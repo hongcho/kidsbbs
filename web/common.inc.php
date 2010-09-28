@@ -1,4 +1,30 @@
 <?
+// Copyright (c) 2001-2010, Younghong "Hong" Cho <hongcho@sori.org>.
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+//
+//   1. Redistributions of source code must retain the above copyright notice,
+// this list of conditions and the following disclaimer.
+//   2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//   3. Neither the name of the organization nor the names of its contributors
+// may be used to endorse or promote products derived from this software
+// without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY
+// DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+// ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+// THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 // $mysql_host, $mysql_user, $mysql_passwd, $mysql_db
 include('dbinfo.inc.php');
 
@@ -77,6 +103,16 @@ function get_threadtitle($title)
     return $title;
   }
 }
+// pad title
+function pad_title($title)
+{
+  static $MAX_TITLE = 40;
+  $n = $MAX_TITLE - strlen($title);
+  while ($n-- > 0) {
+    $title .= ' ';
+  }
+  return preg_replace('/ /', '&nbsp;', $title);
+}
 // get summary
 function get_summary($s)
 {
@@ -141,7 +177,7 @@ function get_dbquery($m)
     $_tn = mysql_real_escape_string($tn);
     return "SELECT a0_seq,a1_username,a2_author,a4_date,a5_title,a7_body ".
       "FROM $_tn ".
-      "WHERE a4_date+0>CONVERT_TZ(NOW(),'US/Mountain','Asia/Seoul')-90000 ".
+      "WHERE a4_date+0>CONVERT_TZ(NOW(),'US/Mountain','Asia/Seoul')-60000 ".
       "ORDER BY a0_seq DESC";
     break;
   case 'rss1':
@@ -294,9 +330,10 @@ function gen_list(&$qr)
       } else {
 	$url = "?m=view&b=$b&t=$t&p=$seq";
       }
+      $title = pad_title($title);
       echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
       echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
-      echo "<TR><TD><FONT size=\"4pt\"><A href=\"$url\">$title</A>&nbsp;</FONT>\n";
+      echo "<TR><TD><FONT size=\"4pt\" style=\"font-family:monospace\"><A href=\"$url\">$title</A>&nbsp;</FONT>\n";
       echo "<TD align=\"right\"><FONT size=\"2pt\">&nbsp;";
       if ($cnt > 1) {
 	echo "<A href=\"$url\">($cnt)&gt;&gt;</A>";
@@ -338,9 +375,10 @@ function gen_thread(&$qr)
 
     switch ($o) {
     case 0:
+      $title = pad_title($title);
       echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
       echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
-      echo "<TR><TD><FONT size=\"4pt\"><A href=\"?m=view&b=$b&t=$t&p=$seq\">$title</A>&nbsp;</FONT>\n";
+      echo "<TR><TD><FONT size=\"4pt\" style=\"font-family:monospace\"><A href=\"?m=view&b=$b&t=$t&p=$seq\">$title</A>&nbsp;</FONT>\n";
       echo "<TD align=\"right\"><FONT size=\"2pt\">&nbsp;";
       echo "</FONT>\n";
       echo "</TABLE>\n";
@@ -376,9 +414,10 @@ function gen_user(&$qr)
 
     switch ($o) {
     case 0:
+      $title = pad_title($title);
       echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
       echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
-      echo "<TR><TD><FONT size=\"4pt\"><A href=\"?m=view&b=$b&t=$t&p=$seq\">$title</A>&nbsp;</FONT>\n";
+      echo "<TR><TD><FONT size=\"4pt\" style=\"font-family:monospace\"><A href=\"?m=view&b=$b&t=$t&p=$seq\">$title</A>&nbsp;</FONT>\n";
       echo "<TD align=\"right\"><FONT size=\"2pt\">&nbsp;";
       echo "</FONT>\n";
       echo "</TABLE>\n";
@@ -412,8 +451,9 @@ function gen_view(&$qr)
 
   switch ($o) {
   case 0:
+    $title = pad_title($title);
     echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">";
-    echo "<TR><TD><FONT size=\"4\">$title&nbsp;</FONT>";
+    echo "<TR><TD><FONT size=\"4pt\" style=\"font-family:monospace\">$title&nbsp;</FONT>";
     echo "<TD align=\"right\"><FONT size=\"2pt\">&nbsp;$seq in [",
       get_boardname($b, $t), "]</FONT>";
     echo "<TR><TD><FONT size=\"2pt\"><A href=\"?m=user&b=$b&t=$t&u=$username\">$author</A>&nbsp;</FONT>";
