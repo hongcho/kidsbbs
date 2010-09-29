@@ -153,6 +153,12 @@ function to_date822($d)
     return '';
   }
 }
+// linkify...
+function linkify_string($s)
+{
+  return preg_replace('/(^|(&nbsp;)+)((https?|mms|ftp|mailto|rtsp):\/\/.+?(?=(&nbsp;|$)))/i',
+		      '$1<A href="$3">$3</A>', $s);
+}
 
 // connect to db
 function db_open()
@@ -452,6 +458,10 @@ function gen_view(&$qr)
   switch ($o) {
   case 0:
     $title = pad_title($title);
+    $body1 = '';
+    foreach (preg_split('/<br\/>/', $body) as $l) {
+      $body1 .= linkify_string($l).'<br/>';
+    }
     echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">";
     echo "<TR><TD><FONT size=\"4pt\" style=\"font-family:monospace\">$title&nbsp;</FONT>";
     echo "<TD align=\"right\"><FONT size=\"2pt\">&nbsp;$seq in [",
@@ -459,7 +469,7 @@ function gen_view(&$qr)
     echo "<TR><TD><FONT size=\"2pt\"><A href=\"?m=user&b=$b&t=$t&u=$username\">$author</A>&nbsp;</FONT>";
     echo "<TD align=\"right\"><FONT size=\"2pt\">&nbsp;$date\n</FONT>";
     echo "\n</TABLE>\n";
-    echo "<TR><TD><FONT size=\"2pt\" style=\"font-family:monospace\">$body</FONT>\n";
+    echo "<TR><TD><FONT size=\"2pt\" style=\"font-family:monospace\">$body1</FONT>\n";
     break;
   case 1:
     gen_xml_item(NULL, NULL, $seq, $username, $author, $date, $title, $body);
@@ -664,12 +674,9 @@ function gen_rss_feed($b, $t)
 
     $date = to_date822($date);
 
-    // linkify...
     $desc = '';
     foreach (preg_split('/<br\/>/', $body) as $l) {
-      $l = preg_replace('/(^|(&nbsp;)+)((https?|mms|ftp|mailto|rtsp):\/\/.+?(?=(&nbsp;|$)))/i',
-			'$1<A href="$3">$3</A>', $l);
-      $desc .= $l.'<br/>';
+      $desc .= linkify_string($l).'<br/>';
     }
     $desc = '<div style="font-family:monospace">'.$desc.'</div>';
 
