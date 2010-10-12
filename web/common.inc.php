@@ -29,37 +29,37 @@
 include('dbinfo.inc.php');
 
 // mode
-$m = $_GET['m'];
-if ($m == NULL) {
-  $m = 'main';
+$_m = $_GET['m'];
+if ($_m == NULL) {
+  $_m = 'main';
  }
 // board, type, table
-$b = $_GET['b'];
-$t = $_GET['t'];
-if ($t == NULL) {
-  $t = 0;
+$_b = $_GET['b'];
+$_t = $_GET['t'];
+if ($_t == NULL) {
+  $_t = 0;
  }
-$tn = $t.'_'.$b;
+$_tn = $_t.'_'.$_b;
 // 0: HTML, 1: XML
-$o = $_GET['_o'];
-if ($o == NULL) {
-  $o = 0;
+$_o = $_GET['_o'];
+if ($_o == NULL) {
+  $_o = 0;
  }
 
 // optional: thread id
-$id = $_GET['id'];
+$_id = $_GET['id'];
 // optional: posting position
-$p = $_GET['p'];
+$_p = $_GET['p'];
 // optional: username
-$u = $_GET['u'];
+$_u = $_GET['u'];
 // start/count...
-$s = $_GET['s'];
-if ($s == NULL) {
-  $s = 0;
+$_s = $_GET['s'];
+if ($_s == NULL || $_s < 0) {
+  $_s = 0;
  }
-$n = $_GET['n'];
-if ($n == NULL) {
-  $n = 20;
+$_n = $_GET['n'];
+if ($_n == NULL || $_n < 0) {
+  $_n = 20;
  }
 
 $tmap = array(0 => '보드목록',
@@ -125,7 +125,7 @@ function pad_title($title)
 // get summary
 function get_summary($s)
 {
-  static $MAX_SUMMARY = 35;
+  static $MAX_SUMMARY = 50;
   $s = preg_replace('/(<br\/>)+/i', '&nbsp;', $s);
   $s = preg_replace('/^(&nbsp;)+/i', '', $s);
   $s = preg_replace('/(&nbsp;)+/i', ' ', $s);
@@ -143,7 +143,7 @@ function get_summary($s)
     } else {
       $s = substr($s, 0, $MAX_SUMMARY);
     }
-    return $s.'[...]';
+    return $s;
   }
 }
 
@@ -186,44 +186,38 @@ function db_close()
 function get_dbquery($m)
 {
   global $mysql_db;
-  global $tn,$id,$p,$u;
+  global $_tn,$_id,$_p,$_u;
+  $tn = mysql_real_escape_string($_tn);
   switch ($m) {
   case 'rss':
-    $_tn = mysql_real_escape_string($tn);
     return "SELECT a0_seq,a1_username,a2_author,a4_date,a5_title,a7_body ".
-      "FROM $_tn ".
+      "FROM $tn ".
       "WHERE a4_date+0>CONVERT_TZ(NOW(),'US/Mountain','Asia/Seoul')-60000 ".
       "ORDER BY a0_seq DESC";
     break;
   case 'rss1':
-    $_tn = mysql_real_escape_string($tn);
     return "SELECT a0_seq,a1_username,a2_author,a4_date,a5_title,a7_body ".
-      "FROM $_tn ORDER BY a0_seq DESC LIMIT 1";
+      "FROM $tn ORDER BY a0_seq DESC LIMIT 1";
     break;
   case 'list':
-    $_tn = mysql_real_escape_string($tn);
     return "SELECT a0_seq,a1_username,a4_date,a5_title,a6_thread,a7_body ".
-      "FROM $_tn ORDER BY a0_seq DESC";
+      "FROM $tn ORDER BY a0_seq DESC";
   case 'tlist':
-    $_tn = mysql_real_escape_string($tn);
     return "SELECT a0_seq,a1_username,a4_date,a5_title,a6_thread,COUNT(*) AS cnt,a7_body ".
-      "FROM (SELECT * FROM $_tn ORDER BY a0_seq DESC) AS t ".
+      "FROM (SELECT * FROM $tn ORDER BY a0_seq DESC) AS t ".
       "GROUP BY a6_thread ORDER BY a0_seq DESC";
   case 'thread':
-    $_tn = mysql_real_escape_string($tn);
-    $_id = mysql_real_escape_string($id);
-    return "SELECT a0_seq,a1_username,a4_date,a5_title,a7_body FROM $_tn ".
-      "WHERE a6_thread='$_id' ORDER BY a0_seq DESC";
+    $id = mysql_real_escape_string($_id);
+    return "SELECT a0_seq,a1_username,a4_date,a5_title,a7_body FROM $tn ".
+      "WHERE a6_thread='$id' ORDER BY a0_seq DESC";
   case 'user':
-    $_tn = mysql_real_escape_string($tn);
-    $_u = mysql_real_escape_string($u);
-    return "SELECT a0_seq,a1_username,a4_date,a5_title,a7_body FROM $_tn ".
-      "WHERE a1_username='$_u' ORDER BY a0_seq DESC";
+    $u = mysql_real_escape_string($_u);
+    return "SELECT a0_seq,a1_username,a4_date,a5_title,a7_body FROM $tn ".
+      "WHERE a1_username='$u' ORDER BY a0_seq DESC";
   case 'view':
-    $_tn = mysql_real_escape_string($tn);
-    $_p = mysql_real_escape_string($p);
+    $p = mysql_real_escape_string($_p);
     return "SELECT a0_seq,a1_username,a2_author,a4_date,a5_title,a6_thread,a7_body ".
-      "FROM $_tn WHERE a0_seq=$_p";
+      "FROM $tn WHERE a0_seq=$p";
   case 'main':
   default:
     return "SELECT table_name FROM information_schema.tables ".
@@ -232,10 +226,10 @@ function get_dbquery($m)
 }
 
 // header
-function display_header($b, $t, $title, $n, $type)
+function display_header($b, $t, $title, $nt, $s, $n, $type)
 {
-  global $o;
-  switch ($o) {
+  global $_o;
+  switch ($_o) {
   case 0:
     echo "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd\">\n";
     echo "<HTML>\n<HEAD>\n";
@@ -263,7 +257,9 @@ function display_header($b, $t, $title, $n, $type)
       echo "<ITEMS type=\"$type\">\n";
       echo "<BOARD>$t".'_'."$b</BOARD>\n";
       echo "<TITLE><![CDATA[$title]]></TITLE>\n";
+      echo "<START>$s</START>\n";
       echo "<COUNT>$n</COUNT>\n";
+      echo "<TOTALCOUNT>$nt</TOTALCOUNT>\n";
       break;
       break;
     }
@@ -275,8 +271,8 @@ function display_header($b, $t, $title, $n, $type)
 // footer
 function display_footer($type)
 {
-  global $o;
-  switch ($o) {
+  global $_o;
+  switch ($_o) {
   case 0:
     if ($type != 'main') {
       echo "\n</TABLE>";
@@ -328,11 +324,14 @@ function gen_xml_item($thread, $cnt,
 // generate list
 function gen_list(&$qr)
 {
-  global $b,$t,$tn,$o;
+  global $_b,$_t,$_o,$_s,$_n;
   $nr = mysql_num_rows($qr);
-  display_header($b, $t, get_boardname($b, $t)." ($nr threads)", $nr,
-		 'list');
-  for ($i = 0; $i < $nr; ++$i) {
+  $s = $_s < $nr ? $_s : $nr;
+  $n = $s + $_n <= $nr ? $_n : $nr - $s;
+
+  display_header($_b, $_t, get_boardname($_b, $_t)." ($n threads)", $nr,
+		 $s, $n, 'list');
+  for ($i = $s; $i < $s + $n; ++$i) {
     $seq = mysql_result($qr, $i, 'a0_seq');
     $username = mysql_result($qr, $i, 'a1_username');
     $date = mysql_result($qr, $i, 'a4_date');
@@ -342,7 +341,7 @@ function gen_list(&$qr)
 
     $body = get_summary($body);
 
-    switch ($o) {
+    switch ($_o) {
     case 0:
       $title = pad_title($title);
       echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
@@ -351,9 +350,9 @@ function gen_list(&$qr)
       echo "<TD align=\"right\"><FONT size=\"2pt\">&nbsp;</FONT>\n";
       echo "</TABLE>\n";
       echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
-      echo "<TR><TD width=\"60\"><FONT size=\"2pt\"><A href=\"?m=user&b=$b&t=$t&u=$username\">$username</A>&nbsp;</FONT>\n";
+      echo "<TR><TD width=\"60\"><FONT size=\"2pt\"><A href=\"?m=user&b=$_b&t=$_t&u=$username\">$username</A>&nbsp;</FONT>\n";
       echo "<TD><FONT size=\"2pt\" style=\"font-family:monospace\">$body</FONT>\n";
-      echo "<TD align=\"right\"><FONT size=\"2pt\"><A href=\"?m=view&b=$b&t=$t&p=$seq\">$date</A></FONT>\n";
+      echo "<TD align=\"right\"><FONT size=\"2pt\"><A href=\"?m=view&b=$_b&t=$_t&p=$seq\">$date</A></FONT>\n";
       echo "</TABLE>\n";
       echo "</TABLE>\n";
       break;
@@ -367,11 +366,14 @@ function gen_list(&$qr)
 // generate threaded list
 function gen_tlist(&$qr)
 {
-  global $b,$t,$tn,$o;
+  global $_b,$_t,$_tn,$_o,$_s,$_n;
   $nr = mysql_num_rows($qr);
-  display_header($b, $t, get_boardname($b, $t)." ($nr threads)", $nr,
-		 'tlist');
-  for ($i = 0; $i < $nr; ++$i) {
+  $s = $_s < $nr ? $_s : $nr;
+  $n = $s + $_n <= $nr ? $_n : $nr - $s;
+
+  display_header($_b, $_t, get_boardname($_b, $_t)." ($n threads)", $nr,
+		 $s, $n, 'tlist');
+  for ($i = $s; $i < $s + $n; ++$i) {
     $seq = mysql_result($qr, $i, 'a0_seq');
     $username = mysql_result($qr, $i, 'a1_username');
     $date = mysql_result($qr, $i, 'a4_date');
@@ -382,12 +384,12 @@ function gen_tlist(&$qr)
 
     $body = get_summary($body);
 
-    switch ($o) {
+    switch ($_o) {
     case 0:
       if ($cnt > 1) {
-	$url = "?m=thread&b=$b&t=$t&id=$thread";
+	$url = "?m=thread&b=$_b&t=$_t&id=$thread";
       } else {
-	$url = "?m=view&b=$b&t=$t&p=$seq";
+	$url = "?m=view&b=$_b&t=$_t&p=$seq";
       }
       $title = pad_title($title);
       echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
@@ -400,9 +402,9 @@ function gen_tlist(&$qr)
       echo "</FONT>\n";
       echo "</TABLE>\n";
       echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
-      echo "<TR><TD width=\"60\"><FONT size=\"2pt\"><A href=\"?m=user&b=$b&t=$t&u=$username\">$username</A>&nbsp;</FONT>\n";
+      echo "<TR><TD width=\"60\"><FONT size=\"2pt\"><A href=\"?m=user&b=$_b&t=$_t&u=$username\">$username</A>&nbsp;</FONT>\n";
       echo "<TD><FONT size=\"2pt\" style=\"font-family:monospace\">$body</FONT>\n";
-      echo "<TD align=\"right\"><FONT size=\"2pt\"><A href=\"?m=view&b=$b&t=$t&p=$seq\">$date</A></FONT>\n";
+      echo "<TD align=\"right\"><FONT size=\"2pt\"><A href=\"?m=view&b=$_b&t=$_t&p=$seq\">$date</A></FONT>\n";
       echo "</TABLE>\n";
       echo "</TABLE>\n";
       break;
@@ -416,14 +418,15 @@ function gen_tlist(&$qr)
 // generate thread
 function gen_thread(&$qr)
 {
-  global $b,$t,$tn,$o;
+  global $_b,$_t,$_o,$_s,$_n;
   $nr = mysql_num_rows($qr);
   $thr_title = get_threadtitle(mysql_result($qr, 0, 'a5_title'));
+  $s = $_s < $nr ? $_s : $nr;
+  $n = $s + $_n <= $nr ? $_n : $nr - $s;
 
-  display_header($b, $t, "$thr_title ($nr) in ".get_boardname($b, $t), $nr,
-		 'thread');
-
-  for ($i = 0; $i < $nr; ++$i) {
+  display_header($_b, $_t, "$thr_title ($n) in ".get_boardname($_b, $_t), $nr,
+		 $s, $n, 'thread');
+  for ($i = $s; $i < $s + $n; ++$i) {
     $seq = mysql_result($qr, $i, 'a0_seq');
     $username = mysql_result($qr, $i, 'a1_username');
     $date = mysql_result($qr, $i, 'a4_date');
@@ -432,19 +435,19 @@ function gen_thread(&$qr)
 
     $body = get_summary($body);
 
-    switch ($o) {
+    switch ($_o) {
     case 0:
       $title = pad_title($title);
       echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
       echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
-      echo "<TR><TD><FONT size=\"4pt\" style=\"font-family:monospace\"><A href=\"?m=view&b=$b&t=$t&p=$seq\">$title</A>&nbsp;</FONT>\n";
+      echo "<TR><TD><FONT size=\"4pt\" style=\"font-family:monospace\"><A href=\"?m=view&b=$_b&t=$_t&p=$seq\">$title</A>&nbsp;</FONT>\n";
       echo "<TD align=\"right\"><FONT size=\"2pt\">&nbsp;";
       echo "</FONT>\n";
       echo "</TABLE>\n";
       echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
-      echo "<TR><TD width=\"60\"><FONT size=\"2pt\"><A href=\"?m=user&b=$b&t=$t&u=$username\">$username</A>&nbsp;</FONT>\n";
+      echo "<TR><TD width=\"60\"><FONT size=\"2pt\"><A href=\"?m=user&b=$_b&t=$_t&u=$username\">$username</A>&nbsp;</FONT>\n";
       echo "<TD><FONT size=\"2pt\" style=\"font-family:monospace\">$body</FONT>\n";
-      echo "<TD align=\"right\"><FONT size=\"2pt\"><A href=\"?m=view&b=$b&t=$t&p=$seq\">$date</A></FONT>\n";
+      echo "<TD align=\"right\"><FONT size=\"2pt\"><A href=\"?m=view&b=$_b&t=$_t&p=$seq\">$date</A></FONT>\n";
       echo "</TABLE>\n";
       echo "</TABLE>\n";
       break;
@@ -458,11 +461,14 @@ function gen_thread(&$qr)
 // generate user post list
 function gen_user(&$qr)
 {
-  global $b,$t,$tn,$u,$o;
+  global $_b,$_t,$_u,$_o,$_s,$_n;
   $nr = mysql_num_rows($qr);
-  display_header($b, $t, "$u in ".get_boardname($b, $t), $nr, 'user');
+  $s = $_s < $nr ? $_s : $nr;
+  $n = $s + $_n <= $nr ? $_n : $nr - $s;
 
-  for ($i = 0; $i < $nr; ++$i) {
+  display_header($_b, $_t, "$_u in ".get_boardname($_b, $_t), $nr,
+		 $s, $n, 'user');
+  for ($i = $s; $i < $s + $n; ++$i) {
     $seq = mysql_result($qr, $i, 'a0_seq');
     $username = mysql_result($qr, $i, 'a1_username');
     $date = mysql_result($qr, $i, 'a4_date');
@@ -471,19 +477,19 @@ function gen_user(&$qr)
 
     $body = get_summary($body);
 
-    switch ($o) {
+    switch ($_o) {
     case 0:
       $title = pad_title($title);
       echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
       echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
-      echo "<TR><TD><FONT size=\"4pt\" style=\"font-family:monospace\"><A href=\"?m=view&b=$b&t=$t&p=$seq\">$title</A>&nbsp;</FONT>\n";
+      echo "<TR><TD><FONT size=\"4pt\" style=\"font-family:monospace\"><A href=\"?m=view&b=$_b&t=$_t&p=$seq\">$title</A>&nbsp;</FONT>\n";
       echo "<TD align=\"right\"><FONT size=\"2pt\">&nbsp;";
       echo "</FONT>\n";
       echo "</TABLE>\n";
       echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
-      echo "<TR><TD width=\"60\"><FONT size=\"2pt\"><A href=\"?m=user&b=$b&t=$t&u=$username\">$username</A>&nbsp;</FONT>\n";
+      echo "<TR><TD width=\"60\"><FONT size=\"2pt\"><A href=\"?m=user&b=$_b&t=$_t&u=$username\">$username</A>&nbsp;</FONT>\n";
       echo "<TD><FONT size=\"2pt\" style=\"font-family:monospace\">$body</FONT>\n";
-      echo "<TD align=\"right\"><FONT size=\"2pt\"><A href=\"?m=view&b=$b&t=$t&p=$seq\">$date</A></FONT>\n";
+      echo "<TD align=\"right\"><FONT size=\"2pt\"><A href=\"?m=view&b=$_b&t=$_t&p=$seq\">$date</A></FONT>\n";
       echo "</TABLE>\n";
       echo "</TABLE>\n";
       break;
@@ -497,7 +503,7 @@ function gen_user(&$qr)
 // generate post view
 function gen_view(&$qr)
 {
-  global $b,$t,$tn,$p,$o;
+  global $_b,$_t,$_p,$_o;
   $seq = mysql_result($qr, 0, 'a0_seq');
   $username = mysql_result($qr, 0, 'a1_username');
   $author = mysql_result($qr, 0, 'a2_author');
@@ -506,10 +512,10 @@ function gen_view(&$qr)
   $thread = mysql_result($qr, 0, 'a6_thread');
   $body = mysql_result($qr, 0, 'a7_body');
 
-  display_header($b, $t, "$title by $username in ".get_boardname($b, $t), 1,
-		 'view');
+  display_header($_b, $_t, "$title by $username in ".get_boardname($_b, $_t),
+		 1, 0, 1, 'view');
 
-  switch ($o) {
+  switch ($_o) {
   case 0:
     $title = pad_title($title);
     $body1 = '';
@@ -517,10 +523,10 @@ function gen_view(&$qr)
       $body1 .= linkify_string($l).'<br/>';
     }
     echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">";
-    echo "<TR><TD><FONT size=\"4pt\" style=\"font-family:monospace\"><A href=\"?m=thread&b=$b&t=$t&id=$thread\">$title</A>&nbsp;</FONT>";
+    echo "<TR><TD><FONT size=\"4pt\" style=\"font-family:monospace\"><A href=\"?m=thread&b=$_b&t=$_t&id=$thread\">$title</A>&nbsp;</FONT>";
     echo "<TD align=\"right\"><FONT size=\"2pt\">&nbsp;$seq in [",
-      get_boardname($b, $t), "]</FONT>";
-    echo "<TR><TD><FONT size=\"2pt\"><A href=\"?m=user&b=$b&t=$t&u=$username\">$author</A>&nbsp;</FONT>";
+      get_boardname($_b, $_t), "]</FONT>";
+    echo "<TR><TD><FONT size=\"2pt\"><A href=\"?m=user&b=$_b&t=$_t&u=$username\">$author</A>&nbsp;</FONT>";
     echo "<TD align=\"right\"><FONT size=\"2pt\">&nbsp;$date\n</FONT>";
     echo "\n</TABLE>\n";
     echo "<TR><TD><FONT size=\"2pt\" style=\"font-family:monospace\">$body1</FONT>\n";
@@ -534,9 +540,10 @@ function gen_view(&$qr)
 // generate main
 function gen_main(&$qr)
 {
-  global $o;
+  global $_o;
   $nr = mysql_num_rows($qr);
-  display_header(NULL, NULL, "키즈 쓰레드 보드 목록 ($nr)", $nr, 'main');
+  display_header(NULL, NULL, "키즈 쓰레드 보드 목록 ($nr)", $nr,
+		 0, $nr, 'main');
   $nc = 4;
   $cnt = 0;
   $last_t = -1;
@@ -555,7 +562,7 @@ function gen_main(&$qr)
     $rx = mysql_query(sprintf("SELECT COUNT(*) AS cnt FROM (SELECT a0_seq FROM %s GROUP BY a6_thread) AS t", $_tn));
     $n_threads = mysql_result($rx, 0, 'cnt');
 
-    switch ($o) {
+    switch ($_o) {
     case 0:
       if ($last_t != $t) {
 	if ($last_t >= 0) {
@@ -590,7 +597,7 @@ function gen_main(&$qr)
       break;
     }
   }
-  switch ($o) {
+  switch ($_o) {
   case 0:
     $n = ($nc - $cnt % $nc) % $nc;
     for ($j = 0; $j < $n; ++$j) {
@@ -606,11 +613,11 @@ function gen_main(&$qr)
 // generate output
 function gen_output()
 {
-  global $m;
+  global $_m;
   db_open();
-  $q = get_dbquery($m);
+  $q = get_dbquery($_m);
   $qr = mysql_query($q);
-  switch ($m) {
+  switch ($_m) {
   case 'list':
     gen_list($qr);
     break;
@@ -640,7 +647,7 @@ function gen_rss_main()
   $q = get_dbquery('main');
   $qr = mysql_query($q);
   $nr = mysql_num_rows($qr);
-  display_header(NULL, NULL, "키즈 RSS 목록 ($nr)", $nr, 'main');
+  display_header(NULL, NULL, "키즈 RSS 목록 ($nr)", $nr, 0, $nr, 'main');
   $nc = 4;
   $cnt = 0;
   $last_t = -1;
@@ -754,11 +761,15 @@ function gen_rss_feed($b, $t)
 # gen rss
 function gen_rss()
 {
-  global $b, $t;
+  global $_b,$_t,$_o;
   db_open();
-  if ($b != NULL && $t != NULL) {
-    gen_rss_feed($b, $t);
+  if ($_b != NULL && $_t != NULL) {
+    // always an XML
+    $_o = 1;
+    gen_rss_feed($_b, $_t);
   } else {
+    // always an HTML
+    $_o = 0;
     gen_rss_main();
   }
   db_close();
