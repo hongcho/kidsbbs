@@ -42,7 +42,7 @@
 		android:singleLine="false"
 		android:ellipsize="none"
 		android:textAppearance="?android:attr/textAppearanceMedium"
-		android:textColor="?android:attr/textColorPrimary"
+		android:textColor="?android:attr/textColorSecondary"
 		android:textStyle="bold"
 		/>
 	<TextView android:id="@+id/date"
@@ -63,7 +63,7 @@
 		android:singleLine="true"
 		android:ellipsize="end"
 		android:textAppearance="?android:attr/textAppearanceSmall"
-		android:textColor="?android:attr/textColorSecondary"
+		android:textColor="?android:attr/textColorPrimary"
 		android:textStyle="bold"
 		/>
     <ScrollView

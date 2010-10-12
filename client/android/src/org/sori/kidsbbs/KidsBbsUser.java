@@ -42,6 +42,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import android.app.Activity;
+import android.app.ListActivity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -55,9 +56,8 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.AdapterView.OnItemClickListener;
 
-public class KidsBbsUser extends Activity {
+public class KidsBbsUser extends ListActivity {
 	static final private int MENU_UPDATE = Menu.FIRST;
 	static final private int MENU_PREFERENCES = Menu.FIRST + 1;
 	static final private int MENU_SHOW = Menu.FIRST + 2;
@@ -69,7 +69,6 @@ public class KidsBbsUser extends Activity {
 	private ArrayList<ArticleInfo> mList = new ArrayList<ArticleInfo>();
 	private AListAdapter mAa;
 
-	private ListView mListView;
 	private TextView mStatusView;
 
 	private UpdateTask mLastUpdate = null;
@@ -101,20 +100,17 @@ public class KidsBbsUser extends Activity {
         mStatusView = (TextView)findViewById(R.id.status);
         mStatusView.setVisibility(View.GONE);
         
-        mListView = (ListView)findViewById(R.id.list_view);
-        mListView.setOnItemClickListener(new OnItemClickListener() {
-        	public void onItemClick(AdapterView _av, View _v, int _index, long arg3) {
-        		showItem(_index);
-        	}
-        });
-        
         mAa = new AListAdapter(this, R.layout.article_info_item, mList);
-        mListView.setAdapter(mAa);
+        setListAdapter(mAa);
         
-        registerForContextMenu(mListView);
+        registerForContextMenu(getListView());
         updateFromPreferences();
         refreshList();
         restoreUIState();
+    }
+    
+    protected void onListItemClick(ListView _l, View _v, int _position, long _id) {
+    	showItem(_position);
     }
     
     @Override
@@ -247,7 +243,7 @@ public class KidsBbsUser extends Activity {
 	            		getResources().getString(R.string.title_user) +
 	            		" (" + _count.toString() + ")");
        		} else {
-       			setTitle(mErrUtils.getErrString(_count));
+       			mStatusView.setText(mErrUtils.getErrString(_count));
        		}
         }
     }
@@ -300,7 +296,7 @@ public class KidsBbsUser extends Activity {
     
     @Override
     public void onSaveInstanceState(Bundle _state) {
-    	_state.putInt(KEY_SELECTED_ITEM, mListView.getSelectedItemPosition());
+    	_state.putInt(KEY_SELECTED_ITEM, getSelectedItemPosition());
     	super.onSaveInstanceState(_state);
     }
     
@@ -312,6 +308,6 @@ public class KidsBbsUser extends Activity {
     			pos = _state.getInt(KEY_SELECTED_ITEM, -1);
     		}
     	}
-    	mListView.setSelection(pos);
+    	setSelection(pos);
     }
 }

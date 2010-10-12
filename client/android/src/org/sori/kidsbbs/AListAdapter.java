@@ -48,40 +48,38 @@ public class AListAdapter extends ArrayAdapter<ArticleInfo> {
 	
 	static class ViewHolder {
 		TextView title;
-		TextView count;
-		TextView username;
 		TextView date;
+		TextView username;
+		TextView summary;
 	}
 	
 	@Override
 	public View getView(int _position, View _convertView, ViewGroup _parent) {
 		ArticleInfo info = getItem(_position);
 		String title = info.getTitle();
-		String username = info.getUsername();
-		String count;
-		if (info.getCount() > 1) {
-			count = "(" + Integer.toString(info.getCount()) + ")>>";
-		} else {
-			count = "";
-		}
 		String date = info.getDateShortString();
+		String username = info.getUsername();
+		if (info.getCount() > 1) {
+			username += " (" + Integer.toString(info.getCount()) + ")";
+		}
+		String summary = info.getBody();
 		
 		ViewHolder holder;
 		if (_convertView == null) {
 			_convertView = mInflater.inflate(mResource, _parent, false);
 			holder = new ViewHolder();
 			holder.title = (TextView)_convertView.findViewById(R.id.title);
-			holder.count = (TextView)_convertView.findViewById(R.id.count);
-			holder.username = (TextView)_convertView.findViewById(R.id.username);
 			holder.date = (TextView)_convertView.findViewById(R.id.date);
+			holder.username = (TextView)_convertView.findViewById(R.id.username);
+			holder.summary = (TextView)_convertView.findViewById(R.id.summary);
 			_convertView.setTag(holder);
 		} else {
 			holder = (ViewHolder)_convertView.getTag();
 		}
 		holder.title.setText(title);
-		holder.count.setText(count);
-		holder.username.setText(username);
 		holder.date.setText(date);
+		holder.username.setText(username);
+		holder.summary.setText(summary);
 		return _convertView;
 	}
 }

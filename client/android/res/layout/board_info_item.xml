@@ -42,5 +42,6 @@
 		android:singleLine="true"
 		android:ellipsize="end"
 		android:textAppearance="?android:attr/textAppearanceLarge"
+		android:text="title"
 		/>
 </LinearLayout>
