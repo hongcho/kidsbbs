@@ -34,15 +34,13 @@
 	android:paddingBottom="6dp"
 	android:paddingLeft="3dp"
 	android:paddingRight="6dp"
-	android:background="#000000"
+	android:background="?android:attr/colorBackground"
     >
     <TextView android:id="@+id/title"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:singleLine="true"
 		android:ellipsize="end"
-		android:textColor="#f9f9f9"
-		android:textSize="24sp"
-		android:textStyle="bold"
+		android:textAppearance="?android:attr/textAppearanceLarge"
 		/>
 </LinearLayout>

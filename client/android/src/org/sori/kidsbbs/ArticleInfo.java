@@ -28,26 +28,22 @@ package org.sori.kidsbbs;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ArticleInfo {
 	static final private String DATE_FORMAT = "yyyy-MM-dd HH:mm";
+	static final private String DATESHORT1_FORMAT = "HH:mm";
+	static final private String DATESHORT2_FORMAT = "yyyy-MM-dd";
 	static final private String DATE_INVALID = "0000-00-00 00:00";
-	static final private String DATESHORT_FORMAT = "MMM dd HH:mm";
-	static final private String DATESHORT_INVALID = "000 00 00:00";
+	static final private String DATESHORT_INVALID = "0000-00-00";
 	
 	static final private Pattern PATTERN_SPACE= Pattern.compile("&nbsp;");
 	static final private Pattern PATTERN_NEWLINE = Pattern.compile("<br/>");
-
-	static final private DateFormat sDfKST = new SimpleDateFormat(DATE_FORMAT);
-	static {
-		sDfKST.setTimeZone(TimeZone.getTimeZone("Korea"));
-	}
-	static final private DateFormat sDfLocal = new SimpleDateFormat(DATE_FORMAT);
-	static final private DateFormat sDfLocalShort = new SimpleDateFormat(DATESHORT_FORMAT);
 	
 	private int mSeq;
 	private String mUsername;
@@ -75,10 +71,29 @@ public class ArticleInfo {
 		mThread = _thread;
 		mCount = _count;
 		
+		Calendar calLocal = new GregorianCalendar();
+		DateFormat dfKorea = new SimpleDateFormat(DATE_FORMAT);
+		dfKorea.setTimeZone(TimeZone.getTimeZone("Korea"));
+		DateFormat dfLong = new SimpleDateFormat(DATE_FORMAT);
+		dfLong.setTimeZone(TimeZone.getDefault());
+		DateFormat dfShort1 = new SimpleDateFormat(DATESHORT1_FORMAT);
+		dfShort1.setTimeZone(TimeZone.getDefault());
+		DateFormat dfShort2 = new SimpleDateFormat(DATESHORT2_FORMAT);
+		dfShort2.setTimeZone(TimeZone.getDefault());
 		try {
-			Date date = sDfKST.parse(_dateString);
-			mDateString = sDfLocal.format(date);
-			mDateShortString = sDfLocalShort.format(date);
+			Date date = dfKorea.parse(_dateString);
+			mDateString = dfLong.format(date);
+			
+			calLocal.setTime(new Date());
+			int dateNow = calLocal.get(Calendar.DATE);
+			calLocal.setTime(date);
+			int dateA = calLocal.get(Calendar.DATE);
+
+			if (dateNow == dateA) {
+				mDateShortString = dfShort1.format(date);
+			} else {
+				mDateShortString = dfShort2.format(date);
+			}
 		} catch (ParseException e) {
 			mDateString = DATE_INVALID;
 			mDateShortString = DATESHORT_INVALID;

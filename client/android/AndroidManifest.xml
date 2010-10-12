@@ -2,10 +2,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
 	package="org.sori.kidsbbs"
     android:versionCode="1"
-    android:versionName="1.0">
-    <application android:icon="@drawable/icon" android:label="@string/title_app">
+    android:versionName="1.0"
+    >
+    <application
+    	android:icon="@drawable/icon"
+    	android:label="@string/title_app"
+    	android:debuggable="true"
+    	>
     	<activity android:name=".KidsBbs"
-        	android:label="@string/title_app">
+        	android:label="@string/title_app"
+        	>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -16,35 +22,40 @@
             </intent-filter>
         </activity>
         <activity android:name=".KidsBbsTlist"
-        	android:label="@string/title_tlist">
+        	android:label="@string/title_tlist"
+        	>
         	<intent-filter>
         		<action android:name="android.intent.action.VIEW" />
         		<category android:name="android.intent.category.DEFAULT" />
         	</intent-filter>
         </activity>
         <activity android:name=".KidsBbsThread"
-        	android:label="@string/title_thread">
+        	android:label="@string/title_thread"
+        	>
         	<intent-filter>
         		<action android:name="android.intent.action.VIEW" />
         		<category android:name="android.intent.category.DEFAULT" />
         	</intent-filter>
         </activity>
         <activity android:name=".KidsBbsUser"
-        	android:label="@string/title_user">
+        	android:label="@string/title_user"
+        	>
         	<intent-filter>
         		<action android:name="android.intent.action.VIEW" />
         		<category android:name="android.intent.category.DEFAULT" />
         	</intent-filter>
         </activity>
         <activity android:name=".KidsBbsView"
-        	android:label="@string/title_view">
+        	android:label="@string/title_view"
+        	>
         	<intent-filter>
         		<action android:name="android.intent.action.VIEW" />
         		<category android:name="android.intent.category.DEFAULT" />
         	</intent-filter>
         </activity>
 		<activity android:name=".Preferences"
-			android:label="@string/title_pref">
+			android:label="@string/title_pref"
+			>
 		</activity>
     </application>
     <uses-sdk android:minSdkVersion="4" />

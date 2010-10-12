@@ -51,7 +51,6 @@ public class Preferences extends PreferenceActivity {
 		
 		findPreference(PREF_ABOUT).setOnPreferenceClickListener(
 				new Preference.OnPreferenceClickListener() {
-					@Override
 					public boolean onPreferenceClick(Preference preference) {
 						onAbout();
 						return true;

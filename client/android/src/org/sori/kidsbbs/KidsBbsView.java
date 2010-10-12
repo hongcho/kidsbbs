@@ -102,13 +102,11 @@ public class KidsBbsView extends Activity {
         mBodyView = (TextView)findViewById(R.id.body);
         
         mTitleView.setOnClickListener(new View.OnClickListener() {
-			@Override
 			public void onClick(View v) {
 				startThreadView();
 			}
 		});
         mUserView.setOnClickListener(new View.OnClickListener() {
-			@Override
 			public void onClick(View v) {
 				startUserView();
 			}

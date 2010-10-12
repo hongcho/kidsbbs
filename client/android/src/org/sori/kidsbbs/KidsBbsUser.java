@@ -103,7 +103,6 @@ public class KidsBbsUser extends Activity {
         
         mListView = (ListView)findViewById(R.id.list_view);
         mListView.setOnItemClickListener(new OnItemClickListener() {
-        	@Override
         	public void onItemClick(AdapterView _av, View _v, int _index, long arg3) {
         		showItem(_index);
         	}
