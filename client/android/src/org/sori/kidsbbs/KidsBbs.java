@@ -73,7 +73,6 @@ public class KidsBbs extends ListActivity {
 	private HashMap<String,String> mNameMap = new HashMap<String,String>();
 
 	private ArrayList<BoardInfo> mList = new ArrayList<BoardInfo>();
-	private BListAdapter mAa;
 
 	private TextView mStatusView;
 	
@@ -96,8 +95,7 @@ public class KidsBbs extends ListActivity {
 
         mStatusView = (TextView)findViewById(R.id.status);
         
-        mAa = new BListAdapter(this, R.layout.board_info_item, mList);
-        setListAdapter(mAa);
+        setListAdapter(new BListAdapter(this, R.layout.board_info_item, mList));
         
         registerForContextMenu(getListView());
         updateFromPreferences();
@@ -188,7 +186,7 @@ public class KidsBbs extends ListActivity {
     	}
     	@Override
         protected void onPostExecute(Integer _count) {
-    		mAa.notifyDataSetChanged();
+    		((BListAdapter)KidsBbs.this.getListAdapter()).notifyDataSetChanged();
     		mStatusView.setVisibility(View.GONE);
             setTitle(getResources().getString(R.string.title_blist) +
             		" (" + _count.toString() + ")");
