@@ -67,7 +67,9 @@ public class KidsBbsUser extends ListActivity {
 	private static final String KEY_SELECTED_ITEM = "KEY_SELECTED_ITEM";
 	
 	private ArrayList<ArticleInfo> mList = new ArrayList<ArticleInfo>();
-	private AListAdapter mAa;
+	private int mItemStart;
+	private int mItemCount;
+	private int mItemTotal;
 
 	private TextView mStatusView;
 
@@ -100,8 +102,7 @@ public class KidsBbsUser extends ListActivity {
         mStatusView = (TextView)findViewById(R.id.status);
         mStatusView.setVisibility(View.GONE);
         
-        mAa = new AListAdapter(this, R.layout.article_info_item, mList);
-        setListAdapter(mAa);
+        setListAdapter(new AListAdapter(this, R.layout.article_info_item, mList));
         
         registerForContextMenu(getListView());
         updateFromPreferences();
@@ -189,9 +190,21 @@ public class KidsBbsUser extends ListActivity {
         			
         			// Clear the old list.
         			mList.clear();
+        			mItemStart = 0;
+        			mItemCount = 0;
+        			mItemTotal = 0;
+        			
+        			Element items = (Element)docEle.getElementsByTagName("ITEMS").item(0);
+        			Element eStart = (Element)items.getElementsByTagName("START").item(0);
+        			Element eNum = (Element)items.getElementsByTagName("COUNT").item(0);
+        			Element eTotal = (Element)items.getElementsByTagName("TOTALCOUNT").item(0);
+        			
+        			mItemStart = Integer.parseInt(eStart.getFirstChild().getNodeValue());
+        			mItemCount = Integer.parseInt(eNum.getFirstChild().getNodeValue());
+        			mItemTotal = Integer.parseInt(eTotal.getFirstChild().getNodeValue());
         			
         			// Get a board item
-        			NodeList nl = docEle.getElementsByTagName("ITEM");
+        			NodeList nl = items.getElementsByTagName("ITEM");
         			if (nl != null && nl.getLength() > 0) {
         				for (int i = 0; i < nl.getLength(); ++i) {
         					Element item = (Element)nl.item(i);
@@ -236,12 +249,13 @@ public class KidsBbsUser extends ListActivity {
     	}
     	@Override
         protected void onPostExecute(Integer _count) {
-       		mAa.notifyDataSetChanged();
+       		((AListAdapter)KidsBbsUser.this.getListAdapter()).notifyDataSetChanged();
        		if (_count >= 0) {
 	    		mStatusView.setVisibility(View.GONE);
 	            setTitle(mBoardUser + " in [" + mBoardTitle + "] " +
 	            		getResources().getString(R.string.title_user) +
-	            		" (" + _count.toString() + ")");
+	            		" (" + Integer.toString(mItemStart + mItemCount) + "/" +
+	            		Integer.toString(mItemTotal) + ")");
        		} else {
        			mStatusView.setText(mErrUtils.getErrString(_count));
        		}
