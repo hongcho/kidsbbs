@@ -40,7 +40,11 @@ use KidSql;
 print('kidsql_job started: ', scalar(localtime), "\n");
 
 my $bl = KidSql::GetBoardList();
-defined($bl) or die("failed to get the board list\n");
+if (!defined($bl)) {
+    print("failed to get the board list from KIDS\n");
+    $bl = KidSql::GetBoardListFromDB();
+    defined($bl) or die("failed to get the board list from DB\n");
+}
 
 foreach my $tab (sort(keys(%$bl))) {
     my ($t, $b);
@@ -51,6 +55,7 @@ foreach my $tab (sort(keys(%$bl))) {
 	die("something seriously wrong: $tab...");
     }
     print("updating $tab...");
+    #sleep(1);
     KidSql::UpdateBoardDB($b, $t);
 }
 

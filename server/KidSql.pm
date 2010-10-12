@@ -41,6 +41,7 @@ use lib '.';
 use KidSqlDBInfo;
 
 our @EXPORT = qw(GetBoardList
+		 GetBoardListFromDB
 		 DropAllTables
 		 UpdateBoardDB);
 
@@ -118,8 +119,8 @@ my $dbi_passwd = $mysql_passwd;
 # SQL Constants.
 
 my $K_MINCNT = 15;
-my $K_MINDAYS = 7;		# 1 week
-my $K_MAXDAYS = 90;		# 3 months
+my $K_MINDAYS = 7;		# 1 week(s)
+my $K_MAXDAYS = 31;		# 1 month(s)
 
 my $MAX_USERNAME = 12;
 my $MAX_AUTHOR = 40;
@@ -422,7 +423,7 @@ sub GetBoardPage
 	}
 	last;
     }
-    if ($try == 0) {
+    if ($try < 0) {
 	print(">> request failed: $url\n");
 	return undef;
     }
@@ -490,7 +491,7 @@ sub GetArticlePage
 	$a->{guid} = $url.';'.ConvertDateSqlToNum($a->{datesql});
 	last;
     }
-    if ($try == 0) {
+    if ($try < 0) {
 	print(">> request failed: $url\n");
 	return undef;
     }
@@ -610,7 +611,8 @@ sub CompareArticleValues
     scalar(@$v) == scalar(@r) or return 1;
     $r[1] eq $v->[1] or return 1; # username
     $r[3] eq $v->[3] or return 1; # guestkey
-    $r[4] eq $v->[4] or return 1; # datesql
+    ($r[4] eq '0000-00-00 00:00:00' or
+     $r[4] eq $v->[4]) or return 1; # datesql
     $r[5] eq $v->[5] or return 1; # title
     return 0;
 }
@@ -710,7 +712,7 @@ sub TrimBoardTable
     my ($dbh, $tn, $limit) = @_;
     my $sth = $dbh->prepare("SELECT a0_seq,a4_date FROM $tn ".
 			    "WHERE DATE(a4_date)+0!=0 ".
-			    "AND DATE(a4_date)+0<=DATE($S_CURDATE_KST)-$K_MAXDAYS ".
+			    "AND DATE(a4_date)+0<=DATE_SUB(DATE($S_CURDATE_KST),INTERVAL $K_MAXDAYS DAY) ".
 			    "ORDER BY a0_seq DESC LIMIT 1");
     $sth->execute
 	or print("failed to find the trim point for $tn: ",
@@ -760,26 +762,52 @@ sub GetBoardList
     my $bl = {};
     SetUserAgentString();
     my $rq = new HTTP::Request(GET => $url);
-    my $rs = $AGENT->request($rq);
-    if (!$rs->is_success) {
-	print(">> request failed: $url\n");
-	return undef;
-    }
-    foreach my $l (split(/\n/, $rs->content)) {
-	if ($l =~ /\[\s*<a href=(.+?)>\s*(.+?)\s*<\/a>\s*\]/oi) {
-	    my $link = $1;
-	    if ($link =~ /Boardlist\?(.+?)=(.+?)&/) {
-		my $t = $BTYPES{$1};
-		my $name = $2;
-		if (defined($t) and $name ne 'OldAnonymous') {
-		    my $key = $t.'_'.$name;
-		    defined($bl->{$key}) or $bl->{$key} = $t;
+    my $try = $MAX_TRY;
+    while ($try-- > 0) {
+	my $rs = $AGENT->request($rq);
+	next if (!$rs->is_success);
+	foreach my $l (split(/\n/, $rs->content)) {
+	    if ($l =~ /\[\s*<a href=(.+?)>\s*(.+?)\s*<\/a>\s*\]/oi) {
+		my $link = $1;
+		if ($link =~ /Boardlist\?(.+?)=(.+?)&/) {
+		    my $t = $BTYPES{$1};
+		    my $name = $2;
+		    if (defined($t) and $name ne 'OldAnonymous') {
+			my $key = $t.'_'.$name;
+			defined($bl->{$key}) or $bl->{$key} = $t;
+		    }
 		}
 	    }
 	}
+	# hidden board.
+	$bl->{'0_p'} = 0;
+	last;
     }
-    # hidden board.
-    $bl->{'0_p'} = 0;
+    if ($try < 0) {
+	print(">> request failed: $url\n");
+	return undef;
+    }
+    return $bl;
+}
+
+######################################################################
+# Get the board list from the database
+sub GetBoardListFromDB
+{
+    my $dbh = DBI->connect($dbi_db, $dbi_user, $dbi_passwd,
+			   {AutoCommit => 0})
+	or print("GetBoardListFromDB: failed to connect to DB\n"),return undef;
+    # list all tables
+    my $sth = $dbh->prepare("SELECT table_name ".
+			    "FROM information_schema.tables ".
+			    "WHERE table_schema='$mysql_db'");
+    $sth->execute
+	or print("DropAllTables: failed to list all tables\n"),return undef;
+    my $bl;
+    while (my @r = $sth->fetchrow_array) {
+	$bl->{$r[0]} = 0;
+    }
+    $dbh->disconnect;
     return $bl;
 }
 
@@ -876,15 +904,15 @@ sub UpdateBoardDB
 		 and $d0 - $dx >= $days and $c >= $K_MINCNT) and $done=1,last;
 	    }
 	}
-	$dbh->commit
-	    or print("commit failed: $DBI::errstr ($DBI::err)\n"),
-	    $dbh->disconnect,return -1;
 	# enough?
 	last if ($done);
 	# previous page
 	$p = $bp->{list}->[0]->{seq} - 1;
 	$p = 'P'.$p;
     }
+    $dbh->commit
+	or print("commit failed: $DBI::errstr ($DBI::err)\n"),
+	$dbh->disconnect,return -1;
     UnlockTables($dbh);
     $dbh->disconnect;
     print($c ? "commited $c articles.\n" : "no change\n");
