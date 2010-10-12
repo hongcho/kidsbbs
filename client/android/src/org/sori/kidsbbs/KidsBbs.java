@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import android.app.Activity;
+import android.app.ListActivity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -42,9 +43,8 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.AdapterView.OnItemClickListener;
 
-public class KidsBbs extends Activity {
+public class KidsBbs extends ListActivity {
 	static final public String PARAM_N_TITLE = "bt";
 	static final public String PARAM_N_BOARD = "b";
 	static final public String PARAM_N_TYPE = "t";
@@ -66,44 +66,47 @@ public class KidsBbs extends Activity {
 	
 	private static final String KEY_SELECTED_ITEM = "KEY_SELECTED_ITEM";
 	
+   	private String[] mTabnames;
+	private String[] mTypeNames;
+	private String[] mNameMapKeys;
+	private String[] mNameMapValues;
+	private HashMap<String,String> mNameMap = new HashMap<String,String>();
+
 	private ArrayList<BoardInfo> mList = new ArrayList<BoardInfo>();
 	private BListAdapter mAa;
 
-	private ListView mListView;
 	private TextView mStatusView;
 	
 	private UpdateTask mLastUpdate = null;
 	
 	private int mUpdateFreq = 0;
 	
-	private void setupNameMaps() {
- 	}
-	
     @Override
     public void onCreate(Bundle _state) {
         super.onCreate(_state);
         setContentView(R.layout.board_list);
 
-        // Set up name map...
-        setupNameMaps();
+	   	mTabnames = getResources().getStringArray(R.array.board_table_names);
+    	mTypeNames = getResources().getStringArray(R.array.board_type_names);
+    	mNameMapKeys = getResources().getStringArray(R.array.board_name_map_in);
+    	mNameMapValues = getResources().getStringArray(R.array.board_name_map_out);
+    	for (int i = 0; i < mNameMapKeys.length; ++i) {
+    		mNameMap.put(mNameMapKeys[i], mNameMapValues[i]);
+    	}
 
         mStatusView = (TextView)findViewById(R.id.status);
-        mStatusView.setVisibility(View.GONE);
-        
-        mListView = (ListView)findViewById(R.id.list_view);
-        mListView.setOnItemClickListener(new OnItemClickListener() {
-        	public void onItemClick(AdapterView _av, View _v, int _index, long arg3) {
-        		showItem(_index);
-        	}
-        });
         
         mAa = new BListAdapter(this, R.layout.board_info_item, mList);
-        mListView.setAdapter(mAa);
+        setListAdapter(mAa);
         
-        registerForContextMenu(mListView);
+        registerForContextMenu(getListView());
         updateFromPreferences();
         refreshList();
         restoreUIState();
+    }
+    
+    protected void onListItemClick(ListView _l, View _v, int _position, long _id) {
+    	showItem(_position);
     }
     
     @Override
@@ -157,33 +160,25 @@ public class KidsBbs extends Activity {
     	}
     	@Override
         protected Integer doInBackground(Void... _args) {
-    	   	String[] tabnames = getResources().getStringArray(R.array.board_table_names);
-        	String[] typeNames = getResources().getStringArray(R.array.board_type_names);
-        	String[] nameMapKeys = getResources().getStringArray(R.array.board_name_map_in);
-        	String[] nameMapValues = getResources().getStringArray(R.array.board_name_map_out);
-    		HashMap<String,String> nameMap = new HashMap<String,String>();
-        	for (int i = 0; i < nameMapKeys.length; ++i) {
-        		nameMap.put(nameMapKeys[i], nameMapValues[i]);
-        	}
-        	for (int i = 0; i < tabnames.length; ++i) {
-        		String[] p = BoardInfo.parseTabName(tabnames[i]);
+        	for (int i = 0; i < mTabnames.length; ++i) {
+        		String[] p = BoardInfo.parseTabName(mTabnames[i]);
         		int type = Integer.parseInt(p[0]);
         		String name = p[1];
         		String title;
-        		if (type > 0 && type < typeNames.length) {
-        			title = typeNames[type] + " ";
+        		if (type > 0 && type < mTypeNames.length) {
+        			title = mTypeNames[type] + " ";
         		} else {
         			title = "";
         		}
-        		String mapped = nameMap.get(name);
+        		String mapped = mNameMap.get(name);
         		if (mapped != null) {
         			title += mapped; 
         		} else {
         			title += name;
         		}
-        		mList.add(new BoardInfo(tabnames[i], title));
+        		mList.add(new BoardInfo(mTabnames[i], title));
         	}
-        	return tabnames.length;
+        	return mTabnames.length;
         }
     	@Override
     	protected void onProgressUpdate(Integer... _args) {
@@ -244,18 +239,19 @@ public class KidsBbs extends Activity {
     
     @Override
     public void onSaveInstanceState(Bundle _state) {
-    	_state.putInt(KEY_SELECTED_ITEM, mListView.getSelectedItemPosition());
     	super.onSaveInstanceState(_state);
+    	_state.putInt(KEY_SELECTED_ITEM, getSelectedItemPosition());
     }
     
     @Override
     public void onRestoreInstanceState(Bundle _state) {
+    	super.onRestoreInstanceState(_state);
     	int pos = -1;
     	if (_state != null) {
     		if (_state.containsKey(KEY_SELECTED_ITEM)) {
     			pos = _state.getInt(KEY_SELECTED_ITEM, -1);
     		}
     	}
-    	mListView.setSelection(pos);
+    	setSelection(pos);
     }
 }
