@@ -54,11 +54,6 @@ public class KidsBbs extends ListActivity {
 	static final public String PARAM_N_START = "s";
 	static final public String PARAM_N_COUNT = "n";
 	
-	static final public int ERR_BAD_URL = -1;
-	static final public int ERR_IO = -2;
-	static final public int ERR_PARSER = -3;
-	static final public int ERR_SAX = -4;
-	
 	static final private int MENU_PREFERENCES = Menu.FIRST;
 	static final private int MENU_SHOW = Menu.FIRST + 1;
 	

@@ -238,5 +238,6 @@
     	<item>IO에 문제가 있습니다.</item>
     	<item>ParserConfiguration에 문제가 있습니다.</item>
     	<item>SAX에 문제가 있습니다.</item>
+    	<item>XML 형식에 문제가 있습니다.</item>
     </string-array>
 </resources>
