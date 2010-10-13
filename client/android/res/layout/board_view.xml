@@ -81,7 +81,7 @@
 			android:textAppearance="?android:attr/textAppearanceSmall"
 			android:textColor="?android:attr/colorForegroundInverse"
 			android:typeface="monospace"
-			android:autoLink="all"
+			android:autoLink="web|email|map"
 			/>
 	</ScrollView>
 </LinearLayout>
