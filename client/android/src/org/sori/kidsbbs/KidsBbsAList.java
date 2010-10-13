@@ -55,7 +55,6 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 public abstract class KidsBbsAList extends ListActivity
 								implements ListView.OnScrollListener {
@@ -69,9 +68,9 @@ public abstract class KidsBbsAList extends ListActivity
 		private static final String KEY_SELECTED_ITEM = "KEY_SELECTED_ITEM";
 		
 		private ArrayList<ArticleInfo> mList = new ArrayList<ArticleInfo>();
-		private  int mItemStart;
-		private  int mItemCount;
-		private int mItemTotal;
+		private int mItemTotal = 0;
+		
+		private String mUrlBaseString;
 		
 		private String mBoardTitle;
 		private String mBoardName;
@@ -83,7 +82,7 @@ public abstract class KidsBbsAList extends ListActivity
 		private ErrUtils mErrUtils;
 		private UpdateTask mLastUpdate = null;
 	    
-	    // Call refreshListCommon() with custom parameters.
+	    // First call setUrlBase(), and all refreshListCommon().
 	    abstract protected void refreshList();
 	    
 	    // Update title...
@@ -140,7 +139,7 @@ public abstract class KidsBbsAList extends ListActivity
 	    	itemPreferences.setIcon(android.R.drawable.ic_menu_preferences);
 	    	itemPreferences.setShortcut('1', 'p');
 	    	
-	    	return false;
+	    	return true;
 	    }
 	    
 	    @Override
@@ -177,16 +176,23 @@ public abstract class KidsBbsAList extends ListActivity
 	    	return false;
 	    }
 	    
-	    private class UpdateTask extends AsyncTask<String, Integer, Integer> {
+	    private class UpdateTask extends AsyncTask<Boolean, Integer, Integer> {
 	    	@Override
 	    	protected void onPreExecute() {
+	    		mStatusView.setText(getResources().getString(R.string.update_text));
 	    		mStatusView.setVisibility(View.VISIBLE);
 	    	}
 	    	@Override
-	        protected Integer doInBackground(String... _args) {
+	        protected Integer doInBackground(Boolean... _args) {
 	        	int count = 0;
+	        	String _urlString = mUrlBaseString;
+	        	boolean _append = _args[0];
+	    		if (_append) {
+	    			_urlString +=
+	    				"&" + KidsBbs.PARAM_N_START + "=" + Integer.toString(mList.size());
+	    		}
 	        	try {
-	        		URL url = new URL(_args[0]);
+	        		URL url = new URL(_urlString);
 	        		HttpURLConnection httpConnection = (HttpURLConnection)url.openConnection();
 	        		int responseCode = httpConnection.getResponseCode();
 	        		if (responseCode == HttpURLConnection.HTTP_OK) {
@@ -198,29 +204,17 @@ public abstract class KidsBbsAList extends ListActivity
 	        			Element docEle = dom.getDocumentElement();
 	        			NodeList nl;
 	        			
-	        			// Clear the old list.
-	        			mList.clear();
-	        			mItemStart = 0;
-	        			mItemCount = 0;
-	        			mItemTotal = 0;
+	        			if (!_append) {
+		        			// Clear the old list.
+		        			mList.clear();
+		        			mItemTotal = 0;
+	        			}
 	        			
 	        			nl = docEle.getElementsByTagName("ITEMS");
 	        			if (nl == null || nl.getLength() <= 0) {
 	        				return ErrUtils.ERR_XMLPARSING;
 	        			}
 	        			Element items = (Element)nl.item(0);
-	        			
-	        			nl = items.getElementsByTagName("START");
-	        			if (nl == null || nl.getLength() <= 0) {
-	        				return ErrUtils.ERR_XMLPARSING;
-	        			}
-	        			mItemStart = Integer.parseInt(((Element)nl.item(0)).getFirstChild().getNodeValue());
-	        			
-	        			nl = items.getElementsByTagName("COUNT");
-	        			if (nl == null || nl.getLength() <= 0) {
-	        				return ErrUtils.ERR_XMLPARSING;
-	        			}
-	        			mItemCount = Integer.parseInt(((Element)nl.item(0)).getFirstChild().getNodeValue());
 	        			
 	        			nl = items.getElementsByTagName("TOTALCOUNT");
 	        			if (nl == null || nl.getLength() <= 0) {
@@ -288,9 +282,9 @@ public abstract class KidsBbsAList extends ListActivity
 	        					
 	        					mList.add(new ArticleInfo(seq, user, date, title, thread, desc, cnt));
 	        					++count;
-	        					if (count % 10 == 0) {
-	        						publishProgress(count);
-	        					}
+	        					//if (count % 10 == 0) {
+	        					//	publishProgress(count);
+	        					//}
 	        				}
 	        			}
 	        		}
@@ -317,25 +311,30 @@ public abstract class KidsBbsAList extends ListActivity
 				((AListAdapter)KidsBbsAList.this.getListAdapter()).notifyDataSetChanged();
 				if (_count >= 0) {
 		    		mStatusView.setVisibility(View.GONE);
-		    		updateTitle(" (" + Integer.toString(mItemStart + mItemCount) +
-		    				"/" + Integer.toString(mItemTotal) + ")");
+		    		updateTitle(" (" + Integer.toString(mItemTotal) + ")");
 				} else {
 					mStatusView.setText(mErrUtils.getErrString(_count));
 				}
 	        }
 	    }
 	    
-	    protected void refreshListCommon(int _base, String _extra) {
-	    	if (mLastUpdate == null ||
-	    			mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED)) {
-	    		String urlString = getString(_base) +
-	    			KidsBbs.PARAM_N_BOARD + "=" + mBoardName +
-	    			"&" + KidsBbs.PARAM_N_TYPE + "=" + mBoardType
-	    			+ _extra;
-	    		Toast.makeText(this, urlString, Toast.LENGTH_LONG);
+	    private void updateList(boolean append) {
+	    	if (mUrlBaseString != null && (mLastUpdate == null ||
+	    			mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED))) {
 	    		mLastUpdate = new UpdateTask();
-	    		mLastUpdate.execute(urlString);
+	    		mLastUpdate.execute(append);
 	    	}
+	    }
+	    
+	    protected void setUrlBase(int _base, String _extra) {
+	    	mUrlBaseString = getString(_base) +
+				KidsBbs.PARAM_N_BOARD + "=" + mBoardName +
+				"&" + KidsBbs.PARAM_N_TYPE + "=" + mBoardType +
+				_extra;
+	    }
+	    
+	    protected void refreshListCommon() {
+	    	updateList(false);
 	    }
 	    
 	    protected void showItemCommon(Context _from, Class<?> _to,
@@ -345,7 +344,6 @@ public abstract class KidsBbsAList extends ListActivity
 	    		"&" + KidsBbs.PARAM_N_TYPE + "=" + mBoardType +
 	    		"&" + KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle +
 	    		_extra;
-    		Toast.makeText(this, uriString, Toast.LENGTH_LONG);
 	    	Intent intent = new Intent(_from, _to); 
 	    	intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
 	    	intent.setAction(Intent.ACTION_VIEW);
@@ -372,8 +370,9 @@ public abstract class KidsBbsAList extends ListActivity
 	    }
 	    
 	    public void onScroll(AbsListView _v, int _first, int _nVisible, int _nTotal) {
-	    	if (_nTotal > 0 && _first + _nVisible >= _nTotal) {
-	    		Toast.makeText(this, "At the End", Toast.LENGTH_SHORT).show();
+	    	if (_nTotal > 0 && _first + _nVisible >= _nTotal - 1 &&
+	    			mList.size() < mItemTotal) {
+	    		updateList(true);
 	    	}
 	    }
 	    
