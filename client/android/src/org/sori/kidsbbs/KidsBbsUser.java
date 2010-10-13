@@ -110,7 +110,9 @@ public class KidsBbsUser extends ListActivity {
         restoreUIState();
     }
     
+    @Override
     protected void onListItemClick(ListView _l, View _v, int _position, long _id) {
+    	super.onListItemClick(_l, _v, _position, _id);
     	showItem(_position);
     }
     

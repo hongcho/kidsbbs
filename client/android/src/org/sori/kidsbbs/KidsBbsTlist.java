@@ -52,11 +52,14 @@ import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
-public class KidsBbsTlist extends ListActivity {
+public class KidsBbsTlist extends ListActivity
+						implements ListView.OnScrollListener {
 	static final private int MENU_UPDATE = Menu.FIRST;
 	static final private int MENU_PREFERENCES = Menu.FIRST + 1;
 	static final private int MENU_SHOW = Menu.FIRST + 2;
@@ -100,6 +103,7 @@ public class KidsBbsTlist extends ListActivity {
         mStatusView.setVisibility(View.GONE);
         
         setListAdapter(new AListAdapter(this, R.layout.article_info_item, mList));
+        getListView().setOnScrollListener(this);
         
         registerForContextMenu(getListView());
         updateFromPreferences();
@@ -107,7 +111,9 @@ public class KidsBbsTlist extends ListActivity {
         restoreUIState();
     }
     
+    @Override
     protected void onListItemClick(ListView _l, View _v, int _position, long _id) {
+    	super.onListItemClick(_l, _v, _position, _id);
     	showItem(_position);
     }
     
@@ -323,5 +329,14 @@ public class KidsBbsTlist extends ListActivity {
     		}
     	}
     	setSelection(pos);
+    }
+    
+    public void onScroll(AbsListView _v, int _first, int _nVisible, int _nTotal) {
+    	if (_nTotal > 0 && _first + _nVisible >= _nTotal) {
+    		Toast.makeText(this, "At the End", 10).show();
+    	}
+    }
+    
+    public void onScrollStateChanged(AbsListView _v, int _state) {
     }
 }
