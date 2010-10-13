@@ -304,13 +304,14 @@ function gen_xml_mainitem($b, $t, $nt, $np)
 function gen_xml_item($thread, $cnt,
 		      $seq, $user, $author, $date, $title, $desc)
 {
+  if ($cnt == NULL) {
+    $cnt = 1;
+  }
   echo "<ITEM>\n";
   if ($thread != NULL) {
     echo "<THREAD><![CDATA[$thread]]></THREAD>\n";
   }
-  if ($cnt != NULL) {
-    echo "<COUNT>$cnt</COUNT>\n";
-  }
+  echo "<COUNT>$cnt</COUNT>\n";
   echo "<TITLE><![CDATA[$title]]></TITLE>\n";
   echo "<SEQ>$seq</SEQ>\n";
   echo "<DATE tz=\"KST\">$date</DATE>\n";
