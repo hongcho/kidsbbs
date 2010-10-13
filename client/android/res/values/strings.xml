@@ -48,11 +48,12 @@
 
     <string name="read_text">보기</string>
     <string name="blist_cm_header">보드목록 메뉴</string>
+    <string name="alist_cm_header">글목록 메뉴</string>
     <string name="tlist_cm_header">쓰레드목록 메뉴</string>
     <string name="thread_cm_header">글목록 메뉴</string>
     <string name="user_cm_header">사용자 글목록 메뉴</string>
     
-    <string name="menu_update">업데이트</string>
+    <string name="menu_refresh">업데이트</string>
     <string name="menu_preferences">설정</string>
 
 	<string name="settings_update">업데이트 옵션</string>

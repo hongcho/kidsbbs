@@ -28,6 +28,12 @@ package org.sori.kidsbbs;
 import android.content.Context;
 
 public class ErrUtils {
+	public static final int ERR_BAD_URL = -1;
+	public static final int ERR_IO = -2;
+	public static final int ERR_PARSER = -3;
+	public static final int ERR_SAX = -4;
+	public static final int ERR_XMLPARSING = -5;
+
 	private String[] mErrStrings;
 	
 	public ErrUtils(Context _context, int _resource) {

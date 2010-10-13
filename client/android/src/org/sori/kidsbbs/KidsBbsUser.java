@@ -25,268 +25,51 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
-
 import android.app.Activity;
-import android.app.ListActivity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.view.ContextMenu;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ListView;
-import android.widget.TextView;
 
-public class KidsBbsUser extends ListActivity {
-	static final private int MENU_UPDATE = Menu.FIRST;
-	static final private int MENU_PREFERENCES = Menu.FIRST + 1;
-	static final private int MENU_SHOW = Menu.FIRST + 2;
-	
-	private static final int SHOW_PREFERENCES = 1;
-	
-	private static final String KEY_SELECTED_ITEM = "KEY_SELECTED_ITEM";
-	
-	private ArrayList<ArticleInfo> mList = new ArrayList<ArticleInfo>();
-	private int mItemStart;
-	private int mItemCount;
-	private int mItemTotal;
-
-	private TextView mStatusView;
-
-	private UpdateTask mLastUpdate = null;
-	
-	private ErrUtils mErrUtils;
-	
+public class KidsBbsUser extends KidsBbsAList {
 	private int mUpdateFreq = 0;
 	
-	private String mBoardName;
-	private String mBoardType;
-	private String mBoardTitle;
 	private String mBoardUser;
 	
     @Override
     public void onCreate(Bundle _state) {
         super.onCreate(_state);
-        setContentView(R.layout.article_list);
-        
-        mErrUtils = new ErrUtils(this, R.array.err_strings);
         
         Uri data = getIntent().getData();
-        mBoardName = data.getQueryParameter(KidsBbs.PARAM_N_BOARD);
-        mBoardType = data.getQueryParameter(KidsBbs.PARAM_N_TYPE);
-        mBoardTitle = data.getQueryParameter(KidsBbs.PARAM_N_TITLE);
         mBoardUser = data.getQueryParameter(KidsBbs.PARAM_N_USER);
-        setTitle(mBoardUser + " in [" + mBoardTitle + "] " +
-        		getResources().getString(R.string.title_user));
         
-        mStatusView = (TextView)findViewById(R.id.status);
-        mStatusView.setVisibility(View.GONE);
-        
-        setListAdapter(new AListAdapter(this, R.layout.article_info_item, mList));
+        updateTitle("");
         
         registerForContextMenu(getListView());
         updateFromPreferences();
         refreshList();
-        restoreUIState();
     }
     
-    @Override
-    protected void onListItemClick(ListView _l, View _v, int _position, long _id) {
-    	super.onListItemClick(_l, _v, _position, _id);
-    	showItem(_position);
+    protected void refreshList() {
+    	refreshListCommon(R.string.url_user,
+    			"&" + KidsBbs.PARAM_N_USER + "=" + mBoardUser);
     }
     
-    @Override
-    public boolean onCreateOptionsMenu(Menu _menu) {
-    	super.onCreateOptionsMenu(_menu);
-    	
-    	MenuItem itemUpdate = _menu.add(0, MENU_UPDATE, Menu.NONE,
-    			R.string.menu_update);
-    	itemUpdate.setIcon(
-    			getResources().getIdentifier("android:drawable/ic_menu_refresh",
-    			null, null));
-    	itemUpdate.setShortcut('0', 'r');
-    	
-    	MenuItem itemPreferences = _menu.add(0, MENU_PREFERENCES, Menu.NONE,
-    			R.string.menu_preferences);
-    	itemPreferences.setIcon(android.R.drawable.ic_menu_preferences);
-    	itemUpdate.setShortcut('1', 'p');
-    	return true;
+    protected void updateTitle(String _extra) {
+		setTitle(mBoardUser + " in [" + getBoardTitle() + "] " +
+				getResources().getString(R.string.title_user) + _extra);
     }
     
-    @Override
-    public void onCreateContextMenu(ContextMenu _menu, View _v,
-    		ContextMenu.ContextMenuInfo _menuInfo) {
-    	super.onCreateOptionsMenu(_menu);
-    	_menu.setHeaderTitle(getResources().getString(R.string.user_cm_header));
-    	_menu.add(0, MENU_SHOW, Menu.NONE, R.string.read_text);
-    }
-    
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-    	super.onOptionsItemSelected(item);
-    	switch (item.getItemId()) {
-    	case MENU_UPDATE:
-    		refreshList();
-    		return true;
-    	case MENU_PREFERENCES:
-    		Intent i = new Intent(this, Preferences.class);
-    		startActivityForResult(i, SHOW_PREFERENCES);
-    		return true;
-    	}
-    	return false;
-    }
-    
-    @Override
-    public boolean onContextItemSelected(MenuItem _item) {
-    	super.onContextItemSelected(_item);
-    	switch (_item.getItemId()) {
-    	case MENU_SHOW:
-    		AdapterView.AdapterContextMenuInfo menuInfo =
-    			(AdapterView.AdapterContextMenuInfo)_item.getMenuInfo();
-    		showItem(menuInfo.position);
-    		return true;
-    	}
-    	return false;
-    }
-    
-    private class UpdateTask extends AsyncTask<String, Integer, Integer> {
-    	@Override
-    	protected void onPreExecute() {
-    		mStatusView.setVisibility(View.VISIBLE);
-    	}
-    	@Override
-        protected Integer doInBackground(String... _args) {
-        	int count = 0;
-        	try {
-        		URL url = new URL(_args[0]);
-        		HttpURLConnection httpConnection = (HttpURLConnection)url.openConnection();
-        		int responseCode = httpConnection.getResponseCode();
-        		if (responseCode == HttpURLConnection.HTTP_OK) {
-        			InputStream is = httpConnection.getInputStream();
-        			DocumentBuilder db = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-        			
-        			// Parse the board list.
-        			Document dom = db.parse(is);
-        			Element docEle = dom.getDocumentElement();
-        			
-        			// Clear the old list.
-        			mList.clear();
-        			mItemStart = 0;
-        			mItemCount = 0;
-        			mItemTotal = 0;
-        			
-        			Element items = (Element)docEle.getElementsByTagName("ITEMS").item(0);
-        			Element eStart = (Element)items.getElementsByTagName("START").item(0);
-        			Element eNum = (Element)items.getElementsByTagName("COUNT").item(0);
-        			Element eTotal = (Element)items.getElementsByTagName("TOTALCOUNT").item(0);
-        			
-        			mItemStart = Integer.parseInt(eStart.getFirstChild().getNodeValue());
-        			mItemCount = Integer.parseInt(eNum.getFirstChild().getNodeValue());
-        			mItemTotal = Integer.parseInt(eTotal.getFirstChild().getNodeValue());
-        			
-        			// Get a board item
-        			NodeList nl = items.getElementsByTagName("ITEM");
-        			if (nl != null && nl.getLength() > 0) {
-        				for (int i = 0; i < nl.getLength(); ++i) {
-        					Element item = (Element)nl.item(i);
-        					Element eTitle = (Element)item.getElementsByTagName("TITLE").item(0);
-        					Element eSeq = (Element)item.getElementsByTagName("SEQ").item(0);
-        					Element eDate = (Element)item.getElementsByTagName("DATE").item(0);
-        					Element eUser = (Element)item.getElementsByTagName("USER").item(0);
-        					Element eDesc = (Element)item.getElementsByTagName("DESCRIPTION").item(0);
-
-        					int seq = Integer.parseInt(eSeq.getFirstChild().getNodeValue());
-        					String title = eTitle.getFirstChild().getNodeValue();
-        					String date = eDate.getFirstChild().getNodeValue();
-        					String user = eUser.getFirstChild().getNodeValue();
-        					String desc = eDesc.getFirstChild().getNodeValue();
-        					
-        					mList.add(new ArticleInfo(seq, user, date, title, null, desc, 1));
-        					++count;
-        					if (count % 10 == 0) {
-        						publishProgress(count);
-        					}
-        				}
-        			}
-        		}
-        	} catch (MalformedURLException e) {
-        		count = KidsBbs.ERR_BAD_URL;
-        	} catch (IOException e) {
-        		count = KidsBbs.ERR_IO;
-        	} catch (ParserConfigurationException e) {
-        		count = KidsBbs.ERR_PARSER;
-        	} catch (SAXException e) {
-        		count = KidsBbs.ERR_SAX;
-        	} finally {
-        	}
-        	return count;
-        }
-    	@Override
-    	protected void onProgressUpdate(Integer... _args) {
-    		String text = getResources().getString(R.string.update_text);
-    		text += " (" + _args[0].toString() + ")";
-    		mStatusView.setText(text);
-    		//mAa.notifyDataSetChanged();
-    	}
-    	@Override
-        protected void onPostExecute(Integer _count) {
-       		((AListAdapter)KidsBbsUser.this.getListAdapter()).notifyDataSetChanged();
-       		if (_count >= 0) {
-	    		mStatusView.setVisibility(View.GONE);
-	            setTitle(mBoardUser + " in [" + mBoardTitle + "] " +
-	            		getResources().getString(R.string.title_user) +
-	            		" (" + Integer.toString(mItemStart + mItemCount) + "/" +
-	            		Integer.toString(mItemTotal) + ")");
-       		} else {
-       			mStatusView.setText(mErrUtils.getErrString(_count));
-       		}
-        }
-    }
-    
-    private void refreshList() {
-    	if (mLastUpdate == null ||
-    			mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED)) {
-    		mLastUpdate = new UpdateTask();
-    		mLastUpdate.execute(getString(R.string.url_user) +
-    				KidsBbs.PARAM_N_BOARD + "=" + mBoardName +
-        			"&" + KidsBbs.PARAM_N_TYPE + "=" + mBoardType +
-        			"&" + KidsBbs.PARAM_N_USER + "=" + mBoardUser);
-    	}
-    }
-    
-    private void showItem(int _index) {
-		ArticleInfo info = mList.get(_index);
-		Uri data = Uri.parse(getResources().getString(R.string.intent_uri_view) +
-				"&" + KidsBbs.PARAM_N_BOARD + "=" + mBoardName +
-				"&" + KidsBbs.PARAM_N_TYPE + "=" + mBoardType +
-				"&" + KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle +
+    protected void showItem(int _index) {
+		ArticleInfo info = getItem(_index);
+		showItemCommon(this, KidsBbsView.class, R.string.intent_uri_view,
 				"&" + KidsBbs.PARAM_N_SEQ + "=" + Integer.toString(info.getSeq()));
-		Intent i = new Intent(this, KidsBbsView.class);
-    	i.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-    	i.setAction(Intent.ACTION_VIEW);
-    	i.setData(data);
-    	startActivity(i);
+    }
+    
+    protected void showPreference() {
+		Intent intent = new Intent(this, Preferences.class);
+		startActivityForResult(intent, SHOW_PREFERENCES);
     }
     
     private void updateFromPreferences() {
@@ -301,29 +84,7 @@ public class KidsBbsUser extends ListActivity {
     	if (_reqCode == SHOW_PREFERENCES) {
     		if (_resCode == Activity.RESULT_OK) {
     			updateFromPreferences();
-    			//refreshBoardList();
     		}
     	}
-    }
-    
-    private void restoreUIState() {
-    	//SharedPreferences prefs = getPreferences(Activity.MODE_PRIVATE);
-    }
-    
-    @Override
-    public void onSaveInstanceState(Bundle _state) {
-    	_state.putInt(KEY_SELECTED_ITEM, getSelectedItemPosition());
-    	super.onSaveInstanceState(_state);
-    }
-    
-    @Override
-    public void onRestoreInstanceState(Bundle _state) {
-    	int pos = -1;
-    	if (_state != null) {
-    		if (_state.containsKey(KEY_SELECTED_ITEM)) {
-    			pos = _state.getInt(KEY_SELECTED_ITEM, -1);
-    		}
-    	}
-    	setSelection(pos);
     }
 }

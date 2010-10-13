@@ -120,7 +120,7 @@ public class KidsBbsView extends Activity {
     	super.onCreateOptionsMenu(_menu);
     	
     	MenuItem itemUpdate = _menu.add(0, MENU_UPDATE, Menu.NONE,
-    			R.string.menu_update);
+    			R.string.menu_refresh);
     	itemUpdate.setIcon(
     			getResources().getIdentifier("android:drawable/ic_menu_refresh",
     			null, null));
@@ -171,34 +171,69 @@ public class KidsBbsView extends Activity {
         			// Get a board item
         			NodeList nl = docEle.getElementsByTagName("ITEM");
         			if (nl != null && nl.getLength() > 0) {
+        				NodeList nl2;
     					Element item = (Element)nl.item(0);
-    					Element eThread = (Element)item.getElementsByTagName("THREAD").item(0);
-    					Element eTitle = (Element)item.getElementsByTagName("TITLE").item(0);
-    					Element eSeq = (Element)item.getElementsByTagName("SEQ").item(0);
-    					Element eDate = (Element)item.getElementsByTagName("DATE").item(0);
-    					Element eUser = (Element)item.getElementsByTagName("USER").item(0);
-    					Element eAuthor = (Element)item.getElementsByTagName("AUTHOR").item(0);
-    					Element eDesc = (Element)item.getElementsByTagName("DESCRIPTION").item(0);
-
-    					int seq = Integer.parseInt(eSeq.getFirstChild().getNodeValue());
-    					String thread = eThread.getFirstChild().getNodeValue();
-    					String title = eTitle.getFirstChild().getNodeValue();
-    					String date = eDate.getFirstChild().getNodeValue();
-    					String author = eAuthor.getFirstChild().getNodeValue();
-    					String desc = eDesc.getFirstChild().getNodeValue();
-    					mBoardUser = eUser.getFirstChild().getNodeValue();
+    					
+    					nl2 = item.getElementsByTagName("THREAD");
+	        			if (nl2 == null || nl2.getLength() <= 0) {
+	        				return ErrUtils.ERR_XMLPARSING;
+	        			}
+	        			String thread =
+	        				((Element)nl2.item(0)).getFirstChild().getNodeValue();
+	        			
+	        			nl2 = item.getElementsByTagName("TITLE");
+	        			if (nl2 == null || nl2.getLength() <= 0) {
+	        				return ErrUtils.ERR_XMLPARSING;
+	        			}
+	        			String title =
+	        				((Element)nl2.item(0)).getFirstChild().getNodeValue();
+	        			
+	        			nl2 = item.getElementsByTagName("SEQ");
+	        			if (nl2 == null || nl2.getLength() <= 0) {
+	        				return ErrUtils.ERR_XMLPARSING;
+	        			}
+	        			int seq =
+	        				Integer.parseInt(((Element)nl2.item(0)).getFirstChild().getNodeValue());
+	        			
+	        			nl2 = item.getElementsByTagName("DATE");
+	        			if (nl2 == null || nl2.getLength() <= 0) {
+	        				return ErrUtils.ERR_XMLPARSING;
+	        			}
+	        			String date =
+	        				((Element)nl2.item(0)).getFirstChild().getNodeValue();
+	        			
+	        			nl2 = item.getElementsByTagName("USER");
+	        			if (nl2 == null || nl2.getLength() <= 0) {
+	        				return ErrUtils.ERR_XMLPARSING;
+	        			}
+	        			mBoardUser =
+	        				((Element)nl2.item(0)).getFirstChild().getNodeValue();
+	        			
+	        			nl2 = item.getElementsByTagName("AUTHOR");
+	        			if (nl2 == null || nl2.getLength() <= 0) {
+	        				return ErrUtils.ERR_XMLPARSING;
+	        			}
+	        			String author =
+	        				((Element)nl2.item(0)).getFirstChild().getNodeValue();
+	        			
+	        			nl2 = item.getElementsByTagName("DESCRIPTION");
+	        			if (nl2 == null || nl2.getLength() <= 0) {
+	        				return ErrUtils.ERR_XMLPARSING;
+	        			}
+	        			String desc =
+	        				((Element)nl2.item(0)).getFirstChild().getNodeValue();
     					
     					mInfo = new ArticleInfo(seq, author, date, title, thread, desc, 1);
         			}
         		}
         	} catch (MalformedURLException e) {
-        		ret = KidsBbs.ERR_BAD_URL;
+        		ret = ErrUtils.ERR_BAD_URL;
         	} catch (IOException e) {
-        		ret = KidsBbs.ERR_IO;
+        		ret = ErrUtils.ERR_IO;
         	} catch (ParserConfigurationException e) {
-        		ret = KidsBbs.ERR_PARSER;
+        		ret = ErrUtils.ERR_PARSER;
         	} catch (SAXException e) {
-        		ret = KidsBbs.ERR_SAX;
+        		ret = ErrUtils.ERR_SAX;
         	} finally {
         	}
         	return ret;
