@@ -39,6 +39,7 @@ public class KidsBbsTlist extends KidsBbsAList {
         super.onCreate(_state);
         
         updateTitle("");
+    	setUrlBase(R.string.url_tlist, "");
         
         registerForContextMenu(getListView());
         updateFromPreferences();
@@ -46,7 +47,7 @@ public class KidsBbsTlist extends KidsBbsAList {
     }
     
     protected void refreshList() {
-    	refreshListCommon(R.string.url_tlist, "");
+    	refreshListCommon();
     }
     
     protected void updateTitle(String _extra) {

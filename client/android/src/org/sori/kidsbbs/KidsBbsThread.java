@@ -45,6 +45,8 @@ public class KidsBbsThread extends KidsBbsAList {
         mBoardThread = data.getQueryParameter(KidsBbs.PARAM_N_THREAD);
         
         updateTitle("");
+        setUrlBase(R.string.url_thread,
+        		"&" + KidsBbs.PARAM_N_THREAD + "=" + mBoardThread);
         
         registerForContextMenu(getListView());
         updateFromPreferences();
@@ -52,8 +54,7 @@ public class KidsBbsThread extends KidsBbsAList {
     }
     
     protected void refreshList() {
-    	refreshListCommon(R.string.url_thread,
-    			"&" + KidsBbs.PARAM_N_THREAD + "=" + mBoardThread);
+    	refreshListCommon();
     }
     
     protected void updateTitle(String _extra) {

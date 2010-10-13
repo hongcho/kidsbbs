@@ -45,6 +45,8 @@ public class KidsBbsUser extends KidsBbsAList {
         mBoardUser = data.getQueryParameter(KidsBbs.PARAM_N_USER);
         
         updateTitle("");
+    	setUrlBase(R.string.url_user,
+    			"&" + KidsBbs.PARAM_N_USER + "=" + mBoardUser);
         
         registerForContextMenu(getListView());
         updateFromPreferences();
@@ -52,8 +54,7 @@ public class KidsBbsUser extends KidsBbsAList {
     }
     
     protected void refreshList() {
-    	refreshListCommon(R.string.url_user,
-    			"&" + KidsBbs.PARAM_N_USER + "=" + mBoardUser);
+    	refreshListCommon();
     }
     
     protected void updateTitle(String _extra) {
