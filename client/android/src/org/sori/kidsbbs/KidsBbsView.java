@@ -37,6 +37,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -177,6 +178,7 @@ public class KidsBbsView extends Activity {
         			NodeList nl = docEle.getElementsByTagName("ITEM");
         			if (nl != null && nl.getLength() > 0) {
         				NodeList nl2;
+        				Node n2;
     					Element item = (Element)nl.item(0);
     					
     					nl2 = item.getElementsByTagName("THREAD");
@@ -190,8 +192,8 @@ public class KidsBbsView extends Activity {
 	        			if (nl2 == null || nl2.getLength() <= 0) {
 	        				return ErrUtils.ERR_XMLPARSING;
 	        			}
-	        			String title =
-	        				((Element)nl2.item(0)).getFirstChild().getNodeValue();
+	        			n2 = ((Element)nl2.item(0)).getFirstChild();
+	        			String title = (n2 != null) ? n2.getNodeValue() : "";
 	        			
 	        			nl2 = item.getElementsByTagName("SEQ");
 	        			if (nl2 == null || nl2.getLength() <= 0) {
@@ -225,8 +227,8 @@ public class KidsBbsView extends Activity {
 	        			if (nl2 == null || nl2.getLength() <= 0) {
 	        				return ErrUtils.ERR_XMLPARSING;
 	        			}
-	        			String desc =
-	        				((Element)nl2.item(0)).getFirstChild().getNodeValue();
+	        			n2 = ((Element)nl2.item(0)).getFirstChild();
+	        			String desc = n2 != null ? n2.getNodeValue() : "";
     					
     					mInfo = new ArticleInfo(seq, author, date, title, thread, desc, 1);
         			}

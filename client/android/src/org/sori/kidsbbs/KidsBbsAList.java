@@ -38,6 +38,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -234,6 +235,7 @@ public abstract class KidsBbsAList extends ListActivity
 	        			if (nl != null && nl.getLength() > 0) {
 	        				for (int i = 0; i < nl.getLength(); ++i) {
 	        					NodeList nl2;
+	        					Node n2;
 	        					Element item = (Element)nl.item(i);
 	        					
 	        					String thread;
@@ -244,20 +246,18 @@ public abstract class KidsBbsAList extends ListActivity
 	    	        				thread = ((Element)nl2.item(0)).getFirstChild().getNodeValue();
 	    	        			}
 	    	        			
-	    	        			int cnt;
 	    	        			nl2 = item.getElementsByTagName("COUNT");
-	    	        			if (nl2 == null || nl2.getLength() <= 0) {
-	    	        				cnt = 1;
-	    	        			} else {
-	    	        				cnt = Integer.parseInt(((Element)nl2.item(0)).getFirstChild().getNodeValue());
-	    	        			}
+	    	        			int cnt =
+	    	        				(nl2 != null && nl2.getLength() > 0)
+	    	        				? Integer.parseInt(((Element)nl2.item(0)).getFirstChild().getNodeValue())
+	    	        				: 1;
 	    	        			
 	    	        			nl2 = item.getElementsByTagName("TITLE");
 	    	        			if (nl2 == null || nl2.getLength() <= 0) {
 	    	        				return ErrUtils.ERR_XMLPARSING;
 	    	        			}
-	    	        			String title =
-	    	        				((Element)nl2.item(0)).getFirstChild().getNodeValue();
+	    	        			n2 = ((Element)nl2.item(0)).getFirstChild();
+	    	        			String title = (n2 != null) ? n2.getNodeValue() : "";
 	    	        			
 	    	        			nl2 = item.getElementsByTagName("SEQ");
 	    	        			if (nl2 == null || nl2.getLength() <= 0) {
@@ -284,8 +284,8 @@ public abstract class KidsBbsAList extends ListActivity
 	    	        			if (nl2 == null || nl2.getLength() <= 0) {
 	    	        				return ErrUtils.ERR_XMLPARSING;
 	    	        			}
-	    	        			String desc =
-	    	        				((Element)nl2.item(0)).getFirstChild().getNodeValue();
+	    	        			n2 = ((Element)nl2.item(0)).getFirstChild();
+	    	        			String desc = n2 != null ? n2.getNodeValue() : "";
 	        					
 	        					mList.add(new ArticleInfo(seq, user, date, title, thread, desc, cnt));
 	        					++count;
