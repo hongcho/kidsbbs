@@ -120,7 +120,9 @@ public abstract class KidsBbsAList extends ListActivity
 	    @Override
 	    protected void onListItemClick(ListView _l, View _v, int _position, long _id) {
 	    	super.onListItemClick(_l, _v, _position, _id);
-	    	showItem(_position);
+	    	if (!isUpdating()) {
+	    		showItem(_position);
+	    	}
 	    }
 	    
 	    @Override
@@ -174,6 +176,11 @@ public abstract class KidsBbsAList extends ListActivity
 	    		return true;
 	    	}
 	    	return false;
+	    }
+	    
+	    private boolean isUpdating() {
+	    	return mLastUpdate != null &&
+	    		!mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED);
 	    }
 	    
 	    private class UpdateTask extends AsyncTask<Boolean, Integer, Integer> {
@@ -283,7 +290,7 @@ public abstract class KidsBbsAList extends ListActivity
 	        					mList.add(new ArticleInfo(seq, user, date, title, thread, desc, cnt));
 	        					++count;
 	        					//if (count % 10 == 0) {
-	        					//	publishProgress(count);
+	        						publishProgress(count);
 	        					//}
 	        				}
 	        			}
@@ -319,8 +326,7 @@ public abstract class KidsBbsAList extends ListActivity
 	    }
 	    
 	    private void updateList(boolean append) {
-	    	if (mUrlBaseString != null && (mLastUpdate == null ||
-	    			mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED))) {
+	    	if (mUrlBaseString != null && !isUpdating()) {
 	    		mLastUpdate = new UpdateTask();
 	    		mLastUpdate.execute(append);
 	    	}
@@ -371,7 +377,7 @@ public abstract class KidsBbsAList extends ListActivity
 	    
 	    public void onScroll(AbsListView _v, int _first, int _nVisible, int _nTotal) {
 	    	if (_nTotal > 0 && _first + _nVisible >= _nTotal - 1 &&
-	    			mList.size() < mItemTotal) {
+	    			!isUpdating() && mList.size() < mItemTotal) {
 	    		updateList(true);
 	    	}
 	    }
