@@ -101,7 +101,9 @@ public class KidsBbs extends ListActivity {
     @Override
     protected void onListItemClick(ListView _l, View _v, int _position, long _id) {
     	super.onListItemClick(_l, _v, _position, _id);
-    	showItem(_position);
+    	if (!isUpdating()) {
+    		showItem(_position);
+    	}
     }
     
     @Override
@@ -140,12 +142,15 @@ public class KidsBbs extends ListActivity {
     	super.onContextItemSelected(_item);
     	switch (_item.getItemId()) {
     	case MENU_SHOW:
-    		AdapterView.AdapterContextMenuInfo menuInfo =
-    			(AdapterView.AdapterContextMenuInfo)_item.getMenuInfo();
-    		showItem(menuInfo.position);
+    		showItem(((AdapterView.AdapterContextMenuInfo)_item.getMenuInfo()).position);
     		return true;
     	}
     	return false;
+    }
+    
+    private boolean isUpdating() {
+    	return mLastUpdate != null &&
+    		!mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED);
     }
     
     private class UpdateTask extends AsyncTask<Void, Integer, Integer> {
@@ -191,8 +196,7 @@ public class KidsBbs extends ListActivity {
     }
     
     private void refreshList() {
-    	if (mLastUpdate == null ||
-    			mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED)) {
+    	if (!isUpdating()) {
     		mLastUpdate = new UpdateTask();
     		mLastUpdate.execute((Void[])null);
     	}

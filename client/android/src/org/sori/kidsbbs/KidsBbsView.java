@@ -148,6 +148,11 @@ public class KidsBbsView extends Activity {
     	return false;
     }
     
+    private boolean isUpdating() {
+    	return mLastUpdate != null &&
+    		!mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED);
+    }
+    
     private class UpdateTask extends AsyncTask<String, String, Integer> {
     	@Override
     	protected void onPreExecute() {
@@ -258,8 +263,7 @@ public class KidsBbsView extends Activity {
     }
     
     private void refreshView() {
-    	if (mLastUpdate == null
-    			|| mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED)) {
+    	if (!isUpdating()) {
     		mLastUpdate = new UpdateTask();
     		mLastUpdate.execute(getString(R.string.url_view) +
         			KidsBbs.PARAM_N_BOARD + "=" + mBoardName +
@@ -269,7 +273,7 @@ public class KidsBbsView extends Activity {
     }
     
     private void startThreadView() {
-    	if (mInfo != null) {
+    	if (!isUpdating() && mInfo != null) {
 			Uri data = Uri.parse(getResources().getString(R.string.intent_uri_thread) +
 					"&" + KidsBbs.PARAM_N_BOARD + "=" + mBoardName +
 					"&" + KidsBbs.PARAM_N_TYPE + "=" + mBoardType +
@@ -284,7 +288,7 @@ public class KidsBbsView extends Activity {
     }
     
     private void startUserView() {
-		if (mBoardUser != null) {
+		if (!isUpdating() && mBoardUser != null) {
 			Uri data = Uri.parse(getResources().getString(R.string.intent_uri_user) +
 					"&" + KidsBbs.PARAM_N_BOARD + "=" + mBoardName +
 					"&" + KidsBbs.PARAM_N_TYPE + "=" + mBoardType +
