@@ -412,13 +412,16 @@ sub GetBoardPage
 		$e->{view} = $5;
 		$e->{title} = $7;
 		$e->{url} = $6;
+		next if ($e->{id} =~ /=======/o); # deleted
+		next if ($e->{id} =~ /^\s*$/o);	# no id?
+		next if ($e->{date} =~ /^\s*0\s*\/\s*0\s*$/o); # bad date
+
 		# check incomplete hangul code at the end
 		if (length($e->{title}) >= $MAX_TITLE
 		    and substr($e->{title}, $MAX_TITLE - 1, 1) eq '_') {
 		    $e->{title} = substr($e->{title}, 0, $MAX_TITLE - 1);
 		}
-		# only if not deleted
-		push(@{$bp->{list}}, $e) unless ($e->{id} =~ /=======/o);
+		push(@{$bp->{list}}, $e);
 	    }
 	}
 	last;
