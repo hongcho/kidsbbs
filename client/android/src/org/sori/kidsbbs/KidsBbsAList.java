@@ -77,7 +77,6 @@ public abstract class KidsBbsAList extends ListActivity
 		private String mBoardName;
 		private String mBoardType;
 		
-		private ListView mListView;
 		private TextView mStatusView;
 		
 		private ErrUtils mErrUtils;
@@ -95,8 +94,10 @@ public abstract class KidsBbsAList extends ListActivity
 	    // Handle preference stuff.
 	    abstract protected void showPreference();
 	    
-	    protected String getBoardTitle() { return mBoardTitle; }
-	    protected ArticleInfo getItem(int _index) { return mList.get(_index); }
+	    protected final String getBoardTitle() { return mBoardTitle; }
+	    protected final ArticleInfo getItem(int _index) {
+	    	return (ArticleInfo)getListView().getItemAtPosition(_index);
+	    }
 		
 	    @Override
 	    public void onCreate(Bundle _state) {
@@ -110,20 +111,17 @@ public abstract class KidsBbsAList extends ListActivity
 	        mBoardType = data.getQueryParameter(KidsBbs.PARAM_N_TYPE);
 	        mBoardTitle = data.getQueryParameter(KidsBbs.PARAM_N_TITLE);
 	        
-	        mListView = getListView();
 	        mStatusView = (TextView)findViewById(R.id.status);
 	        mStatusView.setVisibility(View.GONE);
 	        
 	        setListAdapter(new AListAdapter(this, R.layout.article_info_item, mList));
-	        mListView.setOnScrollListener(this);
+	        getListView().setOnScrollListener(this);
 	    }
 	    
 	    @Override
 	    protected void onListItemClick(ListView _l, View _v, int _position, long _id) {
 	    	super.onListItemClick(_l, _v, _position, _id);
-	    	if (!isUpdating()) {
-	    		showItem(_position);
-	    	}
+	    	showItem(_position);
 	    }
 	    
 	    @Override
@@ -184,24 +182,31 @@ public abstract class KidsBbsAList extends ListActivity
 	    		!mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED);
 	    }
 	    
-	    private class UpdateTask extends AsyncTask<Boolean, Integer, Integer> {
-	    	@Override
+	    private class UpdateTask extends AsyncTask<String, Integer, Integer> {
+			private ArrayList<ArticleInfo> mTList = new ArrayList<ArticleInfo>();
+			private int mStart = 0;
+			private boolean mIsAppend = false;
+			private int mTotalCount = 0;
+
+			@Override
 	    	protected void onPreExecute() {
 	    		mStatusView.setText(getResources().getString(R.string.update_text));
 	    		mStatusView.setVisibility(View.VISIBLE);
 	    	}
 	    	@Override
-	        protected Integer doInBackground(Boolean... _args) {
-	        	int count = 0;
-	        	String _urlString = mUrlBaseString;
-	        	boolean _append = _args[0];
-	    		if (_append) {
-	    			_urlString +=
-	    				"&" + KidsBbs.PARAM_N_START + "=" + Integer.toString(mList.size());
+	        protected Integer doInBackground(String... _args) {
+	        	int result = 0;
+	        	String _urlString = _args[0];
+	        	mStart = Integer.parseInt(_args[1]);
+	        	mIsAppend = mStart > 0;
+	    		if (mIsAppend) {
+	    			_urlString += "&" + KidsBbs.PARAM_N_START + "=" +
+	    				Integer.toString(mStart);
 	    		}
 	        	try {
 	        		URL url = new URL(_urlString);
-	        		HttpURLConnection httpConnection = (HttpURLConnection)url.openConnection();
+	        		HttpURLConnection httpConnection =
+	        			(HttpURLConnection)url.openConnection();
 	        		int responseCode = httpConnection.getResponseCode();
 	        		if (responseCode == HttpURLConnection.HTTP_OK) {
 	        			InputStream is = httpConnection.getInputStream();
@@ -211,12 +216,7 @@ public abstract class KidsBbsAList extends ListActivity
 	        			Document dom = db.parse(is);
 	        			Element docEle = dom.getDocumentElement();
 	        			NodeList nl;
-	        			
-	        			if (!_append) {
-		        			// Clear the old list.
-		        			mList.clear();
-		        			mItemTotal = 0;
-	        			}
+	        			Node n;
 	        			
 	        			nl = docEle.getElementsByTagName("ITEMS");
 	        			if (nl == null || nl.getLength() <= 0) {
@@ -228,7 +228,8 @@ public abstract class KidsBbsAList extends ListActivity
 	        			if (nl == null || nl.getLength() <= 0) {
 	        				return ErrUtils.ERR_XMLPARSING;
 	        			}
-	        			mItemTotal = Integer.parseInt(((Element)nl.item(0)).getFirstChild().getNodeValue());
+	        			n = ((Element)nl.item(0)).getFirstChild();
+	        			mTotalCount = n != null ? Integer.parseInt(n.getNodeValue()) : 0; 
 	        			
 	        			// Get a board item
 	        			nl = items.getElementsByTagName("ITEM");
@@ -238,47 +239,53 @@ public abstract class KidsBbsAList extends ListActivity
 	        					Node n2;
 	        					Element item = (Element)nl.item(i);
 	        					
-	        					String thread;
 	        					nl2 = item.getElementsByTagName("THREAD");
+	        					String thread;
 	    	        			if (nl2 == null || nl2.getLength() <= 0) {
 	    	        				thread = "";
 	    	        			} else {
-	    	        				thread = ((Element)nl2.item(0)).getFirstChild().getNodeValue();
+	    	        				n2 = ((Element)nl2.item(0)).getFirstChild();
+	    	        				thread = n2 != null ? n2.getNodeValue() : "";
 	    	        			}
 	    	        			
 	    	        			nl2 = item.getElementsByTagName("COUNT");
-	    	        			int cnt =
-	    	        				(nl2 != null && nl2.getLength() > 0)
-	    	        				? Integer.parseInt(((Element)nl2.item(0)).getFirstChild().getNodeValue())
-	    	        				: 1;
+	    	        			int cnt;
+	    	        			if (nl2 == null || nl2.getLength() <= 0) {
+	    	        				cnt = 0;
+	    	        			} else {
+	    	        				n2 = ((Element)nl2.item(0)).getFirstChild();
+	    	        				cnt = n2 != null ? Integer.parseInt(n2.getNodeValue())
+	    	        						: 0;
+	    	        			}
 	    	        			
 	    	        			nl2 = item.getElementsByTagName("TITLE");
 	    	        			if (nl2 == null || nl2.getLength() <= 0) {
 	    	        				return ErrUtils.ERR_XMLPARSING;
 	    	        			}
 	    	        			n2 = ((Element)nl2.item(0)).getFirstChild();
-	    	        			String title = (n2 != null) ? n2.getNodeValue() : "";
+	    	        			String title = n2 != null ? n2.getNodeValue() : "";
 	    	        			
 	    	        			nl2 = item.getElementsByTagName("SEQ");
 	    	        			if (nl2 == null || nl2.getLength() <= 0) {
 	    	        				return ErrUtils.ERR_XMLPARSING;
 	    	        			}
-	    	        			int seq =
-	    	        				Integer.parseInt(((Element)nl2.item(0)).getFirstChild().getNodeValue());
+	    	        			n2 = ((Element)nl2.item(0)).getFirstChild();
+	    	        			int seq = n2 != null ? Integer.parseInt(n2.getNodeValue())
+	    	        					: 0;
 	    	        			
 	    	        			nl2 = item.getElementsByTagName("DATE");
 	    	        			if (nl2 == null || nl2.getLength() <= 0) {
 	    	        				return ErrUtils.ERR_XMLPARSING;
 	    	        			}
-	    	        			String date =
-	    	        				((Element)nl2.item(0)).getFirstChild().getNodeValue();
+	    	        			n2 = ((Element)nl2.item(0)).getFirstChild();
+	    	        			String date = n2 != null ? n2.getNodeValue() : "";
 	    	        			
 	    	        			nl2 = item.getElementsByTagName("USER");
 	    	        			if (nl2 == null || nl2.getLength() <= 0) {
 	    	        				return ErrUtils.ERR_XMLPARSING;
 	    	        			}
-	    	        			String user =
-	    	        				((Element)nl2.item(0)).getFirstChild().getNodeValue();
+	    	        			n2 = ((Element)nl2.item(0)).getFirstChild();
+	    	        			String user = n2 != null ? n2.getNodeValue() : "";
 	    	        			
 	    	        			nl2 = item.getElementsByTagName("DESCRIPTION");
 	    	        			if (nl2 == null || nl2.getLength() <= 0) {
@@ -287,25 +294,23 @@ public abstract class KidsBbsAList extends ListActivity
 	    	        			n2 = ((Element)nl2.item(0)).getFirstChild();
 	    	        			String desc = n2 != null ? n2.getNodeValue() : "";
 	        					
-	        					mList.add(new ArticleInfo(seq, user, date, title, thread, desc, cnt));
-	        					++count;
-	        					//if (count % 10 == 0) {
-	        						publishProgress(count);
-	        					//}
+	        					mTList.add(new ArticleInfo(seq, user, date, title, thread, desc, cnt));
+	        					publishProgress(mStart + mTList.size());
 	        				}
 	        			}
 	        		}
+	        		result = mTList.size();
 	        	} catch (MalformedURLException e) {
-	        		count = ErrUtils.ERR_BAD_URL;
+	        		result = ErrUtils.ERR_BAD_URL;
 	        	} catch (IOException e) {
-	        		count = ErrUtils.ERR_IO;
+	        		result = ErrUtils.ERR_IO;
 	        	} catch (ParserConfigurationException e) {
-	        		count = ErrUtils.ERR_PARSER;
+	        		result = ErrUtils.ERR_PARSER;
 	        	} catch (SAXException e) {
-	        		count = ErrUtils.ERR_SAX;
+	        		result = ErrUtils.ERR_SAX;
 	        	} finally {
 	        	}
-	        	return count;
+	        	return result;
 	        }
 	    	@Override
 	    	protected void onProgressUpdate(Integer... _args) {
@@ -314,36 +319,44 @@ public abstract class KidsBbsAList extends ListActivity
 	    		mStatusView.setText(text);
 	    	}
 	    	@Override
-	        protected void onPostExecute(Integer _count) {
+	        protected void onPostExecute(Integer _result) {
+    			mItemTotal = mTotalCount;
+    			if (!mIsAppend) {
+    				mList.clear();
+    			}
+    			mList.addAll(mTList);
 				((AListAdapter)KidsBbsAList.this.getListAdapter()).notifyDataSetChanged();
-				if (_count >= 0) {
+
+				if (_result >= 0) {
 		    		mStatusView.setVisibility(View.GONE);
-		    		updateTitle(" (" + Integer.toString(mItemTotal) + ")");
+		    		updateTitle(" (" + Integer.toString(mList.size()) + "/" +
+		    				Integer.toString(mItemTotal) + ")");
 				} else {
-					mStatusView.setText(mErrUtils.getErrString(_count));
+					mStatusView.setText(mErrUtils.getErrString(_result));
 				}
 	        }
 	    }
 	    
-	    private void updateList(boolean append) {
+	    private void updateList(boolean _append) {
 	    	if (mUrlBaseString != null && !isUpdating()) {
 	    		mLastUpdate = new UpdateTask();
-	    		mLastUpdate.execute(append);
+	    		mLastUpdate.execute(mUrlBaseString,
+	    				Integer.toString(_append ? mList.size() : 0));
 	    	}
 	    }
 	    
-	    protected void setUrlBase(int _base, String _extra) {
+	    protected final void setUrlBase(int _base, String _extra) {
 	    	mUrlBaseString = getString(_base) +
 				KidsBbs.PARAM_N_BOARD + "=" + mBoardName +
 				"&" + KidsBbs.PARAM_N_TYPE + "=" + mBoardType +
 				_extra;
 	    }
 	    
-	    protected void refreshListCommon() {
+	    protected final void refreshListCommon() {
 	    	updateList(false);
 	    }
 	    
-	    protected void showItemCommon(Context _from, Class<?> _to,
+	    protected final void showItemCommon(Context _from, Class<?> _to,
 	    		int _base, String _extra) {
 	    	String uriString = getResources().getString(_base) +
 	    		KidsBbs.PARAM_N_BOARD + "=" + mBoardName +
@@ -377,7 +390,7 @@ public abstract class KidsBbsAList extends ListActivity
 	    
 	    public void onScroll(AbsListView _v, int _first, int _nVisible, int _nTotal) {
 	    	if (_nTotal > 0 && _first + _nVisible >= _nTotal - 1 &&
-	    			!isUpdating() && mList.size() < mItemTotal) {
+	    			_nTotal == mList.size() && mList.size() < mItemTotal) {
 	    		updateList(true);
 	    	}
 	    }
