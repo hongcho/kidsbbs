@@ -155,6 +155,9 @@ public class KidsBbsView extends Activity {
     }
     
     private class UpdateTask extends AsyncTask<String, String, Integer> {
+    	private String mTUser;
+    	private ArticleInfo mTInfo;
+    	
     	@Override
     	protected void onPreExecute() {
     		mStatusView.setVisibility(View.VISIBLE);
@@ -185,43 +188,43 @@ public class KidsBbsView extends Activity {
 	        			if (nl2 == null || nl2.getLength() <= 0) {
 	        				return ErrUtils.ERR_XMLPARSING;
 	        			}
-	        			String thread =
-	        				((Element)nl2.item(0)).getFirstChild().getNodeValue();
+	        			n2 = ((Element)nl2.item(0)).getFirstChild();
+	        			String thread = n2 != null ? n2.getNodeValue() : "";
 	        			
 	        			nl2 = item.getElementsByTagName("TITLE");
 	        			if (nl2 == null || nl2.getLength() <= 0) {
 	        				return ErrUtils.ERR_XMLPARSING;
 	        			}
 	        			n2 = ((Element)nl2.item(0)).getFirstChild();
-	        			String title = (n2 != null) ? n2.getNodeValue() : "";
+	        			String title = n2 != null ? n2.getNodeValue() : "";
 	        			
 	        			nl2 = item.getElementsByTagName("SEQ");
 	        			if (nl2 == null || nl2.getLength() <= 0) {
 	        				return ErrUtils.ERR_XMLPARSING;
 	        			}
-	        			int seq =
-	        				Integer.parseInt(((Element)nl2.item(0)).getFirstChild().getNodeValue());
+	        			n2 = ((Element)nl2.item(0)).getFirstChild();
+	        			int seq = n2 != null ? Integer.parseInt(n2.getNodeValue()) : 0;
 	        			
 	        			nl2 = item.getElementsByTagName("DATE");
 	        			if (nl2 == null || nl2.getLength() <= 0) {
 	        				return ErrUtils.ERR_XMLPARSING;
 	        			}
-	        			String date =
-	        				((Element)nl2.item(0)).getFirstChild().getNodeValue();
+	        			n2 = ((Element)nl2.item(0)).getFirstChild();
+	        			String date = n2 != null ? n2.getNodeValue() : "";
 	        			
 	        			nl2 = item.getElementsByTagName("USER");
 	        			if (nl2 == null || nl2.getLength() <= 0) {
 	        				return ErrUtils.ERR_XMLPARSING;
 	        			}
-	        			mBoardUser =
-	        				((Element)nl2.item(0)).getFirstChild().getNodeValue();
+	        			n2 = ((Element)nl2.item(0)).getFirstChild();
+	        			mTUser = n2 != null ? n2.getNodeValue() : "";
 	        			
 	        			nl2 = item.getElementsByTagName("AUTHOR");
 	        			if (nl2 == null || nl2.getLength() <= 0) {
 	        				return ErrUtils.ERR_XMLPARSING;
 	        			}
-	        			String author =
-	        				((Element)nl2.item(0)).getFirstChild().getNodeValue();
+	        			n2 = ((Element)nl2.item(0)).getFirstChild();
+	        			String author = n2 != null ? n2.getNodeValue() : "";
 	        			
 	        			nl2 = item.getElementsByTagName("DESCRIPTION");
 	        			if (nl2 == null || nl2.getLength() <= 0) {
@@ -230,7 +233,7 @@ public class KidsBbsView extends Activity {
 	        			n2 = ((Element)nl2.item(0)).getFirstChild();
 	        			String desc = n2 != null ? n2.getNodeValue() : "";
     					
-    					mInfo = new ArticleInfo(seq, author, date, title, thread, desc, 1);
+    					mTInfo = new ArticleInfo(seq, author, date, title, thread, desc, 1);
         			}
         		}
         	} catch (MalformedURLException e) {
@@ -246,13 +249,11 @@ public class KidsBbsView extends Activity {
         	return ret;
         }
     	@Override
-    	protected void onProgressUpdate(String... _args) {
-    		String text = getResources().getString(R.string.update_text);
-    		mStatusView.setText(text);
-    	}
-    	@Override
         protected void onPostExecute(Integer _result) {
     		if (_result >= 0) {
+    			mBoardUser = mTUser;
+    			mInfo = mTInfo;
+    			
 	    		mStatusView.setVisibility(View.GONE);
 	    		mTitleView.setText(mInfo.getTitle());
 	    		mUserView.setText(mInfo.getUsername());
@@ -275,7 +276,7 @@ public class KidsBbsView extends Activity {
     }
     
     private void startThreadView() {
-    	if (!isUpdating() && mInfo != null) {
+    	if (mInfo != null) {
 			Uri data = Uri.parse(getResources().getString(R.string.intent_uri_thread) +
 					"&" + KidsBbs.PARAM_N_BOARD + "=" + mBoardName +
 					"&" + KidsBbs.PARAM_N_TYPE + "=" + mBoardType +
@@ -290,7 +291,7 @@ public class KidsBbsView extends Activity {
     }
     
     private void startUserView() {
-		if (!isUpdating() && mBoardUser != null) {
+		if (mBoardUser != null) {
 			Uri data = Uri.parse(getResources().getString(R.string.intent_uri_user) +
 					"&" + KidsBbs.PARAM_N_BOARD + "=" + mBoardName +
 					"&" + KidsBbs.PARAM_N_TYPE + "=" + mBoardType +

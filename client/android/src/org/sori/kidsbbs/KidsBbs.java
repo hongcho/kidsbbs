@@ -101,9 +101,7 @@ public class KidsBbs extends ListActivity {
     @Override
     protected void onListItemClick(ListView _l, View _v, int _position, long _id) {
     	super.onListItemClick(_l, _v, _position, _id);
-    	if (!isUpdating()) {
-    		showItem(_position);
-    	}
+    	showItem(_position);
     }
     
     @Override
@@ -154,6 +152,8 @@ public class KidsBbs extends ListActivity {
     }
     
     private class UpdateTask extends AsyncTask<Void, Integer, Integer> {
+    	private ArrayList<BoardInfo> mTList = new ArrayList<BoardInfo>();
+
     	@Override
     	protected void onPreExecute() {
     		mStatusView.setVisibility(View.VISIBLE);
@@ -176,7 +176,8 @@ public class KidsBbs extends ListActivity {
         		} else {
         			title += name;
         		}
-        		mList.add(new BoardInfo(mTabnames[i], title));
+        		mTList.add(new BoardInfo(mTabnames[i], title));
+        		//publishProgress(mTList.size());
         	}
         	return mTabnames.length;
         }
@@ -188,7 +189,10 @@ public class KidsBbs extends ListActivity {
     	}
     	@Override
         protected void onPostExecute(Integer _count) {
+    		mList.clear();
+    		mList.addAll(mTList);
     		((BListAdapter)KidsBbs.this.getListAdapter()).notifyDataSetChanged();
+    		
     		mStatusView.setVisibility(View.GONE);
             setTitle(getResources().getString(R.string.title_blist) +
             		" (" + _count.toString() + ")");
@@ -203,7 +207,7 @@ public class KidsBbs extends ListActivity {
     }
     
     private void showItem(int _index) {
-		BoardInfo info = mList.get(_index);
+		BoardInfo info = (BoardInfo)getListView().getItemAtPosition(_index);
     	Uri data = Uri.parse(getResources().getString(R.string.intent_uri_tlist) +
     			PARAM_N_BOARD + "=" + info.getBoard() + 
     			"&" + PARAM_N_TYPE + "=" + info.getType() +

@@ -34,7 +34,7 @@ public class ErrUtils {
 	public static final int ERR_SAX = -4;
 	public static final int ERR_XMLPARSING = -5;
 
-	private String[] mErrStrings;
+	private final String[] mErrStrings;
 	
 	public ErrUtils(Context _context, int _resource) {
 		mErrStrings = _context.getResources().getStringArray(_resource);

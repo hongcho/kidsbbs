@@ -34,22 +34,23 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ArticleInfo {
-	static final private String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
-	static final private String DATE_INVALID = "Invalid Date";
+	private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
+	private static final String DATE_INVALID = "0000-00-00 00:00:00";
+	private static final String DATESHORT_INVALID = "0000-00-00";
 	
-	static final private DateFormat mTimeFormat =
+	private static final DateFormat mTimeFormat =
 		DateFormat.getTimeInstance(DateFormat.SHORT);
-	static final private DateFormat mDateFormat =
+	private static final DateFormat mDateFormat =
 		DateFormat.getDateInstance(DateFormat.SHORT);
-	static final private DateFormat mFullFormat =
+	private static final DateFormat mFullFormat =
 		DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
 	
-	static final private Pattern[] PATTERNS_HTML = {
+	private static final Pattern[] PATTERNS_HTML = {
 		Pattern.compile("&nbsp;"),
 		Pattern.compile("&lt;"),
 		Pattern.compile("<br/>"),
 	};
-	static final private String[] REPLACE_STRINGS = {
+	private static final String[] REPLACE_STRINGS = {
 		" ",
 		"<",
 		"\n",
@@ -64,14 +65,14 @@ public class ArticleInfo {
 	private String mDateString;
 	private String mDateShortString;
 	
-	public int getSeq() { return mSeq; }
-	public String getUsername() { return mUsername; }
-	public String getTitle() { return mTitle; }
-	public String getThread() { return mThread; }
-	public String getBody() { return mBody; }
-	public int getCount() { return mCount; }
-	public String getDateString() { return mDateString; }
-	public String getDateShortString() { return mDateShortString; }
+	public final int getSeq() { return mSeq; }
+	public final String getUsername() { return mUsername; }
+	public final String getTitle() { return mTitle; }
+	public final String getThread() { return mThread; }
+	public final String getBody() { return mBody; }
+	public final int getCount() { return mCount; }
+	public final String getDateString() { return mDateString; }
+	public final String getDateShortString() { return mDateShortString; }
 	
 	public ArticleInfo(int _seq, String _username, String _dateString,
 			String _title, String _thread, String _body, int _count) {
@@ -81,25 +82,32 @@ public class ArticleInfo {
 		mThread = _thread;
 		mCount = _count;
 		
-		// Prepare date/time in the local time zone.
-		DateFormat dfKorea = new SimpleDateFormat(DATE_FORMAT);
-		dfKorea.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
-		
-		try {
-			Date date = dfKorea.parse(_dateString);
-			mDateString = mFullFormat.format(date);
-
-			Date local = mFullFormat.parse(mDateString);
-			Date now = new Date();
-
-			if (now.getDate() == local.getDate()) {
-				mDateShortString = mTimeFormat.format(date);
-			} else {
-				mDateShortString = mDateFormat.format(date);
-			}
-		} catch (ParseException e) {
+		if (_dateString.equals(DATE_INVALID)) {
 			mDateString = DATE_INVALID;
-			mDateShortString = DATE_INVALID;
+			mDateShortString = DATESHORT_INVALID;
+		} else {
+			// Prepare date/time in the local time zone.
+			DateFormat dfKorea = new SimpleDateFormat(DATE_FORMAT);
+			dfKorea.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
+			
+			try {
+				Date date = dfKorea.parse(_dateString);
+				mDateString = mFullFormat.format(date);
+	
+				Date local = mFullFormat.parse(mDateString);
+				Date now = new Date();
+	
+				if (now.getYear() == local.getYear() &&
+						now.getMonth() == local.getMonth() &&
+						now.getDate() == local.getDate()) {
+					mDateShortString = mTimeFormat.format(date);
+				} else {
+					mDateShortString = mDateFormat.format(date);
+				}
+			} catch (ParseException e) {
+				mDateString = DATE_INVALID;
+				mDateShortString = DATESHORT_INVALID;
+			}
 		}
 		
 		// Convert some HTML sequences...
@@ -108,5 +116,10 @@ public class ArticleInfo {
 			_body = m.replaceAll(REPLACE_STRINGS[i]);
 		}
 		mBody = _body;
+	}
+	
+	@Override
+	public String toString() {
+		return mTitle + " " + mUsername + " " + mBody;
 	}
 }
