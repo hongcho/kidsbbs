@@ -336,7 +336,7 @@ function gen_list(&$qr)
     $seq = mysql_result($qr, $i, 'a0_seq');
     $username = mysql_result($qr, $i, 'a1_username');
     $date = mysql_result($qr, $i, 'a4_date');
-    $title = get_threadtitle(mysql_result($qr, $i, 'a5_title'));
+    $title = mysql_result($qr, $i, 'a5_title');
     $thread = mysql_result($qr, $i, 'a6_thread');
     $body = mysql_result($qr, $i, 'a7_body');
 
@@ -557,10 +557,10 @@ function gen_main(&$qr)
       continue;
     }
 
-    $_tn = mysql_real_escape_string($tn);
-    $rx = mysql_query(sprintf("SELECT COUNT(*) AS cnt FROM %s", $_tn));
+    $tnE = mysql_real_escape_string($tn);
+    $rx = mysql_query(sprintf("SELECT COUNT(*) AS cnt FROM %s", $tnE));
     $n_posts = mysql_result($rx, 0, 'cnt');
-    $rx = mysql_query(sprintf("SELECT COUNT(*) AS cnt FROM (SELECT a0_seq FROM %s GROUP BY a6_thread) AS t", $_tn));
+    $rx = mysql_query(sprintf("SELECT COUNT(*) AS cnt FROM (SELECT a0_seq FROM %s GROUP BY a6_thread) AS t", $tnE));
     $n_threads = mysql_result($rx, 0, 'cnt');
 
     switch ($_o) {
