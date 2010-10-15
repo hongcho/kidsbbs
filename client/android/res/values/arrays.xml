@@ -80,157 +80,144 @@
     </string-array>
     
     <string-array name="board_table_names">
-		<item>0_anonymous</item>
-		<item>0_AnonymousSerious</item>
-		<item>0_garbages</item>
-		<item>0_guest</item>
-		<item>0_notice</item>
-		<item>0_ToSysop</item>
-		<item>0_OpenDiary</item>
-
-		<item>0_CinemaPlay</item>
-		<item>0_ComicsAnim</item>
-		<item>0_ComputerGamenia</item>
-		<item>0_cyberPunk</item>
-		<item>0_Fun</item>
-		<item>0_GoodPlaces</item>
-		<item>0_MUD</item>
-		<item>0_Music</item>
-		<item>0_QuizWit</item>
-		<item>0_SportsLeisure</item>
-		<item>0_tV</item>
-
-		<item>0_car</item>
-		<item>0_consumer</item>
-		<item>0_cooKing</item>
-		<item>0_educationLearning</item>
-		<item>0_envirOnment</item>
-		<item>0_fineArt</item>
-		<item>0_healthNdiet</item>
-		<item>0_loveNfriendship</item>
-		<item>0_medicineClinic</item>
-		<item>0_military</item>
-		<item>0_pet</item>
-		<item>0_photo</item>
-		<item>0_plantsNherb</item>
-		<item>0_Season</item>
-		<item>0_salaryMan</item>
-		<item>0_venTure</item>
-
-		<item>0_Buddhism</item>
-		<item>0_catholic</item>
-		<item>0_Christian</item>
-		<item>0_economics</item>
-		<item>0_history</item>
-		<item>0_law</item>
-		<item>0_PhilosophyThought</item>
-		<item>0_Politics</item>
-		<item>0_sciEncE</item>
-
-		<item>0_CnUnix</item>
-		<item>0_dataBase</item>
-		<item>0_Guru</item>
-		<item>0_internet</item>
-		<item>0_java</item>
-		<item>0_LinuxFreeBSD</item>
-		<item>0_pC</item>
-		<item>0_windows</item>
-		<item>0_WWW</item>
-
-		<item>0_Travel</item>
-		<item>0_AUstralia</item>
-		<item>0_canaDA</item>
-		<item>0_Japan</item>
-		<item>0_euroPe</item>
-		<item>0_USA</item>
-
 		<item>0_2000</item>
 		<item>0_386</item>
 		<item>0_AfterWeddingMarch</item>
-		<item>0_CareerCenter</item>
-		<item>0_CultureOfKids</item>
-		<item>0_face2face</item>
-		<item>0_Family</item>
-		<item>0_FlagOfKids</item>
-		<item>0_fleaMarket</item>
-		<item>0_freeeXpression</item>
-		<item>0_IDofTheWeek</item>
-		<item>0_Iam</item>
-		<item>0_kidsOB</item>
-		<item>0_kidsine</item>
-		<item>0_manualKids</item>
-		<item>0_sExLife</item>
-		<item>0_Teach</item>
-		<item>0_Wanted</item>
-
-		<item>0_EnglishOnly</item>
-		<item>0_HangulKorean</item>
-
-		<item>0_CampusLife</item>
-		<item>0_studyingabroad</item>
 		<item>0_AJou</item>
+		<item>0_anonymous</item>
+		<item>0_AnonymousSerious</item>
 		<item>0_Arizona</item>
+		<item>0_AUstralia</item>
+		<item>0_Buddhism</item>
+		<item>0_CampusLife</item>
+		<item>0_canaDA</item>
+		<item>0_car</item>
+		<item>0_CareerCenter</item>
+		<item>0_catholic</item>
 		<item>0_CAU</item>
 		<item>0_CBNU</item>
+		<item>0_CinemaPlay</item>
+		<item>0_Christian</item>
+		<item>0_ChungNam</item>
 		<item>0_CMU</item>
 		<item>0_CNU</item>
-		<item>0_ChungNam</item>
+		<item>0_CnUnix</item>
+		<item>0_ComicsAnim</item>
+		<item>0_ComputerGamenia</item>
+		<item>0_consumer</item>
+		<item>0_cooKing</item>
+		<item>0_CultureOfKids</item>
+		<item>0_cyberPunk</item>
+		<item>0_dataBase</item>
 		<item>0_DongDuk</item>
 		<item>0_donggukUniv</item>
 		<item>0_Duksung</item>
+		<item>0_economics</item>
+		<item>0_educationLearning</item>
+		<item>0_EnglishOnly</item>
+		<item>0_envirOnment</item>
+		<item>0_euroPe</item>
 		<item>0_Ewha</item>
+		<item>0_face2face</item>
+		<item>0_Family</item>
+		<item>0_fineArt</item>
+		<item>0_FlagOfKids</item>
+		<item>0_fleaMarket</item>
+		<item>0_freeeXpression</item>
+		<item>0_Fun</item>
+		<item>0_garbages</item>
+		<item>0_GoodPlaces</item>
+		<item>0_guest</item>
+		<item>0_Guru</item>
+		<item>0_HallymUnv</item>
+		<item>0_HangulKorean</item>
+		<item>0_healthNdiet</item>
+		<item>0_history</item>
 		<item>0_HUFSan</item>
 		<item>0_HYU</item>
-		<item>0_HallymUnv</item>
+		<item>0_Iam</item>
+		<item>0_IDofTheWeek</item>
+		<item>0_internet</item>
 		<item>0_KAIST</item>
+		<item>0_kidsine</item>
+		<item>0_kidsOB</item>
 		<item>0_KJIST</item>
 		<item>0_KNU</item>
 		<item>0_KoreaUniv</item>
 		<item>0_KyungHee</item>
+		<item>0_Japan</item>
+		<item>0_java</item>
+		<item>0_law</item>
+		<item>0_LinuxFreeBSD</item>
+		<item>0_loveNfriendship</item>
+		<item>0_manualKids</item>
+		<item>0_medicineClinic</item>
+		<item>0_military</item>
 		<item>0_MIT</item>
+		<item>0_MUD</item>
+		<item>0_Music</item>
 		<item>0_MyongJi</item>
+		<item>0_notice</item>
 		<item>0_NWU</item>
+		<item>0_OpenDiary</item>
+		<item>0_p</item>
+		<item>0_pC</item>
+		<item>0_pet</item>
+		<item>0_PhilosophyThought</item>
+		<item>0_photo</item>
+		<item>0_plantsNherb</item>
 		<item>0_PNU</item>
+		<item>0_Politics</item>
 		<item>0_POSTECH</item>
 		<item>0_purdue</item>
+		<item>0_QuizWit</item>
+		<item>0_salaryMan</item>
+		<item>0_sciEncE</item>
+		<item>0_Season</item>
+		<item>0_sExLife</item>
 		<item>0_SKK</item>
 		<item>0_SNU</item>
 		<item>0_SoGang</item>
 		<item>0_SookMyung</item>
 		<item>0_SoongSil</item>
+		<item>0_SportsLeisure</item>
+		<item>0_SquareMemo</item>
+		<item>0_OpenLetter</item>
 		<item>0_Stanford</item>
+		<item>0_studyingabroad</item>
 		<item>0_SungShin</item>
 		<item>0_TAMU</item>
+		<item>0_Teach</item>
+		<item>0_ToSysop</item>
+		<item>0_Travel</item>
+		<item>0_tV</item>
 		<item>0_UCLA</item>
 		<item>0_UIUC</item>
 		<item>0_UMN</item>
+		<item>0_USA</item>
+		<item>0_venTure</item>
+		<item>0_Wanted</item>
+		<item>0_windows</item>
+		<item>0_WWW</item>
 		<item>0_YonSei</item>
-
 		<item>0_zDongWuHoe</item>
 		<item>0_zMeot</item>
+		<item>0_zYugA</item>
 		<item>0_zSan</item>
 		<item>0_zSul</item>
-		<item>0_zYugA</item>
-
-		<item>0_SquareMemo</item>
-		<item>0_OpenLetter</item>
-
-		<item>1_Memo</item>
+		<item>2_Anthology</item>
+		<item>2_Favorite</item>
+		<item>2_Memo</item>
+		<item>2_Note</item>
+		<item>2_Poet</item>
 		<item>1_adage</item>
 		<item>1_books</item>
 		<item>1_contemplation</item>
 		<item>1_essay</item>
 		<item>1_fiction</item>
 		<item>1_hwirim</item>
+		<item>1_Memo</item>
 		<item>1_SF</item>
-
-		<item>2_Memo</item>
-		<item>2_Anthology</item>
-		<item>2_Favorite</item>
-		<item>2_Note</item>
-		<item>2_Poet</item>
-
-		<item>0_p</item>
     </string-array>
     
     <string-array name="err_strings">
@@ -238,6 +225,6 @@
     	<item>IO에 문제가 있습니다.</item>
     	<item>ParserConfiguration에 문제가 있습니다.</item>
     	<item>SAX에 문제가 있습니다.</item>
-    	<item>XML 형식에 문제가 있습니다.</item>
+    	<item>XML형식에 문제가 있습니다.</item>
     </string-array>
 </resources>
