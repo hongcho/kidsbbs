@@ -43,7 +43,8 @@ public class KidsBbsTlist extends KidsBbsAList {
         
         registerForContextMenu(getListView());
         updateFromPreferences();
-        refreshList();
+        
+        initializeStates();
     }
     
     protected void refreshList() {
@@ -66,7 +67,7 @@ public class KidsBbsTlist extends KidsBbsAList {
 			target = KidsBbsThread.class;
 		} else {
 			base = R.string.intent_uri_view;
-			extra = "&" + KidsBbs.PARAM_N_SEQ + "=" + Integer.toString(info.getSeq());
+			extra = "&" + KidsBbs.PARAM_N_SEQ + "=" + info.getSeq();
 			target = KidsBbsView.class;
 		}
 		showItemCommon(this, target, base, extra);

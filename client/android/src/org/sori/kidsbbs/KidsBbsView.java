@@ -112,8 +112,7 @@ public class KidsBbsView extends Activity {
 			}
 		});
         
-        updateFromPreferences();
-        refreshView();
+        initializeStates();
     }
     
     @Override
@@ -253,16 +252,19 @@ public class KidsBbsView extends Activity {
     		if (_result >= 0) {
     			mBoardUser = mTUser;
     			mInfo = mTInfo;
-    			
-	    		mStatusView.setVisibility(View.GONE);
-	    		mTitleView.setText(mInfo.getTitle());
-	    		mUserView.setText(mInfo.getUsername());
-	    		mDateView.setText(mInfo.getDateString());
-	    		mBodyView.setText(mInfo.getBody());
+    			updateView();
     		} else {
 				setTitle(mErrUtils.getErrString(_result));
     		}
         }
+    }
+    
+    private void updateView() {
+		mStatusView.setVisibility(View.GONE);
+		mTitleView.setText(mInfo.getTitle());
+		mUserView.setText(mInfo.getUsername());
+		mDateView.setText(mInfo.getDateString());
+		mBodyView.setText(mInfo.getBody());
     }
     
     private void refreshView() {
@@ -320,5 +322,33 @@ public class KidsBbsView extends Activity {
     			//refreshBoardList();
     		}
     	}
+    }
+    
+    private class SavedStates {
+    	ArticleInfo info;
+    	String user;
+    	int updateFreq;
+    }
+    
+    // Saving state for rotation changes...
+    public Object onRetainNonConfigurationInstance() {
+    	SavedStates save = new SavedStates();
+    	save.info = mInfo;
+    	save.user = mBoardUser;
+    	save.updateFreq = mUpdateFreq;
+        return save;
+    }
+    
+    private void initializeStates() {
+    	SavedStates save = (SavedStates)getLastNonConfigurationInstance();
+    	if (save == null) {
+    		updateFromPreferences();
+    		refreshView();
+    	} else {
+    		mInfo = save.info;
+    		mBoardUser = save.user;
+    		mUpdateFreq = save.updateFreq;
+    		updateView();
+		}
     }
 }

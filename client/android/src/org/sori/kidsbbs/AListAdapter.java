@@ -60,7 +60,8 @@ public class AListAdapter extends ArrayAdapter<ArticleInfo> {
 		String date = info.getDateShortString();
 		String username = info.getUsername();
 		if (info.getCount() > 1) {
-			username += " (+" + Integer.toString(info.getCount()-1) + ")";
+			int cnt = info.getCount() - 1;
+			username += " (+" + cnt + ")";
 		}
 		String summary = info.getBody();
 		

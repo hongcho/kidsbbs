@@ -93,9 +93,9 @@ public class KidsBbs extends ListActivity {
         setListAdapter(new BListAdapter(this, R.layout.board_info_item, mList));
         
         registerForContextMenu(getListView());
-        updateFromPreferences();
-        refreshList();
         restoreUIState();
+        
+        initializeStates();
     }
     
     @Override
@@ -184,19 +184,23 @@ public class KidsBbs extends ListActivity {
     	@Override
     	protected void onProgressUpdate(Integer... _args) {
     		String text = getResources().getString(R.string.update_text);
-    		text += " (" + _args[0].toString() + ")";
+    		text += " (" + _args[0] + ")";
     		mStatusView.setText(text);
     	}
     	@Override
         protected void onPostExecute(Integer _count) {
-    		mList.clear();
-    		mList.addAll(mTList);
-    		((BListAdapter)KidsBbs.this.getListAdapter()).notifyDataSetChanged();
-    		
-    		mStatusView.setVisibility(View.GONE);
-            setTitle(getResources().getString(R.string.title_blist) +
-            		" (" + _count.toString() + ")");
+    		updateView(mTList);
         }
+    }
+    
+    private void updateView(ArrayList<BoardInfo> _list) {
+		mList.clear();
+		mList.addAll(_list);
+		((BListAdapter)getListAdapter()).notifyDataSetChanged();
+		
+		mStatusView.setVisibility(View.GONE);
+        setTitle(getResources().getString(R.string.title_blist) +
+        		" (" + mList.size() + ")");
     }
     
     private void refreshList() {
@@ -256,5 +260,29 @@ public class KidsBbs extends ListActivity {
     		}
     	}
     	setSelection(pos);
+    }
+    
+    private class SavedStates {
+    	ArrayList<BoardInfo> list;
+    	int updateFreq;
+    }
+    
+    // Saving state for rotation changes...
+    public Object onRetainNonConfigurationInstance() {
+    	SavedStates save = new SavedStates();
+    	save.list = mList;
+    	save.updateFreq = mUpdateFreq;
+        return save;
+    }
+    
+    private void initializeStates() {
+    	SavedStates save = (SavedStates)getLastNonConfigurationInstance();
+    	if (save == null) {
+            updateFromPreferences();
+            refreshList();
+    	} else {
+    		mUpdateFreq = save.updateFreq;
+    		updateView(save.list);
+		}
     }
 }

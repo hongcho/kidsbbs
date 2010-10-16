@@ -50,7 +50,8 @@ public class KidsBbsUser extends KidsBbsAList {
         
         registerForContextMenu(getListView());
         updateFromPreferences();
-        refreshList();
+        
+        initializeStates();
     }
     
     protected void refreshList() {
@@ -65,7 +66,7 @@ public class KidsBbsUser extends KidsBbsAList {
     protected void showItem(int _index) {
 		ArticleInfo info = getItem(_index);
 		showItemCommon(this, KidsBbsView.class, R.string.intent_uri_view,
-				"&" + KidsBbs.PARAM_N_SEQ + "=" + Integer.toString(info.getSeq()));
+				"&" + KidsBbs.PARAM_N_SEQ + "=" + info.getSeq());
     }
     
     protected void showPreference() {

@@ -200,8 +200,7 @@ public abstract class KidsBbsAList extends ListActivity
 	        	mStart = Integer.parseInt(_args[1]);
 	        	mIsAppend = mStart > 0;
 	    		if (mIsAppend) {
-	    			_urlString += "&" + KidsBbs.PARAM_N_START + "=" +
-	    				Integer.toString(mStart);
+	    			_urlString += "&" + KidsBbs.PARAM_N_START + "=" + mStart;
 	    		}
 	        	try {
 	        		URL url = new URL(_urlString);
@@ -315,26 +314,29 @@ public abstract class KidsBbsAList extends ListActivity
 	    	@Override
 	    	protected void onProgressUpdate(Integer... _args) {
 	    		String text = getResources().getString(R.string.update_text);
-	    		text += " (" + _args[0].toString() + ")";
+	    		text += " (" + _args[0] + ")";
 	    		mStatusView.setText(text);
 	    	}
 	    	@Override
 	        protected void onPostExecute(Integer _result) {
-    			mItemTotal = mTotalCount;
-    			if (!mIsAppend) {
-    				mList.clear();
-    			}
-    			mList.addAll(mTList);
-				((AListAdapter)KidsBbsAList.this.getListAdapter()).notifyDataSetChanged();
-
-				if (_result >= 0) {
-		    		mStatusView.setVisibility(View.GONE);
-		    		updateTitle(" (" + Integer.toString(mList.size()) + "/" +
-		    				Integer.toString(mItemTotal) + ")");
+	    		if (_result >= 0) {
+	    			mItemTotal = mTotalCount;
+	    			updateView(mTList, mIsAppend);
 				} else {
 					mStatusView.setText(mErrUtils.getErrString(_result));
 				}
 	        }
+	    }
+	    
+	    private void updateView(ArrayList<ArticleInfo> _list, boolean _append) {
+			if (!_append) {
+				mList.clear();
+			}
+			mList.addAll(_list);
+			((AListAdapter)getListAdapter()).notifyDataSetChanged();
+
+    		mStatusView.setVisibility(View.GONE);
+    		updateTitle(" (" + mList.size() + "/" + mItemTotal + ")");
 	    }
 	    
 	    private void updateList(boolean _append) {
@@ -396,5 +398,28 @@ public abstract class KidsBbsAList extends ListActivity
 	    }
 	    
 	    public void onScrollStateChanged(AbsListView _v, int _state) {
+	    }
+	    
+	    private class SavedStates {
+	    	ArrayList<ArticleInfo> list;
+	    	int total;
+	    }
+	    
+	    // Saving state for rotation changes...
+	    public Object onRetainNonConfigurationInstance() {
+	    	SavedStates save = new SavedStates();
+	    	save.list = mList;
+	    	save.total = mItemTotal;
+	        return save;
+	    }
+	    
+	    protected final void initializeStates() {
+	    	SavedStates save = (SavedStates)getLastNonConfigurationInstance();
+	    	if (save == null) {
+	    		refreshList();
+	    	} else {
+    			mItemTotal = save.total;
+	    		updateView(save.list, false);
+			}
 	    }
 }
