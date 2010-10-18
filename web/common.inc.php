@@ -219,7 +219,7 @@ function get_dbquery($m)
       "FROM $tn ORDER BY a0_seq DESC LIMIT 1";
     break;
   case 'list':
-    return "SELECT a0_seq,a1_username,a4_date,a5_title,a6_thread,a7_body ".
+    return "SELECT a0_seq,a1_username,a2_author,a4_date,a5_title,a6_thread,a7_body ".
       "FROM $tn ORDER BY a0_seq DESC";
   case 'tlist':
     return "SELECT a0_seq,a1_username,a4_date,a5_title,a6_thread,COUNT(*) AS cnt,a7_body ".
@@ -354,16 +354,16 @@ function gen_list(&$qr)
   for ($i = $s; $i < $s + $n; ++$i) {
     $seq = mysql_result($qr, $i, 'a0_seq');
     $username = mysql_result($qr, $i, 'a1_username');
+    $author = mysql_result($qr, 0, 'a2_author');
     $date = mysql_result($qr, $i, 'a4_date');
     $title = mysql_result($qr, $i, 'a5_title');
     $thread = mysql_result($qr, $i, 'a6_thread');
     $body = mysql_result($qr, $i, 'a7_body');
 
-    $body = get_summary($body);
-
     switch ($_o) {
     case 0:
       $title = pad_title($title);
+      $body = get_summary($body);
       echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
       echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
       echo "<TR><TD><FONT size=\"4pt\" style=\"font-family:monospace\"><A href=\"?m=view&b=$b&t=$t&p=$seq\">$title</A>&nbsp;</FONT>\n";
@@ -377,7 +377,9 @@ function gen_list(&$qr)
       echo "</TABLE>\n";
       break;
     case 1:
-      gen_xml_item($thread, NULL, $seq, $username, NULL, $date, $title, $body);
+      $body = remove_kids_html($body);
+      $body = trim_broken_korean($body, strlen($body));
+      gen_xml_item($thread, 1, $seq, $username, $author, $date, $title, $body);
       break;
     }
   }
@@ -603,7 +605,7 @@ function gen_main(&$qr)
 	echo '<TR>';
       }
       echo "<TD><A href=\"?m=tlist&b=$b&t=$t\">", get_boardname($b, $t),
-	"</A>&nbsp;<FONT size=\"2\">($n_threads|<A href=\"?m=list&b=$b&t=$t\">$n_posts</A>)</FONT>\n";
+	"</A>&nbsp;<FONT size=\"2\">($n_threads|$n_posts)</FONT>\n";
       break;
     case 1:
       if ($last_t != $t) {
