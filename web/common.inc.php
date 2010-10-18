@@ -140,13 +140,29 @@ function trim_broken_korean($s, $M)
     return  substr($s, 0, $M);
   }
 }
+// remove href
+function remove_kids_href($s)
+{
+  return preg_replace('/<a href="(.*)" target=_blank>.*<\/a>/i',
+		      '$1', $s);
+}
+// remove kids html
+function remove_kids_html($s)
+{
+  $s = remove_kids_href($s);
+  $s = preg_replace('/<br\/>/i', "\n", $s);
+  $s = preg_replace('/&nbsp;/i', ' ', $s);
+  $s = preg_replace('/&lt;/i', '<', $s);
+  return $s;
+}
 // get summary
 function get_summary($s)
 {
   static $MAX_SUMMARY = 50;
-  $s = preg_replace('/(<br\/>)+/i', '&nbsp;', $s);
-  $s = preg_replace('/^(&nbsp;)+/i', '', $s);
-  $s = preg_replace('/(&nbsp;)+/i', ' ', $s);
+  $s = remove_kids_html($s);
+  $s = preg_replace('/\n+/i', ' ', $s);
+  $s = preg_replace('/\s+/i', ' ', $s);
+  $s = preg_replace('/^\s+/i', '', $s);
   return trim_broken_korean($s, $MAX_SUMMARY);
 }
 
@@ -536,6 +552,7 @@ function gen_view(&$qr)
     echo "<TR><TD><FONT size=\"2pt\" style=\"font-family:monospace\">$body1</FONT>\n";
     break;
   case 1:
+    $body = remove_kids_html($body);
     $body = trim_broken_korean($body, strlen($body));
     gen_xml_item($thread, 1, $seq, $username, $author, $date, $title, $body);
    break;
