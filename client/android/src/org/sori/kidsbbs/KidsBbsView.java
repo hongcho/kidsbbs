@@ -254,7 +254,7 @@ public class KidsBbsView extends Activity {
     			mInfo = mTInfo;
     			updateView();
     		} else {
-				setTitle(mErrUtils.getErrString(_result));
+				mStatusView.setText(mErrUtils.getErrString(_result));
     		}
         }
     }
