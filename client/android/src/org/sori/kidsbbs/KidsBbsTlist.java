@@ -39,7 +39,7 @@ public class KidsBbsTlist extends KidsBbsAList {
         super.onCreate(_state);
         
         updateTitle("");
-    	setUrlBase(R.string.url_tlist, "");
+    	setUrlBase(KidsBbs.URL_TLIST, "");
         
         registerForContextMenu(getListView());
         updateFromPreferences();
@@ -58,15 +58,15 @@ public class KidsBbsTlist extends KidsBbsAList {
     
     protected void showItem(int _index) {
 		ArticleInfo info = getItem(_index);
-		int base;
+		String base;
 		String extra;
 		Class<?> target;
 		if (info.getCount() > 1) {
-			base = R.string.intent_uri_thread;
+			base = KidsBbs.URI_INTENT_THREAD;
 			extra = "&" + KidsBbs.PARAM_N_THREAD + "=" + info.getThread();
 			target = KidsBbsThread.class;
 		} else {
-			base = R.string.intent_uri_view;
+			base = KidsBbs.URI_INTENT_VIEW;
 			extra = "&" + KidsBbs.PARAM_N_SEQ + "=" + info.getSeq();
 			target = KidsBbsView.class;
 		}

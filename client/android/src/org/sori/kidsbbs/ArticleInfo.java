@@ -37,25 +37,25 @@ public class ArticleInfo {
 	private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 	private static final String DATE_INVALID = "0000-00-00 00:00:00";
 	private static final String DATESHORT_INVALID = "0000-00-00";
-	
+
 	private static final DateFormat mTimeFormat =
 		DateFormat.getTimeInstance(DateFormat.SHORT);
 	private static final DateFormat mDateFormat =
 		DateFormat.getDateInstance(DateFormat.SHORT);
 	private static final DateFormat mFullFormat =
 		DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
-	
+
 	private static final Pattern[] PATTERNS_HTML = {
+		Pattern.compile("<br/>"),
 		Pattern.compile("&nbsp;"),
 		Pattern.compile("&lt;"),
-		Pattern.compile("<br/>"),
 	};
 	private static final String[] REPLACE_STRINGS = {
+		"\n",
 		" ",
 		"<",
-		"\n",
 	};
-	
+
 	private int mSeq;
 	private String mUsername;
 	private String mTitle;
@@ -64,7 +64,8 @@ public class ArticleInfo {
 	private int mCount;
 	private String mDateString;
 	private String mDateShortString;
-	
+	private boolean mRead;
+
 	public final int getSeq() { return mSeq; }
 	public final String getUsername() { return mUsername; }
 	public final String getTitle() { return mTitle; }
@@ -72,16 +73,20 @@ public class ArticleInfo {
 	public final String getBody() { return mBody; }
 	public final int getCount() { return mCount; }
 	public final String getDateString() { return mDateString; }
-	public final String getDateShortString() { return mDateShortString; }
-	
+	public final String getDateShortString() { return mDateShortString;}
+	public final boolean getRead() { return mRead; }
+	public final void setRead(boolean _read) { mRead = _read; }
+
 	public ArticleInfo(int _seq, String _username, String _dateString,
-			String _title, String _thread, String _body, int _count) {
+			String _title, String _thread, String _body, int _count,
+			boolean _read) {
 		mSeq = _seq;
 		mUsername = _username;
 		mTitle = _title;
 		mThread = _thread;
 		mCount = _count;
-		
+		mRead = _read;
+
 		if (_dateString.equals(DATE_INVALID)) {
 			mDateString = DATE_INVALID;
 			mDateShortString = DATESHORT_INVALID;
@@ -89,17 +94,17 @@ public class ArticleInfo {
 			// Prepare date/time in the local time zone.
 			DateFormat dfKorea = new SimpleDateFormat(DATE_FORMAT);
 			dfKorea.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
-			
+
 			try {
 				Date date = dfKorea.parse(_dateString);
 				mDateString = mFullFormat.format(date);
-	
+
 				Date local = mFullFormat.parse(mDateString);
 				Date now = new Date();
-	
-				if (now.getYear() == local.getYear() &&
-						now.getMonth() == local.getMonth() &&
-						now.getDate() == local.getDate()) {
+
+				if (now.getYear() == local.getYear()
+						&& now.getMonth() == local.getMonth()
+						&& now.getDate() == local.getDate()) {
 					mDateShortString = mTimeFormat.format(date);
 				} else {
 					mDateShortString = mDateFormat.format(date);
@@ -109,15 +114,17 @@ public class ArticleInfo {
 				mDateShortString = DATESHORT_INVALID;
 			}
 		}
-		
+
+		if (false) {
 		// Convert some HTML sequences...
 		for (int i = 0; i < PATTERNS_HTML.length; ++i) {
 			Matcher m = PATTERNS_HTML[i].matcher(_body);
 			_body = m.replaceAll(REPLACE_STRINGS[i]);
 		}
+		}
 		mBody = _body;
 	}
-	
+
 	@Override
 	public String toString() {
 		return mTitle + " " + mUsername + " " + mBody;

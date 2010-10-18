@@ -45,7 +45,7 @@ public class KidsBbsThread extends KidsBbsAList {
         mBoardThread = data.getQueryParameter(KidsBbs.PARAM_N_THREAD);
         
         updateTitle("");
-        setUrlBase(R.string.url_thread,
+        setUrlBase(KidsBbs.URL_THREAD,
         		"&" + KidsBbs.PARAM_N_THREAD + "=" + mBoardThread);
         
         registerForContextMenu(getListView());
@@ -65,7 +65,7 @@ public class KidsBbsThread extends KidsBbsAList {
     
     protected void showItem(int _index) {
 		ArticleInfo info = getItem(_index);
-		showItemCommon(this, KidsBbsView.class, R.string.intent_uri_view,
+		showItemCommon(this, KidsBbsView.class, KidsBbs.URI_INTENT_VIEW,
 				"&" + KidsBbs.PARAM_N_SEQ + "=" + info.getSeq());
     }
     
