@@ -122,6 +122,24 @@ function pad_title($title)
   }
   return preg_replace('/ /', '&nbsp;', $title);
 }
+// trim broken korean
+function trim_broken_korean($s, $M)
+{
+  $len = strlen($s);
+  if ($len < $M) {
+    $M = $len;
+  }
+  $n = $M;
+  $c = 0;
+  while ($n > 0 and ord(substr($s, $n - 1, 1)) >= 0x80) {
+    ++$c; --$n;
+  }
+  if ($c % 2) {
+    return substr($s, 0, $M - 1). ' ';
+  } else {
+    return  substr($s, 0, $M);
+  }
+}
 // get summary
 function get_summary($s)
 {
@@ -129,22 +147,7 @@ function get_summary($s)
   $s = preg_replace('/(<br\/>)+/i', '&nbsp;', $s);
   $s = preg_replace('/^(&nbsp;)+/i', '', $s);
   $s = preg_replace('/(&nbsp;)+/i', ' ', $s);
-  $n = strlen($s);
-  if ($n < $MAX_SUMMARY) {
-    return $s;
-  } else {
-    $n = $MAX_SUMMARY;
-    $c = 0;
-    while ($n > 0 and ord(substr($s, $n - 1, 1)) >= 0x80) {
-      ++$c; --$n;
-    }
-    if ($c % 2) {
-      $s = substr($s, 0, $MAX_SUMMARY - 1).' ';
-    } else {
-      $s = substr($s, 0, $MAX_SUMMARY);
-    }
-    return $s;
-  }
+  return trim_broken_korean($s, $MAX_SUMMARY);
 }
 
 // convert SQL date/time to RFC 822
@@ -533,6 +536,7 @@ function gen_view(&$qr)
     echo "<TR><TD><FONT size=\"2pt\" style=\"font-family:monospace\">$body1</FONT>\n";
     break;
   case 1:
+    $body = trim_broken_korean($body, strlen($body));
     gen_xml_item($thread, 1, $seq, $username, $author, $date, $title, $body);
    break;
   }
