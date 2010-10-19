@@ -27,14 +27,17 @@ package org.sori.kidsbbs;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -165,12 +168,13 @@ public class KidsBbsView extends Activity {
 		protected Integer doInBackground(String... _args) {
 			int ret = 0;
 			try {
-				URL url = new URL(_args[0]);
-				HttpURLConnection httpConnection =
-						(HttpURLConnection)url.openConnection();
-				int responseCode = httpConnection.getResponseCode();
-				if (responseCode == HttpURLConnection.HTTP_OK) {
-					InputStream is = httpConnection.getInputStream();
+				HttpClient client = new DefaultHttpClient();
+				HttpGet get = new HttpGet(_args[0]);
+				HttpResponse response = client.execute(get);
+				HttpEntity entity = response.getEntity();
+				if (entity == null) {
+				} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+					InputStream is = entity.getContent(); 
 					DocumentBuilder db =
 							DocumentBuilderFactory.newInstance().newDocumentBuilder();
 
@@ -239,8 +243,6 @@ public class KidsBbsView extends Activity {
 								thread, desc, 1, false);
 					}
 				}
-			} catch (MalformedURLException e) {
-				ret = ErrUtils.ERR_BAD_URL;
 			} catch (IOException e) {
 				ret = ErrUtils.ERR_IO;
 			} catch (ParserConfigurationException e) {
@@ -285,10 +287,10 @@ public class KidsBbsView extends Activity {
 	private void startThreadView() {
 		if (mInfo != null) {
 			Uri data = Uri.parse(KidsBbs.URI_INTENT_THREAD
-					+ KidsBbs.PARAM_N_BOARD + "=" + mBoardName + "&"
-					+ KidsBbs.PARAM_N_TYPE + "=" + mBoardType + "&"
-					+ KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle + "&"
-					+ KidsBbs.PARAM_N_THREAD + "=" + mInfo.getThread());
+					+ KidsBbs.PARAM_N_BOARD + "=" + mBoardName +
+					"&" + KidsBbs.PARAM_N_TYPE + "=" + mBoardType +
+					"&" + KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle +
+					"&" + KidsBbs.PARAM_N_THREAD + "=" + mInfo.getThread());
 			Intent i = new Intent(this, KidsBbsThread.class);
 			i.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
 			i.setAction(Intent.ACTION_VIEW);
@@ -300,10 +302,10 @@ public class KidsBbsView extends Activity {
 	private void startUserView() {
 		if (mBoardUser != null) {
 			Uri data = Uri.parse(KidsBbs.URI_INTENT_USER
-					+ KidsBbs.PARAM_N_BOARD + "=" + mBoardName + "&"
-					+ KidsBbs.PARAM_N_TYPE + "=" + mBoardType + "&"
-					+ KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle + "&"
-					+ KidsBbs.PARAM_N_USER + "=" + mBoardUser);
+					+ KidsBbs.PARAM_N_BOARD + "=" + mBoardName +
+					"&" + KidsBbs.PARAM_N_TYPE + "=" + mBoardType +
+					"&" + KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle +
+					"&" + KidsBbs.PARAM_N_USER + "=" + mBoardUser);
 			Intent i = new Intent(this, KidsBbsUser.class);
 			i.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
 			i.setAction(Intent.ACTION_VIEW);

@@ -59,6 +59,9 @@
         <provider android:name=".KidsBbsProvider"
             android:authorities="org.sori.provider.kidsbbs"
             />
+        <service android:name=".KidsBbsService"
+            android:enabled="true"
+            />
     </application>
     <uses-sdk android:minSdkVersion="4" />
     <uses-permission android:name="android.permission.INTERNET" />

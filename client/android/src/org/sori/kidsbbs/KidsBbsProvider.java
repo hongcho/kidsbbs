@@ -45,6 +45,17 @@ import android.util.Log;
 public class KidsBbsProvider extends ContentProvider {
 	private static final String PROVIDER_NAME = "org.sori.provider.kidsbbs";
 
+	public static final Uri CONTENT_URI_BOARDS = Uri.parse(
+		"content://" + PROVIDER_NAME + "/boards");
+	public static final String CONTENT_URISTR_LIST =
+		"content://" + PROVIDER_NAME + "/list/";
+	public static final String CONTENT_URISTR_TLIST =
+		"content://" + PROVIDER_NAME + "/tlist/";
+	public static final String CONTENT_URISTR_THREAD =
+		"content://" + PROVIDER_NAME + "/thread/";
+	public static final String CONTENT_URISTR_USER =
+		"content://" + PROVIDER_NAME + "/user/";
+	
 	private static final int TYPE_BOARDS = 0;
 	private static final int TYPE_BOARDS_ID = 1;
 	private static final int TYPE_LIST = 2;
@@ -308,11 +319,11 @@ public class KidsBbsProvider extends ContentProvider {
 		mDB.execSQL("CREATE TABLE " + _tabname + " (" +
 				KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
 				KEYA_SEQ + " INTEGER NOT NULL," +
-				KEYA_USER + " CHAR(12) NOT NULL," +
+				KEYA_AUTHOR + " VARCHAR(40) NOT NULL," +
 				KEYA_DATE + " DATETIME NOT NULL," +
 				KEYA_TITLE + " VARCHAR(40)" +
 				KEYA_THREAD + " CHAR(32) NOT NULL," +
-				KEYA_DESC + " TEXT," +
+				KEYA_BODY + " TEXT," +
 				KEYA_READ + " BOOLEAN DEFAULT FALSE);");
 	}
 
@@ -320,27 +331,28 @@ public class KidsBbsProvider extends ContentProvider {
 		mDB.execSQL("DROP TABLE IF EXISTS " + _tabname);
 	}
 
-	private static final String TAG = "KidsBbsProvider";
+	// Common ID...
+	public static final String KEY_ID = "_id"; // INTEGER PRIMARY KEY AUTOINCREMENT
+
+	// Board table
+	public static final String KEYB_NAME = "name"; // CHAR(32) NOT NULL
+	public static final String KEYB_TYPE = "type"; // INTEGER NOT NULL
+	public static final String KEYB_TITLE = "title"; // VARCHAR(40) NOT NULL
+	public static final String KEYB_LASTTIME = "lasttime"; // DATETIME
+	public static final String KEYB_NEWCOUNT = "newcount"; // INTEGER DEFAULT 0
+
+	// Article table
+	public static final String KEYA_SEQ = "seq"; // INTEGER NOT NULL
+	public static final String KEYA_AUTHOR = "author"; // VARCHAR(40) NOT NULL
+	public static final String KEYA_DATE = "date"; // DATETIME NOT NULL
+	public static final String KEYA_TITLE = "title"; // VARCHAR(40) NOT NULL
+	public static final String KEYA_THREAD = "thread"; // CHAR(32) NOT NULL
+	public static final String KEYA_BODY = "body"; // TEXT
+	public static final String KEYA_READ = "read"; // BOOLEAN DEFAULT FALSE
+
 	private static final String DB_NAME = "kidsbbs.db";
 	private static final int DB_VERSION = 1;
 	private static final String DB_TABLE = "boards";
-
-	private static final String KEY_ID = "_id"; // INTEGER PRIMARY KEY AUTOINCREMENT
-
-	// Board table
-	private static final String KEYB_NAME = "name"; // CHAR(32) NOT NULL
-	private static final String KEYB_TITLE = "title"; // VARCHAR(40) NOT NULL
-	private static final String KEYB_LASTTIME = "lasttime"; // DATETIME
-	private static final String KEYB_NEW = "new"; // INTEGER DEFAULT 0
-
-	// Article table
-	private static final String KEYA_SEQ = "seq"; // INTEGER NOT NULL
-	private static final String KEYA_USER = "user"; // CHAR(12) NOT NULL
-	private static final String KEYA_DATE = "date"; // DATETIME NOT NULL
-	private static final String KEYA_TITLE = "title"; // VARCHAR(40) NOT NULL
-	private static final String KEYA_THREAD = "thread"; // CHAR(32) NOT NULL
-	private static final String KEYA_DESC = "desc"; // TEXT
-	private static final String KEYA_READ = "read"; // BOOLEAN DEFAULT FALSE
 
 	private SQLiteDatabase mDB;
 
@@ -352,21 +364,22 @@ public class KidsBbsProvider extends ContentProvider {
 
 		@Override
 		public void onCreate(SQLiteDatabase _db) {
-			_db.execSQL("CREATE TABLE " + DB_TABLE + " (" +
-					KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
-					KEYB_NAME + " CHAR(32) NOT NULL," +
-					KEYB_TITLE + " VARCHAR(40) NOT NULL," +
-					KEYB_LASTTIME + " DATETIME," +
-					KEYB_NEW + " INTEGER DEFAULT 0);");
+			//_db.execSQL("CREATE TABLE " + DB_TABLE + " (" +
+			//		KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+			//		KEYB_NAME + " CHAR(32) NOT NULL," +
+			//		KEYB_TYPE + " INTEGER NOT NULL," +
+			//		KEYB_TITLE + " VARCHAR(40) NOT NULL," +
+			//		KEYB_LASTTIME + " DATETIME," +
+			//		KEYB_NEWCOUNT + " INTEGER DEFAULT 0);");
 		}
 
 		@Override
 		public void onUpgrade(SQLiteDatabase _db, int _old, int _new) {
 			// TODO: properly upgrade...
-			Log.w(TAG, "Upgrading database from version " + _old + " to " +
-					_new + ", which will destroy all old data");
-			_db.execSQL("DROP TABLE IF EXISTS " + DB_TABLE);
-			onCreate(_db);
+			//Log.w(PROVIDER_NAME, "Upgrading database from version " + _old +
+			//		" to " + _new + ", which will destroy all old data");
+			//_db.execSQL("DROP TABLE IF EXISTS " + DB_TABLE);
+			//onCreate(_db);
 		}
 	}
 }
