@@ -27,15 +27,19 @@ package org.sori.kidsbbs;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -206,12 +210,13 @@ public abstract class KidsBbsAList extends ListActivity implements
 				_urlString += "&" + KidsBbs.PARAM_N_START + "=" + mStart;
 			}
 			try {
-				URL url = new URL(_urlString);
-				HttpURLConnection httpConnection =
-						(HttpURLConnection)url.openConnection();
-				int responseCode = httpConnection.getResponseCode();
-				if (responseCode == HttpURLConnection.HTTP_OK) {
-					InputStream is = httpConnection.getInputStream();
+				HttpClient client = new DefaultHttpClient();
+				HttpGet get = new HttpGet(_urlString);
+				HttpResponse response = client.execute(get);
+				HttpEntity entity = response.getEntity();
+				if (entity == null) {
+				} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+					InputStream is = entity.getContent(); 
 					DocumentBuilder db =
 							DocumentBuilderFactory.newInstance().newDocumentBuilder();
 

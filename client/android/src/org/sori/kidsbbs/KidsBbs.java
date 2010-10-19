@@ -46,6 +46,7 @@ import android.widget.TextView;
 
 public class KidsBbs extends ListActivity {
 	public static final String URL_BLIST = "http://sori.org/kids/kids.php?_o=1&";
+	public static final String URL_LIST = "http://sori.org/kids/kids.php?_o=1&m=list&";
 	public static final String URL_TLIST = "http://sori.org/kids/kids.php?_o=1&m=tlist&";
 	public static final String URL_THREAD = "http://sori.org/kids/kids.php?_o=1&m=thread&";
 	public static final String URL_USER = "http://sori.org/kids/kids.php?_o=1&m=user&";
@@ -229,9 +230,10 @@ public class KidsBbs extends ListActivity {
 
 	private void showItem(int _index) {
 		BoardInfo info = (BoardInfo) getListView().getItemAtPosition(_index);
-		Uri data = Uri.parse(KidsBbs.URI_INTENT_TLIST + PARAM_N_BOARD + "="
-				+ info.getBoard() + "&" + PARAM_N_TYPE + "=" + info.getType()
-				+ "&" + PARAM_N_TITLE + "=" + info.getTitle());
+		Uri data = Uri.parse(KidsBbs.URI_INTENT_TLIST +
+				PARAM_N_BOARD + "=" + info.getBoard() +
+				"&" + PARAM_N_TYPE + "=" + info.getType() +
+				"&" + PARAM_N_TITLE + "=" + info.getTitle());
 		Intent i = new Intent(this, KidsBbsTlist.class);
 		i.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		i.setAction(Intent.ACTION_VIEW);
