@@ -143,7 +143,7 @@ function trim_broken_korean($s, $M)
 // remove href
 function remove_kids_href($s)
 {
-  return preg_replace('/<a href="(.*)" target=_blank>.*<\/a>/i',
+  return preg_replace('/<a\s+href="(.*?)"\s+target=_blank>.*?<\/a>/i',
 		      '$1', $s);
 }
 // remove kids html
