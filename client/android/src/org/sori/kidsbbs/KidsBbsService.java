@@ -26,9 +26,23 @@
 package org.sori.kidsbbs;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.io.InputStream;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import android.app.Service;
 import android.content.ContentResolver;
@@ -53,6 +67,8 @@ public class KidsBbsService extends Service {
 	}
 	
 	private class UpdateTask extends AsyncTask<String, ArticleInfo, Integer> {
+		private int mTotalCount = 0;
+		
 		@Override
 		protected void onPreExecute() {
 		}
@@ -61,14 +77,117 @@ public class KidsBbsService extends Service {
 		protected Integer doInBackground(String... _args) {
 			int result = 0;
 			String _urlString = _args[0];
+			String _board = _args[1];
+			String _type = _args[2];
+			String tabname = _type + "_" + _board;
+			HttpClient client = new DefaultHttpClient();
+			HttpGet get = new HttpGet(_urlString);
 			try {
-				URL url = new URL(_urlString);
-				HttpURLConnection httpConnection =
-					(HttpURLConnection)url.openConnection();
-			} catch (MalformedURLException e) {
-				result = ErrUtils.ERR_BAD_URL;
+				HttpResponse response = client.execute(get);
+				HttpEntity entity = response.getEntity();
+				if (entity == null) {
+				} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+					InputStream is = entity.getContent(); 
+					DocumentBuilder db =
+						DocumentBuilderFactory.newInstance().newDocumentBuilder();
+
+					// Parse the board list.
+					Document dom = db.parse(is);
+					Element docEle = dom.getDocumentElement();
+					NodeList nl;
+					Node n;
+	
+					nl = docEle.getElementsByTagName("ITEMS");
+					if (nl == null || nl.getLength() <= 0) {
+						return ErrUtils.ERR_XMLPARSING;
+					}
+					Element items = (Element) nl.item(0);
+	
+					nl = items.getElementsByTagName("TOTALCOUNT");
+					if (nl == null || nl.getLength() <= 0) {
+						return ErrUtils.ERR_XMLPARSING;
+					}
+					n = ((Element) nl.item(0)).getFirstChild();
+					mTotalCount = n != null ?
+							Integer.parseInt(n.getNodeValue()) : 0;
+	
+					// Get a board item
+					nl = items.getElementsByTagName("ITEM");
+					if (nl != null && nl.getLength() > 0) {
+						for (int i = 0; i < nl.getLength(); ++i) {
+							NodeList nl2;
+							Node n2;
+							Element item = (Element) nl.item(i);
+	
+							nl2 = item.getElementsByTagName("THREAD");
+							String thread;
+							if (nl2 == null || nl2.getLength() <= 0) {
+								thread = "";
+							} else {
+								n2 = ((Element) nl2.item(0)).getFirstChild();
+								thread = n2 != null ? n2.getNodeValue() : "";
+							}
+	
+							nl2 = item.getElementsByTagName("COUNT");
+							int cnt;
+							if (nl2 == null || nl2.getLength() <= 0) {
+								cnt = 0;
+							} else {
+								n2 = ((Element) nl2.item(0)).getFirstChild();
+								cnt = n2 != null ?
+										Integer.parseInt(n2.getNodeValue()) : 0;
+							}
+	
+							nl2 = item.getElementsByTagName("TITLE");
+							if (nl2 == null || nl2.getLength() <= 0) {
+								return ErrUtils.ERR_XMLPARSING;
+							}
+							n2 = ((Element) nl2.item(0)).getFirstChild();
+							String title = n2 != null ? n2.getNodeValue() : "";
+	
+							nl2 = item.getElementsByTagName("SEQ");
+							if (nl2 == null || nl2.getLength() <= 0) {
+								return ErrUtils.ERR_XMLPARSING;
+							}
+							n2 = ((Element) nl2.item(0)).getFirstChild();
+							int seq = n2 != null ? Integer.parseInt(n2
+									.getNodeValue()) : 0;
+	
+							nl2 = item.getElementsByTagName("DATE");
+							if (nl2 == null || nl2.getLength() <= 0) {
+								return ErrUtils.ERR_XMLPARSING;
+							}
+							n2 = ((Element) nl2.item(0)).getFirstChild();
+							String date = n2 != null ? n2.getNodeValue() : "";
+	
+							nl2 = item.getElementsByTagName("AUTHOR");
+							if (nl2 == null || nl2.getLength() <= 0) {
+								return ErrUtils.ERR_XMLPARSING;
+							}
+							n2 = ((Element) nl2.item(0)).getFirstChild();
+							String user = n2 != null ? n2.getNodeValue() : "";
+	
+							nl2 = item.getElementsByTagName("DESCRIPTION");
+							if (nl2 == null || nl2.getLength() <= 0) {
+								return ErrUtils.ERR_XMLPARSING;
+							}
+							n2 = ((Element) nl2.item(0)).getFirstChild();
+							String desc = n2 != null ? n2.getNodeValue() : "";
+	
+							ArticleInfo info = new ArticleInfo(seq, user, date, title,
+									thread, desc, cnt, false);
+							addArticle(tabname, info);
+							publishProgress(info);
+							++result;
+						}
+					}
+				}
 			} catch (IOException e) {
 				result = ErrUtils.ERR_IO;
+			} catch (ParserConfigurationException e) {
+				result = ErrUtils.ERR_PARSER;
+			} catch (SAXException e) {
+				result = ErrUtils.ERR_SAX;
 			} finally {
 			}
 			return result;
@@ -122,7 +241,8 @@ public class KidsBbsService extends Service {
 			mLastUpdate.execute(KidsBbs.URL_LIST +
 					KidsBbs.PARAM_N_BOARD + "=" + _board +
 					"&" + KidsBbs.PARAM_N_TYPE + "=" + _type +
-					"&" + KidsBbs.PARAM_N_START + "=" + _start);
+					"&" + KidsBbs.PARAM_N_START + "=" + _start,
+					_board, Integer.toString(_type));
 		}
 	}
 	

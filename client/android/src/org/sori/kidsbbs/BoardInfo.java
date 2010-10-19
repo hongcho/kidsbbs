@@ -40,7 +40,7 @@ public class BoardInfo {
 		mTabName = _tabName;
 		mTitle = _title;
 
-		String[] parsed = mTabName.split("_");
+		String[] parsed = parseTabName(mTabName);
 		mType = Integer.parseInt(parsed[0]);
 		mBoard = parsed[1];
 	}
@@ -50,7 +50,9 @@ public class BoardInfo {
 		return mTitle;
 	}
 	
-	static public String[] parseTabName(String _tabName) {
-		return _tabName.split("_");
+	public static String[] parseTabName(String _tabName) {
+		String[] parsed = _tabName.split("_");
+		parsed[0] = parsed[0].substring(1);
+		return parsed;
 	}
 }

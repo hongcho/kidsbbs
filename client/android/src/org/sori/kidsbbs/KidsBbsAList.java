@@ -27,7 +27,6 @@ package org.sori.kidsbbs;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -209,9 +208,9 @@ public abstract class KidsBbsAList extends ListActivity implements
 			if (mIsAppend) {
 				_urlString += "&" + KidsBbs.PARAM_N_START + "=" + mStart;
 			}
+			HttpClient client = new DefaultHttpClient();
+			HttpGet get = new HttpGet(_urlString);
 			try {
-				HttpClient client = new DefaultHttpClient();
-				HttpGet get = new HttpGet(_urlString);
 				HttpResponse response = client.execute(get);
 				HttpEntity entity = response.getEntity();
 				if (entity == null) {
@@ -310,8 +309,6 @@ public abstract class KidsBbsAList extends ListActivity implements
 					}
 				}
 				result = mTList.size();
-			} catch (MalformedURLException e) {
-				result = ErrUtils.ERR_BAD_URL;
 			} catch (IOException e) {
 				result = ErrUtils.ERR_IO;
 			} catch (ParserConfigurationException e) {

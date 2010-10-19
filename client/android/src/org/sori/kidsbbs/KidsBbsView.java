@@ -57,7 +57,7 @@ import android.view.View;
 import android.widget.TextView;
 
 public class KidsBbsView extends Activity {
-	static final private int MENU_UPDATE = Menu.FIRST;
+	static final private int MENU_REFRESH = Menu.FIRST;
 	static final private int MENU_PREFERENCES = Menu.FIRST + 1;
 
 	private static final int SHOW_PREFERENCES = 1;
@@ -122,7 +122,7 @@ public class KidsBbsView extends Activity {
 	public boolean onCreateOptionsMenu(Menu _menu) {
 		super.onCreateOptionsMenu(_menu);
 
-		MenuItem itemUpdate = _menu.add(0, MENU_UPDATE, Menu.NONE,
+		MenuItem itemUpdate = _menu.add(0, MENU_REFRESH, Menu.NONE,
 				R.string.menu_refresh);
 		itemUpdate.setIcon(getResources().getIdentifier(
 				"android:drawable/ic_menu_refresh", null, null));
@@ -139,7 +139,7 @@ public class KidsBbsView extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		super.onOptionsItemSelected(item);
 		switch (item.getItemId()) {
-		case MENU_UPDATE:
+		case MENU_REFRESH:
 			refreshView();
 			return true;
 		case MENU_PREFERENCES:
@@ -167,9 +167,9 @@ public class KidsBbsView extends Activity {
 		@Override
 		protected Integer doInBackground(String... _args) {
 			int ret = 0;
+			HttpClient client = new DefaultHttpClient();
+			HttpGet get = new HttpGet(_args[0]);
 			try {
-				HttpClient client = new DefaultHttpClient();
-				HttpGet get = new HttpGet(_args[0]);
 				HttpResponse response = client.execute(get);
 				HttpEntity entity = response.getEntity();
 				if (entity == null) {
