@@ -26,12 +26,13 @@
 package org.sori.kidsbbs;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import android.app.Activity;
 import android.app.ListActivity;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -45,17 +46,19 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 public class KidsBbs extends ListActivity {
-	public static final String URL_BLIST = "http://sori.org/kids/kids.php?_o=1&";
-	public static final String URL_LIST = "http://sori.org/kids/kids.php?_o=1&m=list&";
-	public static final String URL_TLIST = "http://sori.org/kids/kids.php?_o=1&m=tlist&";
-	public static final String URL_THREAD = "http://sori.org/kids/kids.php?_o=1&m=thread&";
-	public static final String URL_USER = "http://sori.org/kids/kids.php?_o=1&m=user&";
-	public static final String URL_VIEW = "http://sori.org/kids/kids.php?_o=1&m=view&";
-
-	public static final String URI_INTENT_TLIST = "content://kidsbbs/tlist?";
-	public static final String URI_INTENT_THREAD = "content://kidsbbs/thread?";
-	public static final String URI_INTENT_USER = "content://kidsbbs/user?";
-	public static final String URI_INTENT_VIEW = "content://kidsbbs/view?";
+	private static final String URL_BASE = "http://sori.org/kids/kids.php?_o=1&";
+	public static final String URL_BLIST = URL_BASE; 
+	public static final String URL_LIST = URL_BASE + "m=list&";
+	public static final String URL_TLIST = URL_BASE + "m=tlist&";
+	public static final String URL_THREAD = URL_BASE + "m=thread&";
+	public static final String URL_USER = URL_BASE + "m=user&";
+	public static final String URL_VIEW = URL_BASE + "m=view&";
+	
+	private static final String URI_BASE = "content:/kidsbbs/";
+	public static final String URI_INTENT_TLIST = URI_BASE + "tlist?";
+	public static final String URI_INTENT_THREAD = URI_BASE + "thread?";
+	public static final String URI_INTENT_USER = URI_BASE + "user?";
+	public static final String URI_INTENT_VIEW = URI_BASE + "view?";
 
 	public static final String PARAM_N_TITLE = "bt";
 	public static final String PARAM_N_BOARD = "b";
@@ -66,20 +69,16 @@ public class KidsBbs extends ListActivity {
 	public static final String PARAM_N_START = "s";
 	public static final String PARAM_N_COUNT = "n";
 
-	private static final int MENU_PREFERENCES = Menu.FIRST;
-	private static final int MENU_SHOW = Menu.FIRST + 1;
+	static final private int MENU_REFRESH = Menu.FIRST;
+	private static final int MENU_PREFERENCES = Menu.FIRST + 1;
+	private static final int MENU_SHOW = Menu.FIRST + 2;
 
 	private static final int SHOW_PREFERENCES = 1;
 
 	private static final String KEY_SELECTED_ITEM = "KEY_SELECTED_ITEM";
 
-	private String[] mTabnames;
-	private String[] mTypeNames;
-	private String[] mNameMapKeys;
-	private String[] mNameMapValues;
-	private HashMap<String, String> mNameMap = new HashMap<String, String>();
-
 	private ArrayList<BoardInfo> mList = new ArrayList<BoardInfo>();
+	private String mTitleBase;
 
 	private TextView mStatusView;
 
@@ -92,18 +91,11 @@ public class KidsBbs extends ListActivity {
 		super.onCreate(_state);
 		setContentView(R.layout.board_list);
 
-		mTabnames = getResources().getStringArray(R.array.board_table_names);
-		mTypeNames = getResources().getStringArray(R.array.board_type_names);
-		mNameMapKeys = getResources().getStringArray(R.array.board_name_map_in);
-		mNameMapValues = getResources().getStringArray(
-				R.array.board_name_map_out);
-		for (int i = 0; i < mNameMapKeys.length; ++i) {
-			mNameMap.put(mNameMapKeys[i], mNameMapValues[i]);
-		}
-
+		mTitleBase = getResources().getString(R.string.title_blist);
 		mStatusView = (TextView) findViewById(R.id.status);
 
-		setListAdapter(new BListAdapter(this, R.layout.board_info_item, mList));
+		setListAdapter(new BListAdapter(this, R.layout.board_info_item,
+				mList));
 
 		registerForContextMenu(getListView());
 		restoreUIState();
@@ -112,7 +104,8 @@ public class KidsBbs extends ListActivity {
 	}
 
 	@Override
-	protected void onListItemClick(ListView _l, View _v, int _position, long _id) {
+	protected void onListItemClick(ListView _l, View _v, int _position,
+			long _id) {
 		super.onListItemClick(_l, _v, _position, _id);
 		showItem(_position);
 	}
@@ -121,10 +114,17 @@ public class KidsBbs extends ListActivity {
 	public boolean onCreateOptionsMenu(Menu _menu) {
 		super.onCreateOptionsMenu(_menu);
 
+		MenuItem itemUpdate = _menu.add(0, MENU_REFRESH, Menu.NONE,
+				R.string.menu_refresh);
+		itemUpdate.setIcon(getResources().getIdentifier(
+				"android:drawable/ic_menu_refresh", null, null));
+		itemUpdate.setShortcut('0', 'r');
+
 		MenuItem itemPreferences = _menu.add(0, MENU_PREFERENCES, Menu.NONE,
 				R.string.menu_preferences);
 		itemPreferences.setIcon(android.R.drawable.ic_menu_preferences);
-		itemPreferences.setShortcut('0', 'p');
+		itemPreferences.setShortcut('1', 'p');
+
 		return true;
 	}
 
@@ -142,6 +142,9 @@ public class KidsBbs extends ListActivity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		super.onOptionsItemSelected(item);
 		switch (item.getItemId()) {
+		case MENU_REFRESH:
+			refreshList();
+			return true;
 		case MENU_PREFERENCES:
 			Intent i = new Intent(this, Preferences.class);
 			startActivityForResult(i, SHOW_PREFERENCES);
@@ -155,7 +158,8 @@ public class KidsBbs extends ListActivity {
 		super.onContextItemSelected(_item);
 		switch (_item.getItemId()) {
 		case MENU_SHOW:
-			showItem(((AdapterView.AdapterContextMenuInfo) _item.getMenuInfo()).position);
+			showItem(((AdapterView.AdapterContextMenuInfo)
+					_item.getMenuInfo()).position);
 			return true;
 		}
 		return false;
@@ -168,41 +172,37 @@ public class KidsBbs extends ListActivity {
 
 	private class UpdateTask extends AsyncTask<Void, Integer, Integer> {
 		private ArrayList<BoardInfo> mTList = new ArrayList<BoardInfo>();
+		private String mProgressBase;
 
 		@Override
 		protected void onPreExecute() {
+			mProgressBase = getResources().getString(R.string.update_text);
 			mStatusView.setVisibility(View.VISIBLE);
 		}
 
 		@Override
 		protected Integer doInBackground(Void... _args) {
-			for (int i = 0; i < mTabnames.length; ++i) {
-				String[] p = BoardInfo.parseTabName(mTabnames[i]);
-				int type = Integer.parseInt(p[0]);
-				String name = p[1];
-				String title;
-				if (type > 0 && type < mTypeNames.length) {
-					title = mTypeNames[type] + " ";
-				} else {
-					title = "";
-				}
-				String mapped = mNameMap.get(name);
-				if (mapped != null) {
-					title += mapped;
-				} else {
-					title += name;
-				}
-				mTList.add(new BoardInfo(mTabnames[i], title));
-				// publishProgress(mTList.size());
+			ContentResolver cr = getContentResolver();
+			Cursor c = cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, null,
+					null, null, null);
+			if (c.moveToFirst()) {
+				do {
+					String tabname = c.getString(c.getColumnIndex(
+							KidsBbsProvider.KEYB_TABNAME));
+					String title = c.getString(c.getColumnIndex(
+							KidsBbsProvider.KEYB_TITLE));
+					
+					mTList.add(new BoardInfo(tabname, title));
+					publishProgress(mTList.size());
+				} while (c.moveToNext());
 			}
-			return mTabnames.length;
+			c.close();
+			return mTList.size();
 		}
 
 		@Override
 		protected void onProgressUpdate(Integer... _args) {
-			String text = getResources().getString(R.string.update_text);
-			text += " (" + _args[0] + ")";
-			mStatusView.setText(text);
+			mStatusView.setText(mProgressBase + " (" + _args[0] + ")");
 		}
 
 		@Override
@@ -214,11 +214,10 @@ public class KidsBbs extends ListActivity {
 	private void updateView(ArrayList<BoardInfo> _list) {
 		mList.clear();
 		mList.addAll(_list);
-		((BListAdapter) getListAdapter()).notifyDataSetChanged();
+		((BListAdapter)getListAdapter()).notifyDataSetChanged();
 
 		mStatusView.setVisibility(View.GONE);
-		setTitle(getResources().getString(R.string.title_blist) + " ("
-				+ mList.size() + ")");
+		setTitle(mTitleBase + " (" + mList.size() + ")");
 	}
 
 	private void refreshList() {
@@ -229,7 +228,7 @@ public class KidsBbs extends ListActivity {
 	}
 
 	private void showItem(int _index) {
-		BoardInfo info = (BoardInfo) getListView().getItemAtPosition(_index);
+		BoardInfo info = (BoardInfo)getListView().getItemAtPosition(_index);
 		Uri data = Uri.parse(KidsBbs.URI_INTENT_TLIST +
 				PARAM_N_BOARD + "=" + info.getBoard() +
 				"&" + PARAM_N_TYPE + "=" + info.getType() +
