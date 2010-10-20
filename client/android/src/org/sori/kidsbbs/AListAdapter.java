@@ -58,10 +58,10 @@ public class AListAdapter extends ArrayAdapter<ArticleInfo> {
 		ArticleInfo info = getItem(_position);
 		String title = info.getTitle();
 		String date = info.getDateShortString();
-		String username = info.getUsername();
+		String user = info.getUser();
 		if (info.getCount() > 1) {
 			int cnt = info.getCount() - 1;
-			username += " (+" + cnt + ")";
+			user += " (+" + cnt + ")";
 		}
 		String summary = info.getBody();
 		
@@ -79,7 +79,7 @@ public class AListAdapter extends ArrayAdapter<ArticleInfo> {
 		}
 		holder.title.setText(title);
 		holder.date.setText(date);
-		holder.username.setText(username);
+		holder.username.setText(user);
 		holder.summary.setText(summary);
 		return _convertView;
 	}

@@ -27,6 +27,9 @@ package org.sori.kidsbbs;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -48,17 +51,47 @@ import android.app.Service;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 
 public class KidsBbsService extends Service {
+	public static final String NEW_ARTICLES_FOUND = "NEW_ARTICLES_FOUND";
 	
 	private UpdateTask mLastUpdate = null;
+	private Timer mUpdateTimer;
+	
+	// Update to onStartCommand when min SDK becomes >= 5...
+	@Override
+	public void onStart(Intent _intent, int _startId) {
+    	SharedPreferences prefs =
+    			PreferenceManager.getDefaultSharedPreferences(
+    					getApplicationContext());
+    	int updateFreq = Integer.parseInt(prefs.getString(
+    			Preferences.PREF_UPDATE_FREQ, "0"));
+    	
+    	mUpdateTimer.cancel();
+    	if (updateFreq > 0) {
+    		mUpdateTimer = new Timer("KidsBbsUpdates");
+    		mUpdateTimer.scheduleAtFixedRate(doRefresh, 0, updateFreq*60*1000);
+    	} else {
+    		refreshArticles();
+    	}
+	}
+	
+	private TimerTask doRefresh = new TimerTask() {
+		public void run() {
+			refreshArticles();
+		}
+	};
 	
 	@Override
 	public void onCreate() {
+		mUpdateTimer = new Timer("KidsBbsUpdates");
 	}
 	
 	@Override
@@ -67,130 +100,161 @@ public class KidsBbsService extends Service {
 	}
 	
 	private class UpdateTask extends AsyncTask<String, ArticleInfo, Integer> {
-		private int mTotalCount = 0;
-		
 		@Override
 		protected void onPreExecute() {
 		}
 		
 		@Override
 		protected Integer doInBackground(String... _args) {
-			int result = 0;
+			int total_count = 0;
 			String _urlString = _args[0];
-			String _board = _args[1];
-			String _type = _args[2];
-			String tabname = _type + "_" + _board;
-			HttpClient client = new DefaultHttpClient();
-			HttpGet get = new HttpGet(_urlString);
-			try {
-				HttpResponse response = client.execute(get);
-				HttpEntity entity = response.getEntity();
-				if (entity == null) {
-				} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-					InputStream is = entity.getContent(); 
-					DocumentBuilder db =
-						DocumentBuilderFactory.newInstance().newDocumentBuilder();
+			String _tabname = _args[1];
+			ArrayList<String> tabnames = new ArrayList<String>(); 
 
-					// Parse the board list.
-					Document dom = db.parse(is);
-					Element docEle = dom.getDocumentElement();
-					NodeList nl;
-					Node n;
-	
-					nl = docEle.getElementsByTagName("ITEMS");
-					if (nl == null || nl.getLength() <= 0) {
-						return ErrUtils.ERR_XMLPARSING;
+			// Which boards to update?
+			if (_tabname == null || _tabname == "") {
+				// Get all the boards...
+				final String[] FIELDS = {
+					KidsBbsProvider.KEYB_TABNAME
+				};
+				ContentResolver cr = getContentResolver();
+				Cursor c = cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
+						null, null, null);
+				if (c.moveToFirst()) {
+					do {
+						tabnames.add(c.getString(c.getColumnIndex(
+								KidsBbsProvider.KEYB_TABNAME)));
+					} while (c.moveToNext());
+				}
+				c.close();
+			} else {
+				tabnames.add(_tabname);
+			}
+			
+			final String[] FIELDS = {
+				KidsBbsProvider.KEY_ID,
+				KidsBbsProvider.KEYA_SEQ,
+				KidsBbsProvider.KEYA_USER,
+				KidsBbsProvider.KEYA_DATE,
+				KidsBbsProvider.KEYA_TITLE,
+			};
+			final int ST_DONE = 0;
+			final int ST_INSERT = 1;
+			final int ST_UPDATE = 2;
+
+			// Update each board in the list.
+			ContentResolver cr = getContentResolver();
+			for (int i = 0; i < tabnames.size(); ++i) {
+				String tabname = tabnames.get(i);
+				String[] parsed = BoardInfo.parseTabname(tabname);
+				String board = parsed[1];
+				int type = Integer.parseInt(parsed[0]);
+				int start = 0;
+				Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + tabname);
+				int state = ST_INSERT;
+				while (state != ST_DONE) {
+					ArrayList<ArticleInfo> articles = getArticles(_urlString,
+							board, type, start);
+					if (articles.isEmpty()) {
+						break;
 					}
-					Element items = (Element) nl.item(0);
-	
-					nl = items.getElementsByTagName("TOTALCOUNT");
-					if (nl == null || nl.getLength() <= 0) {
-						return ErrUtils.ERR_XMLPARSING;
-					}
-					n = ((Element) nl.item(0)).getFirstChild();
-					mTotalCount = n != null ?
-							Integer.parseInt(n.getNodeValue()) : 0;
-	
-					// Get a board item
-					nl = items.getElementsByTagName("ITEM");
-					if (nl != null && nl.getLength() > 0) {
-						for (int i = 0; i < nl.getLength(); ++i) {
-							NodeList nl2;
-							Node n2;
-							Element item = (Element) nl.item(i);
-	
-							nl2 = item.getElementsByTagName("THREAD");
-							String thread;
-							if (nl2 == null || nl2.getLength() <= 0) {
-								thread = "";
-							} else {
-								n2 = ((Element) nl2.item(0)).getFirstChild();
-								thread = n2 != null ? n2.getNodeValue() : "";
+					for (int j = 0; j < articles.size(); ++j) {
+						ArticleInfo info = articles.get(j);
+						String where = KidsBbsProvider.KEYA_SEQ + "=" + info.getSeq();
+						
+						ContentValues values = new ContentValues();
+						values.put(KidsBbsProvider.KEYA_SEQ, info.getSeq());
+						values.put(KidsBbsProvider.KEYA_USER, info.getUser());
+						values.put(KidsBbsProvider.KEYA_AUTHOR, info.getAuthor());
+						values.put(KidsBbsProvider.KEYA_DATE, info.getDateString());
+						values.put(KidsBbsProvider.KEYA_TITLE, info.getTitle());
+						values.put(KidsBbsProvider.KEYA_THREAD, info.getThread());
+						values.put(KidsBbsProvider.KEYA_BODY, info.getBody());
+						values.put(KidsBbsProvider.KEYA_READ, info.getRead());
+
+						// Try inserting or updating...
+						boolean result = true;
+						try {
+							switch (state) {
+							case ST_INSERT:
+								cr.insert(uri, values);
+								break;
+							case ST_UPDATE:
+								cr.update(uri, values, where, null);
+								break;
+							default:
+								state = ST_DONE;
+								break;
 							}
-	
-							nl2 = item.getElementsByTagName("COUNT");
-							int cnt;
-							if (nl2 == null || nl2.getLength() <= 0) {
-								cnt = 0;
-							} else {
-								n2 = ((Element) nl2.item(0)).getFirstChild();
-								cnt = n2 != null ?
-										Integer.parseInt(n2.getNodeValue()) : 0;
+						} catch (NullPointerException e) {
+							result = false;
+						} catch (SQLException e) {
+							result = false;
+						} finally {
+						}
+						
+						if (result) {
+							++total_count;
+						} else {
+							// It didn't work...
+							switch (state) {
+							case ST_INSERT:
+								Cursor c = cr.query(uri, FIELDS, where, null,
+										null);
+								if (c == null || c.getCount() != 1) {
+									if (c != null) {
+										c.close();
+									}
+									state = ST_DONE;
+								} else {
+									// Get the existing article information out.
+									int seq = c.getInt(c.getColumnIndex(
+											KidsBbsProvider.KEYA_SEQ));
+									String user = c.getString(c.getColumnIndex(
+											KidsBbsProvider.KEYA_USER));
+									String date = c.getString(c.getColumnIndex(
+											KidsBbsProvider.KEYA_DATE));
+									String title = c.getString(c.getColumnIndex(
+											KidsBbsProvider.KEYA_TITLE));
+									c.close();
+
+									if (info.getUser() != user ||
+											!(info.getDateString() == ArticleInfo.DATE_INVALID ||
+													info.getDateString() == date) ||
+											info.getTitle() != title) {
+										state = ST_UPDATE;
+										result = true;
+										try {
+											cr.update(uri, values, where, null);
+										} catch (NullPointerException e) {
+											result = false;
+										} catch (SQLException e) {
+											result = false;
+										} finally {
+										}
+										if (!result) {
+											// Still didn't work...
+											state = ST_DONE;
+										}
+									} else {
+										// It's the same, so stop.
+										state = ST_DONE;
+									}
+								}
+								break;
+							case ST_UPDATE:
+								// TODO: Compare...
+								state = ST_DONE;
+								break;
+							default:
+								break;
 							}
-	
-							nl2 = item.getElementsByTagName("TITLE");
-							if (nl2 == null || nl2.getLength() <= 0) {
-								return ErrUtils.ERR_XMLPARSING;
-							}
-							n2 = ((Element) nl2.item(0)).getFirstChild();
-							String title = n2 != null ? n2.getNodeValue() : "";
-	
-							nl2 = item.getElementsByTagName("SEQ");
-							if (nl2 == null || nl2.getLength() <= 0) {
-								return ErrUtils.ERR_XMLPARSING;
-							}
-							n2 = ((Element) nl2.item(0)).getFirstChild();
-							int seq = n2 != null ? Integer.parseInt(n2
-									.getNodeValue()) : 0;
-	
-							nl2 = item.getElementsByTagName("DATE");
-							if (nl2 == null || nl2.getLength() <= 0) {
-								return ErrUtils.ERR_XMLPARSING;
-							}
-							n2 = ((Element) nl2.item(0)).getFirstChild();
-							String date = n2 != null ? n2.getNodeValue() : "";
-	
-							nl2 = item.getElementsByTagName("AUTHOR");
-							if (nl2 == null || nl2.getLength() <= 0) {
-								return ErrUtils.ERR_XMLPARSING;
-							}
-							n2 = ((Element) nl2.item(0)).getFirstChild();
-							String user = n2 != null ? n2.getNodeValue() : "";
-	
-							nl2 = item.getElementsByTagName("DESCRIPTION");
-							if (nl2 == null || nl2.getLength() <= 0) {
-								return ErrUtils.ERR_XMLPARSING;
-							}
-							n2 = ((Element) nl2.item(0)).getFirstChild();
-							String desc = n2 != null ? n2.getNodeValue() : "";
-	
-							ArticleInfo info = new ArticleInfo(seq, user, date, title,
-									thread, desc, cnt, false);
-							addArticle(tabname, info);
-							publishProgress(info);
-							++result;
 						}
 					}
-				}
-			} catch (IOException e) {
-				result = ErrUtils.ERR_IO;
-			} catch (ParserConfigurationException e) {
-				result = ErrUtils.ERR_PARSER;
-			} catch (SAXException e) {
-				result = ErrUtils.ERR_SAX;
-			} finally {
+					start += articles.size();
+				};
 			}
-			return result;
+			return total_count;
 		}
 		
 		@Override
@@ -199,54 +263,160 @@ public class KidsBbsService extends Service {
 		
 		@Override
 		protected void onPostExecute(Integer _result) {
-			stopSelf();
 		}
 	}
 	
-	private static final String[] FIELDS1 = {
-		KidsBbsProvider.KEY_ID,
-		KidsBbsProvider.KEYA_SEQ,
-		KidsBbsProvider.KEYA_AUTHOR,
-		KidsBbsProvider.KEYA_DATE,
-		KidsBbsProvider.KEYA_TITLE,
-	};
-	
-	private boolean addArticle(String _tabname, ArticleInfo _info) {
-		boolean result = true;
-		Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
-		ContentResolver cr = getContentResolver();
-		String where = KidsBbsProvider.KEYA_SEQ + "=" + _info.getSeq();
-		Cursor c = cr.query(uri, FIELDS1, where, null, null);
-		if (c.getCount() == 0) {
-			ContentValues values = new ContentValues();
-			values.put(KidsBbsProvider.KEYA_SEQ, _info.getSeq());
-			values.put(KidsBbsProvider.KEYA_AUTHOR, _info.getUsername());
-			values.put(KidsBbsProvider.KEYA_DATE, _info.getDateString());
-			values.put(KidsBbsProvider.KEYA_TITLE, _info.getTitle());
-			values.put(KidsBbsProvider.KEYA_THREAD, _info.getThread());
-			values.put(KidsBbsProvider.KEYA_BODY, _info.getBody());
-			values.put(KidsBbsProvider.KEYA_READ, _info.getRead());
-			cr.insert(uri, values);
-		} else {
-			result = false;
-		}
-		c.close();
-		return result;
+	private void announceNewArticle(String _tabname, ArticleInfo _info) {
+		Intent intent = new Intent(NEW_ARTICLES_FOUND);
+		intent.putExtra(KidsBbsProvider.KEYB_TABNAME, _tabname);
+		intent.putExtra(KidsBbsProvider.KEYA_AUTHOR, _info.getAuthor());
+		intent.putExtra(KidsBbsProvider.KEYA_DATE, _info.getDateString());
+		intent.putExtra(KidsBbsProvider.KEYA_TITLE, _info.getTitle());
+		sendBroadcast(intent);
 	}
 	
-	private void refreshArticles(String _board, int _type, int _start) {
+	private void refreshArticles() {
 		if (mLastUpdate == null ||
 				mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED)) {
 			mLastUpdate = new UpdateTask();
-			mLastUpdate.execute(KidsBbs.URL_LIST +
-					KidsBbs.PARAM_N_BOARD + "=" + _board +
-					"&" + KidsBbs.PARAM_N_TYPE + "=" + _type +
-					"&" + KidsBbs.PARAM_N_START + "=" + _start,
-					_board, Integer.toString(_type));
+			mLastUpdate.execute(KidsBbs.URL_LIST, null);
 		}
 	}
 	
-	private void refreshBoards() {
-		
+	private ArrayList<ArticleInfo> getArticles(String _base, String _board, int _type,
+			int _start) {
+		ArrayList<ArticleInfo> articles = new ArrayList<ArticleInfo>();
+		String urlString = _base +
+				KidsBbs.PARAM_N_BOARD + "=" + _board +
+				"&" + KidsBbs.PARAM_N_TYPE + "=" + _type +
+				"&" + KidsBbs.PARAM_N_START + "=" + _start;
+		HttpClient client = new DefaultHttpClient();
+		HttpGet get = new HttpGet(urlString);
+		try {
+			HttpResponse response = client.execute(get);
+			HttpEntity entity = response.getEntity();
+			if (entity == null) {
+				// ???
+			} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+				InputStream is = entity.getContent(); 
+				DocumentBuilder db =
+					DocumentBuilderFactory.newInstance().newDocumentBuilder();
+
+				// Parse the board list.
+				Document dom = db.parse(is);
+				Element docEle = dom.getDocumentElement();
+				NodeList nl;
+
+				nl = docEle.getElementsByTagName("ITEMS");
+				if (nl == null || nl.getLength() <= 0) {
+					throw new ParserConfigurationException(
+							"XMLParser failed: ITEMS");
+				}
+				Element items = (Element)nl.item(0);
+
+				// Get a board item
+				nl = items.getElementsByTagName("ITEM");
+				if (nl != null && nl.getLength() > 0) {
+					for (int i = 0; i < nl.getLength(); ++i) {
+						NodeList nl2;
+						Node n2;
+						Element item = (Element)nl.item(i);
+
+						nl2 = item.getElementsByTagName("THREAD");
+						String thread;
+						if (nl2 == null || nl2.getLength() <= 0) {
+							throw new ParserConfigurationException(
+									"XMLParser failed: THREAD");
+						}
+						n2 = ((Element)nl2.item(0)).getFirstChild();
+						if (n2 == null) {
+							throw new ParserConfigurationException(
+									"XMLParser failed: THREAD");
+						}
+						thread = n2.getNodeValue();
+
+						nl2 = item.getElementsByTagName("TITLE");
+						if (nl2 == null || nl2.getLength() <= 0) {
+							throw new ParserConfigurationException(
+									"XMLParser failed: TITLE");
+						}
+						n2 = ((Element)nl2.item(0)).getFirstChild();
+						if (n2 == null) {
+							throw new ParserConfigurationException(
+									"XMLParser failed: TITLE");
+						}
+						String title = n2.getNodeValue();
+
+						nl2 = item.getElementsByTagName("SEQ");
+						if (nl2 == null || nl2.getLength() <= 0) {
+							throw new ParserConfigurationException(
+									"XMLParser failed: SEQ");
+						}
+						n2 = ((Element)nl2.item(0)).getFirstChild();
+						if (n2 == null) {
+							throw new ParserConfigurationException(
+									"XMLParser failed: SEQ");
+						}
+						int seq = Integer.parseInt(n2.getNodeValue());
+
+						nl2 = item.getElementsByTagName("DATE");
+						if (nl2 == null || nl2.getLength() <= 0) {
+							throw new ParserConfigurationException(
+									"XMLParser failed: DATE");
+						}
+						n2 = ((Element)nl2.item(0)).getFirstChild();
+						if (n2 == null) {
+							throw new ParserConfigurationException(
+									"XMLParser failed: DATE");
+						}
+						String date = n2.getNodeValue();
+
+						nl2 = item.getElementsByTagName("USER");
+						if (nl2 == null || nl2.getLength() <= 0) {
+							throw new ParserConfigurationException(
+									"XMLParser failed: USER");
+						}
+						n2 = ((Element)nl2.item(0)).getFirstChild();
+						if (n2 == null) {
+							throw new ParserConfigurationException(
+									"XMLParser failed: USER");
+						}
+						String user = n2.getNodeValue();
+
+						nl2 = item.getElementsByTagName("AUTHOR");
+						if (nl2 == null || nl2.getLength() <= 0) {
+							throw new ParserConfigurationException(
+									"XMLParser failed: AUTHOR");
+						}
+						n2 = ((Element)nl2.item(0)).getFirstChild();
+						if (n2 == null) {
+							throw new ParserConfigurationException(
+									"XMLParser failed: AUTHOR");
+						}
+						String author = n2.getNodeValue();
+
+						nl2 = item.getElementsByTagName("DESCRIPTION");
+						if (nl2 == null || nl2.getLength() <= 0) {
+							throw new ParserConfigurationException(
+									"XMLParser failed: DESCRIPTION");
+						}
+						n2 = ((Element)nl2.item(0)).getFirstChild();
+						if (n2 == null) {
+							throw new ParserConfigurationException(
+									"XMLParser failed: DESCRIPTION");
+						}
+						String desc = n2.getNodeValue();
+
+						articles.add(new ArticleInfo(seq, user, author, date,
+								title, thread, desc, 1, false));
+					}
+				}
+			}
+		} catch (IOException e) {
+		} catch (ParserConfigurationException e) {
+		} catch (SAXException e) {
+		} finally {
+		}
+		return articles;
 	}
 }
