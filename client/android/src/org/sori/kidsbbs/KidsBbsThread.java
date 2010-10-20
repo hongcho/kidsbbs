@@ -27,14 +27,10 @@ package org.sori.kidsbbs;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 
 public class KidsBbsThread extends KidsBbsAList {
-	private int mUpdateFreq = 0;
-	
 	private String mBoardThread;
 	
     @Override
@@ -75,9 +71,6 @@ public class KidsBbsThread extends KidsBbsAList {
     }
     
     private void updateFromPreferences() {
-    	SharedPreferences prefs =
-    		PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-    	mUpdateFreq = Integer.parseInt(prefs.getString(Preferences.PREF_UPDATE_FREQ, "0"));
     }
     
     @Override

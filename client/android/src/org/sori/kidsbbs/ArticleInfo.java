@@ -30,12 +30,10 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class ArticleInfo {
+	public static final String DATE_INVALID = "0000-00-00 00:00:00";
 	private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
-	private static final String DATE_INVALID = "0000-00-00 00:00:00";
 	private static final String DATESHORT_INVALID = "0000-00-00";
 
 	private static final DateFormat mTimeFormat =
@@ -45,19 +43,9 @@ public class ArticleInfo {
 	private static final DateFormat mFullFormat =
 		DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
 
-	private static final Pattern[] PATTERNS_HTML = {
-		Pattern.compile("<br/>"),
-		Pattern.compile("&nbsp;"),
-		Pattern.compile("&lt;"),
-	};
-	private static final String[] REPLACE_STRINGS = {
-		"\n",
-		" ",
-		"<",
-	};
-
 	private int mSeq;
-	private String mUsername;
+	private String mAuthor;
+	private String mUser;
 	private String mTitle;
 	private String mThread;
 	private String mBody;
@@ -67,7 +55,8 @@ public class ArticleInfo {
 	private boolean mRead;
 
 	public final int getSeq() { return mSeq; }
-	public final String getUsername() { return mUsername; }
+	public final String getAuthor() { return mAuthor; }
+	public final String getUser() { return mUser; } 
 	public final String getTitle() { return mTitle; }
 	public final String getThread() { return mThread; }
 	public final String getBody() { return mBody; }
@@ -77,11 +66,12 @@ public class ArticleInfo {
 	public final boolean getRead() { return mRead; }
 	public final void setRead(boolean _read) { mRead = _read; }
 
-	public ArticleInfo(int _seq, String _username, String _dateString,
-			String _title, String _thread, String _body, int _count,
-			boolean _read) {
+	public ArticleInfo(int _seq, String _user, String _author,
+			String _dateString, String _title, String _thread, String _body,
+			int _count, boolean _read) {
 		mSeq = _seq;
-		mUsername = _username;
+		mUser = _user;
+		mAuthor = _author;
 		mTitle = _title;
 		mThread = _thread;
 		mCount = _count;
@@ -115,18 +105,11 @@ public class ArticleInfo {
 			}
 		}
 
-		if (false) {
-		// Convert some HTML sequences...
-		for (int i = 0; i < PATTERNS_HTML.length; ++i) {
-			Matcher m = PATTERNS_HTML[i].matcher(_body);
-			_body = m.replaceAll(REPLACE_STRINGS[i]);
-		}
-		}
 		mBody = _body;
 	}
 
 	@Override
 	public String toString() {
-		return mTitle + " " + mUsername + " " + mBody;
+		return mTitle + " " + mAuthor + " " + mBody;
 	}
 }

@@ -117,7 +117,7 @@ public abstract class KidsBbsAList extends ListActivity implements
 		mBoardType = data.getQueryParameter(KidsBbs.PARAM_N_TYPE);
 		mBoardTitle = data.getQueryParameter(KidsBbs.PARAM_N_TITLE);
 
-		mStatusView = (TextView) findViewById(R.id.status);
+		mStatusView = (TextView)findViewById(R.id.status);
 		mStatusView.setVisibility(View.GONE);
 
 		setListAdapter(new AListAdapter(this, R.layout.article_info_item, mList));
@@ -229,13 +229,13 @@ public abstract class KidsBbsAList extends ListActivity implements
 					if (nl == null || nl.getLength() <= 0) {
 						return ErrUtils.ERR_XMLPARSING;
 					}
-					Element items = (Element) nl.item(0);
+					Element items = (Element)nl.item(0);
 
 					nl = items.getElementsByTagName("TOTALCOUNT");
 					if (nl == null || nl.getLength() <= 0) {
 						return ErrUtils.ERR_XMLPARSING;
 					}
-					n = ((Element) nl.item(0)).getFirstChild();
+					n = ((Element)nl.item(0)).getFirstChild();
 					mTotalCount = n != null ?
 							Integer.parseInt(n.getNodeValue()) : 0;
 
@@ -245,64 +245,78 @@ public abstract class KidsBbsAList extends ListActivity implements
 						for (int i = 0; i < nl.getLength(); ++i) {
 							NodeList nl2;
 							Node n2;
-							Element item = (Element) nl.item(i);
+							Element item = (Element)nl.item(i);
 
 							nl2 = item.getElementsByTagName("THREAD");
 							String thread;
 							if (nl2 == null || nl2.getLength() <= 0) {
 								thread = "";
 							} else {
-								n2 = ((Element) nl2.item(0)).getFirstChild();
-								thread = n2 != null ? n2.getNodeValue() : "";
+								n2 = ((Element)nl2.item(0)).getFirstChild();
+								if (n2 == null) {
+									return ErrUtils.ERR_XMLPARSING;
+								}
+								thread = n2.getNodeValue();
 							}
 
 							nl2 = item.getElementsByTagName("COUNT");
 							int cnt;
 							if (nl2 == null || nl2.getLength() <= 0) {
-								cnt = 0;
+								cnt = 1;
 							} else {
-								n2 = ((Element) nl2.item(0)).getFirstChild();
+								n2 = ((Element)nl2.item(0)).getFirstChild();
 								cnt = n2 != null ?
-										Integer.parseInt(n2.getNodeValue()) : 0;
+										Integer.parseInt(n2.getNodeValue()) : 1;
 							}
 
 							nl2 = item.getElementsByTagName("TITLE");
 							if (nl2 == null || nl2.getLength() <= 0) {
 								return ErrUtils.ERR_XMLPARSING;
 							}
-							n2 = ((Element) nl2.item(0)).getFirstChild();
+							n2 = ((Element)nl2.item(0)).getFirstChild();
 							String title = n2 != null ? n2.getNodeValue() : "";
 
 							nl2 = item.getElementsByTagName("SEQ");
 							if (nl2 == null || nl2.getLength() <= 0) {
 								return ErrUtils.ERR_XMLPARSING;
 							}
-							n2 = ((Element) nl2.item(0)).getFirstChild();
-							int seq = n2 != null ? Integer.parseInt(n2
-									.getNodeValue()) : 0;
+							n2 = ((Element)nl2.item(0)).getFirstChild();
+							if (n2 == null) {
+								return ErrUtils.ERR_XMLPARSING;
+							}
+							int seq = Integer.parseInt(n2.getNodeValue());
 
 							nl2 = item.getElementsByTagName("DATE");
 							if (nl2 == null || nl2.getLength() <= 0) {
 								return ErrUtils.ERR_XMLPARSING;
 							}
-							n2 = ((Element) nl2.item(0)).getFirstChild();
-							String date = n2 != null ? n2.getNodeValue() : "";
+							n2 = ((Element)nl2.item(0)).getFirstChild();
+							if (n2 == null) {
+								return ErrUtils.ERR_XMLPARSING;
+							}
+							String date = n2.getNodeValue();
 
 							nl2 = item.getElementsByTagName("USER");
 							if (nl2 == null || nl2.getLength() <= 0) {
 								return ErrUtils.ERR_XMLPARSING;
 							}
-							n2 = ((Element) nl2.item(0)).getFirstChild();
-							String user = n2 != null ? n2.getNodeValue() : "";
+							n2 = ((Element)nl2.item(0)).getFirstChild();
+							if (n2 == null) {
+								return ErrUtils.ERR_XMLPARSING;
+							}
+							String user = n2.getNodeValue();
 
 							nl2 = item.getElementsByTagName("DESCRIPTION");
 							if (nl2 == null || nl2.getLength() <= 0) {
 								return ErrUtils.ERR_XMLPARSING;
 							}
-							n2 = ((Element) nl2.item(0)).getFirstChild();
-							String desc = n2 != null ? n2.getNodeValue() : "";
+							n2 = ((Element)nl2.item(0)).getFirstChild();
+							if (n2 == null) {
+								return ErrUtils.ERR_XMLPARSING;
+							}
+							String desc = n2.getNodeValue();
 
-							mTList.add(new ArticleInfo(seq, user, date, title,
+							mTList.add(new ArticleInfo(seq, user, null, date, title,
 									thread, desc, cnt, false));
 							publishProgress(mStart + mTList.size());
 						}
@@ -424,7 +438,7 @@ public abstract class KidsBbsAList extends ListActivity implements
 	}
 
 	protected final void initializeStates() {
-		SavedStates save = (SavedStates) getLastNonConfigurationInstance();
+		SavedStates save = (SavedStates)getLastNonConfigurationInstance();
 		if (save == null) {
 			refreshList();
 		} else {

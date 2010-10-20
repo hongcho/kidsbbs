@@ -46,11 +46,9 @@ import org.xml.sax.SAXException;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -70,15 +68,12 @@ public class KidsBbsView extends Activity {
 
 	private UpdateTask mLastUpdate = null;
 
-	private int mUpdateFreq = 0;
-
 	private ErrUtils mErrUtils;
 
 	private String mBoardTitle;
 	private String mBoardName;
 	private String mBoardType;
 	private String mBoardSeq;
-	private String mBoardUser;
 
 	private ArticleInfo mInfo = null;
 
@@ -96,13 +91,13 @@ public class KidsBbsView extends Activity {
 		mBoardSeq = data.getQueryParameter(KidsBbs.PARAM_N_SEQ);
 		setTitle(mBoardSeq + " in [" + mBoardTitle + "]");
 
-		mStatusView = (TextView) findViewById(R.id.status);
+		mStatusView = (TextView)findViewById(R.id.status);
 		mStatusView.setVisibility(View.GONE);
 
-		mTitleView = (TextView) findViewById(R.id.title);
-		mUserView = (TextView) findViewById(R.id.username);
-		mDateView = (TextView) findViewById(R.id.date);
-		mBodyView = (TextView) findViewById(R.id.body);
+		mTitleView = (TextView)findViewById(R.id.title);
+		mUserView = (TextView)findViewById(R.id.username);
+		mDateView = (TextView)findViewById(R.id.date);
+		mBodyView = (TextView)findViewById(R.id.body);
 
 		mTitleView.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
@@ -156,7 +151,6 @@ public class KidsBbsView extends Activity {
 	}
 
 	private class UpdateTask extends AsyncTask<String, String, Integer> {
-		private String mTUser;
 		private ArticleInfo mTInfo;
 
 		@Override
@@ -187,60 +181,71 @@ public class KidsBbsView extends Activity {
 					if (nl != null && nl.getLength() > 0) {
 						NodeList nl2;
 						Node n2;
-						Element item = (Element) nl.item(0);
+						Element item = (Element)nl.item(0);
 
 						nl2 = item.getElementsByTagName("THREAD");
 						if (nl2 == null || nl2.getLength() <= 0) {
 							return ErrUtils.ERR_XMLPARSING;
 						}
-						n2 = ((Element) nl2.item(0)).getFirstChild();
+						n2 = ((Element)nl2.item(0)).getFirstChild();
 						String thread = n2 != null ? n2.getNodeValue() : "";
 
 						nl2 = item.getElementsByTagName("TITLE");
 						if (nl2 == null || nl2.getLength() <= 0) {
 							return ErrUtils.ERR_XMLPARSING;
 						}
-						n2 = ((Element) nl2.item(0)).getFirstChild();
-						String title = n2 != null ? n2.getNodeValue() : "";
+						n2 = ((Element)nl2.item(0)).getFirstChild();
+						if (n2 == null) {
+							return ErrUtils.ERR_XMLPARSING;
+						}
+						String title = n2.getNodeValue();
 
 						nl2 = item.getElementsByTagName("SEQ");
 						if (nl2 == null || nl2.getLength() <= 0) {
 							return ErrUtils.ERR_XMLPARSING;
 						}
-						n2 = ((Element) nl2.item(0)).getFirstChild();
-						int seq = n2 != null ?
-								Integer.parseInt(n2.getNodeValue()) : 0;
+						n2 = ((Element)nl2.item(0)).getFirstChild();
+						if (n2 == null) {
+							return ErrUtils.ERR_XMLPARSING;
+						}
+						int seq = Integer.parseInt(n2.getNodeValue());
 
 						nl2 = item.getElementsByTagName("DATE");
 						if (nl2 == null || nl2.getLength() <= 0) {
 							return ErrUtils.ERR_XMLPARSING;
 						}
-						n2 = ((Element) nl2.item(0)).getFirstChild();
-						String date = n2 != null ? n2.getNodeValue() : "";
+						n2 = ((Element)nl2.item(0)).getFirstChild();
+						if (n2 == null) {
+							return ErrUtils.ERR_XMLPARSING;
+						}
+						String date = n2.getNodeValue();
 
 						nl2 = item.getElementsByTagName("USER");
 						if (nl2 == null || nl2.getLength() <= 0) {
 							return ErrUtils.ERR_XMLPARSING;
 						}
-						n2 = ((Element) nl2.item(0)).getFirstChild();
-						mTUser = n2 != null ? n2.getNodeValue() : "";
+						n2 = ((Element)nl2.item(0)).getFirstChild();
+						if (n2 == null) {
+							return ErrUtils.ERR_XMLPARSING;
+						}
+						String user = n2.getNodeValue();
 
 						nl2 = item.getElementsByTagName("AUTHOR");
 						if (nl2 == null || nl2.getLength() <= 0) {
 							return ErrUtils.ERR_XMLPARSING;
 						}
-						n2 = ((Element) nl2.item(0)).getFirstChild();
+						n2 = ((Element)nl2.item(0)).getFirstChild();
 						String author = n2 != null ? n2.getNodeValue() : "";
 
 						nl2 = item.getElementsByTagName("DESCRIPTION");
 						if (nl2 == null || nl2.getLength() <= 0) {
 							return ErrUtils.ERR_XMLPARSING;
 						}
-						n2 = ((Element) nl2.item(0)).getFirstChild();
+						n2 = ((Element)nl2.item(0)).getFirstChild();
 						String desc = n2 != null ? n2.getNodeValue() : "";
 
-						mTInfo = new ArticleInfo(seq, author, date, title,
-								thread, desc, 1, false);
+						mTInfo = new ArticleInfo(seq, user, author, date,
+								title, thread, desc, 1, false);
 					}
 				}
 			} catch (IOException e) {
@@ -257,7 +262,6 @@ public class KidsBbsView extends Activity {
 		@Override
 		protected void onPostExecute(Integer _result) {
 			if (_result >= 0) {
-				mBoardUser = mTUser;
 				mInfo = mTInfo;
 				updateView();
 			} else {
@@ -269,7 +273,7 @@ public class KidsBbsView extends Activity {
 	private void updateView() {
 		mStatusView.setVisibility(View.GONE);
 		mTitleView.setText(mInfo.getTitle());
-		mUserView.setText(mInfo.getUsername());
+		mUserView.setText(mInfo.getAuthor());
 		mDateView.setText(mInfo.getDateString());
 		mBodyView.setText(mInfo.getBody());
 	}
@@ -300,12 +304,12 @@ public class KidsBbsView extends Activity {
 	}
 
 	private void startUserView() {
-		if (mBoardUser != null) {
+		if (mInfo != null) {
 			Uri data = Uri.parse(KidsBbs.URI_INTENT_USER
 					+ KidsBbs.PARAM_N_BOARD + "=" + mBoardName +
 					"&" + KidsBbs.PARAM_N_TYPE + "=" + mBoardType +
 					"&" + KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle +
-					"&" + KidsBbs.PARAM_N_USER + "=" + mBoardUser);
+					"&" + KidsBbs.PARAM_N_USER + "=" + mInfo.getUser());
 			Intent i = new Intent(this, KidsBbsUser.class);
 			i.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
 			i.setAction(Intent.ACTION_VIEW);
@@ -315,10 +319,6 @@ public class KidsBbsView extends Activity {
 	}
 
 	private void updateFromPreferences() {
-		SharedPreferences prefs = PreferenceManager
-				.getDefaultSharedPreferences(getApplicationContext());
-		mUpdateFreq = Integer.parseInt(
-				prefs.getString(Preferences.PREF_UPDATE_FREQ, "0"));
 	}
 
 	@Override
@@ -334,16 +334,12 @@ public class KidsBbsView extends Activity {
 
 	private class SavedStates {
 		ArticleInfo info;
-		String user;
-		int updateFreq;
 	}
 
 	// Saving state for rotation changes...
 	public Object onRetainNonConfigurationInstance() {
 		SavedStates save = new SavedStates();
 		save.info = mInfo;
-		save.user = mBoardUser;
-		save.updateFreq = mUpdateFreq;
 		return save;
 	}
 
@@ -354,8 +350,6 @@ public class KidsBbsView extends Activity {
 			refreshView();
 		} else {
 			mInfo = save.info;
-			mBoardUser = save.user;
-			mUpdateFreq = save.updateFreq;
 			updateView();
 		}
 	}

@@ -26,21 +26,31 @@
 package org.sori.kidsbbs;
 
 public class BoardInfo {
-	private String mTabName;
+	private String mTabname;
 	private String mTitle;
 	private int mType;
 	private String mBoard;
 	
-	public String getTabName() { return mTabName; }
+	public String getTabname() { return mTabname; }
 	public String getTitle() { return mTitle; }
 	public int getType() { return mType; }
 	public String getBoard() { return mBoard; }
 	
-	public BoardInfo(String _tabName, String _title) {
-		mTabName = _tabName;
+	public static final String buildTabname(String _board, int _type) {
+		return "b" + _type + "_" + _board;
+	}
+	
+	public static final String[] parseTabname(String _tabname) {
+		String[] parsed = _tabname.split("_");
+		parsed[0] = parsed[0].substring(1);
+		return parsed;
+	}
+	
+	public BoardInfo(String _tabname, String _title) {
+		mTabname = _tabname;
 		mTitle = _title;
 
-		String[] parsed = parseTabName(mTabName);
+		String[] parsed = parseTabname(mTabname);
 		mType = Integer.parseInt(parsed[0]);
 		mBoard = parsed[1];
 	}
@@ -48,11 +58,5 @@ public class BoardInfo {
 	@Override
 	public String toString() {
 		return mTitle;
-	}
-	
-	public static String[] parseTabName(String _tabName) {
-		String[] parsed = _tabName.split("_");
-		parsed[0] = parsed[0].substring(1);
-		return parsed;
 	}
 }

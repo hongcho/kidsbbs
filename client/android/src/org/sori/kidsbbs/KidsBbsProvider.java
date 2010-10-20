@@ -335,7 +335,7 @@ public class KidsBbsProvider extends ContentProvider {
 		return Uri.parse(uriString);
 	}
 	
-	private static final String getThreadedTabName(String _tabname) {
+	private static final String getThreadedTabname(String _tabname) {
 		return _tabname + "_threaded";
 	}
 
@@ -347,21 +347,18 @@ public class KidsBbsProvider extends ContentProvider {
 	// Board table
 	public static final String KEYB_TABNAME = "tabname";
 	private static final String KEYB_TABNAME_DEF =
-			KEYB_TABNAME + " CHAR(36) NOT NULL";
+			KEYB_TABNAME + " CHAR(36) NOT NULL UNIQUE";
 	public static final String KEYB_TITLE = "title";
 	private static final String KEYB_TITLE_DEF =
 			KEYB_TITLE + " VARCHAR(40) NOT NULL";
-	public static final String KEYB_LASTTIME = "lasttime";
-	private static final String KEYB_LASTTIME_DEF =
-			KEYB_LASTTIME + " DATETIME";
-	public static final String KEYB_NEWCOUNT = "newcount";
-	private static final String KEYB_NEWCOUNT_DEF =
-			KEYB_NEWCOUNT + " INTEGER DEFAULT 0";
 
 	// Article table
 	public static final String KEYA_SEQ = "seq";
 	private static final String KEYA_SEQ_DEF =
-			KEYA_SEQ + " INTEGER NOT NULL";
+			KEYA_SEQ + " INTEGER NOT NULL UNIQUE";
+	public static final String KEYA_USER = "user";
+	private static final String KEYA_USER_DEF =
+			KEYA_USER + " CHAR(12) NOT NULL";
 	public static final String KEYA_AUTHOR = "author";
 	private static final String KEYA_AUTHOR_DEF =
 			KEYA_AUTHOR + " VARCHAR(40) NOT NULL";
@@ -424,7 +421,7 @@ public class KidsBbsProvider extends ContentProvider {
 			
 			// Populate...
 			for (int i = 0; i < mTabnames.length; ++i) {
-				String[] p = BoardInfo.parseTabName(mTabnames[i]);
+				String[] p = BoardInfo.parseTabname(mTabnames[i]);
 				int type = Integer.parseInt(p[0]);
 				String name = p[1];
 				String title;
@@ -465,24 +462,20 @@ public class KidsBbsProvider extends ContentProvider {
 		
 		private void addBoard(SQLiteDatabase _db, BoardInfo _info) {
 			ContentValues values = new ContentValues();
-			values.put(KEYB_TABNAME, _info.getTabName());
+			values.put(KEYB_TABNAME, _info.getTabname());
 			values.put(KEYB_TITLE, _info.getTitle());
-			values.put(KEYB_LASTTIME, "0000-00-00 00:00:00");
-			values.put(KEYB_NEWCOUNT, "0");
 			if (_db.insert(DB_TABLE, null, values) < 0) {
 				throw new SQLException(
 						"addBoard: Failed to insert row into " + DB_TABLE);
 			}
-			createArticleTable(_db, _info.getTabName());
+			createArticleTable(_db, _info.getTabname());
 		}
 		
 		private void createMainTable(SQLiteDatabase _db) {
 			_db.execSQL("CREATE TABLE " + DB_TABLE + " (" +
 					KEY_ID_DEF + "," +
 					KEYB_TABNAME_DEF + "," +
-					KEYB_TITLE_DEF + "," +
-					KEYB_LASTTIME_DEF + "," +
-					KEYB_NEWCOUNT_DEF + ");");
+					KEYB_TITLE_DEF + ");");
 		}
 		
 		private void dropMainTable(SQLiteDatabase _db) {
@@ -493,27 +486,28 @@ public class KidsBbsProvider extends ContentProvider {
 			_db.execSQL("CREATE TABLE " + _tabname + " (" +
 					KEY_ID_DEF + "," +
 					KEYA_SEQ_DEF + "," +
+					KEYA_USER_DEF + "," +
 					KEYA_AUTHOR_DEF + "," +
 					KEYA_DATE_DEF + "," +
 					KEYA_TITLE_DEF + "," +
 					KEYA_THREAD_DEF + "," +
 					KEYA_BODY_DEF + "," +
 					KEYA_READ_DEF + ");");
-			_db.execSQL("CREATE TABLE " + getThreadedTabName(_tabname) + " (" +
-					KEY_ID_DEF + "," +
-					KEYA_SEQ_DEF + "," +
-					KEYA_AUTHOR_DEF + "," +
-					KEYA_DATE_DEF + "," +
-					KEYA_TITLE_DEF + "," +
-					KEYA_THREAD_DEF + "," +
-					KEYA_BODY_DEF + "," +
-					KEYT_COUNT_DEF + ");");
+			//_db.execSQL("CREATE TABLE " + getThreadedTabname(_tabname) + " (" +
+			//		KEY_ID_DEF + "," +
+			//		KEYA_SEQ_DEF + "," +
+			//		KEYA_AUTHOR_DEF + "," +
+			//		KEYA_DATE_DEF + "," +
+			//		KEYA_TITLE_DEF + "," +
+			//		KEYA_THREAD_DEF + "," +
+			//		KEYA_BODY_DEF + "," +
+			//		KEYT_COUNT_DEF + ");");
 		}
 		
 		private void dropArticleTable(SQLiteDatabase _db, String _tabname) {
 			_db.execSQL("DROP TABLE IF EXISTS " + _tabname);
-			_db.execSQL("DROP TABLE IF EXISTS " +
-					getThreadedTabName(_tabname));
+			//_db.execSQL("DROP TABLE IF EXISTS " +
+			//		getThreadedTabname(_tabname));
 		}
 	}
 }

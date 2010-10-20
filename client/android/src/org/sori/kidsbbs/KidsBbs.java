@@ -31,12 +31,10 @@ import android.app.Activity;
 import android.app.ListActivity;
 import android.content.ContentResolver;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -84,15 +82,13 @@ public class KidsBbs extends ListActivity {
 
 	private UpdateTask mLastUpdate = null;
 
-	private int mUpdateFreq = 0;
-
 	@Override
 	public void onCreate(Bundle _state) {
 		super.onCreate(_state);
 		setContentView(R.layout.board_list);
 
 		mTitleBase = getResources().getString(R.string.title_blist);
-		mStatusView = (TextView) findViewById(R.id.status);
+		mStatusView = (TextView)findViewById(R.id.status);
 
 		setListAdapter(new BListAdapter(this, R.layout.board_info_item,
 				mList));
@@ -171,6 +167,11 @@ public class KidsBbs extends ListActivity {
 	}
 
 	private class UpdateTask extends AsyncTask<Void, Integer, Integer> {
+		private String[] FIELDS = {
+			KidsBbsProvider.KEYB_TABNAME,
+			KidsBbsProvider.KEYB_TITLE,
+		};
+		
 		private ArrayList<BoardInfo> mTList = new ArrayList<BoardInfo>();
 		private String mProgressBase;
 
@@ -183,7 +184,7 @@ public class KidsBbs extends ListActivity {
 		@Override
 		protected Integer doInBackground(Void... _args) {
 			ContentResolver cr = getContentResolver();
-			Cursor c = cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, null,
+			Cursor c = cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
 					null, null, null);
 			if (c.moveToFirst()) {
 				do {
@@ -241,10 +242,6 @@ public class KidsBbs extends ListActivity {
 	}
 
 	private void updateFromPreferences() {
-		SharedPreferences prefs = PreferenceManager
-				.getDefaultSharedPreferences(getApplicationContext());
-		mUpdateFreq = Integer.parseInt(prefs.getString(
-				Preferences.PREF_UPDATE_FREQ, "0"));
 	}
 
 	@Override
@@ -282,25 +279,26 @@ public class KidsBbs extends ListActivity {
 
 	private class SavedStates {
 		ArrayList<BoardInfo> list;
-		int updateFreq;
 	}
 
 	// Saving state for rotation changes...
 	public Object onRetainNonConfigurationInstance() {
 		SavedStates save = new SavedStates();
 		save.list = mList;
-		save.updateFreq = mUpdateFreq;
 		return save;
 	}
 
 	private void initializeStates() {
-		SavedStates save = (SavedStates) getLastNonConfigurationInstance();
+		SavedStates save = (SavedStates)getLastNonConfigurationInstance();
 		if (save == null) {
 			updateFromPreferences();
 			refreshList();
 		} else {
-			mUpdateFreq = save.updateFreq;
 			updateView(save.list);
 		}
+	}
+	
+	private void refreshArticles() {
+		startService(new Intent(this, KidsBbsService.class));
 	}
 }
