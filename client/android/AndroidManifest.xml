@@ -20,6 +20,14 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+        <activity android:name=".KidsBbsBlist"
+            android:label="@string/title_blist"
+            >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
         <activity android:name=".KidsBbsTlist"
             android:label="@string/title_tlist"
             >

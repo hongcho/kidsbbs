@@ -28,6 +28,9 @@ package org.sori.kidsbbs;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -58,9 +61,13 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.util.Log;
 
 public class KidsBbsService extends Service {
-	public static final String NEW_ARTICLES_FOUND = "NEW_ARTICLES_FOUND";
+	public static final String NEW_ARTICLE =
+			KidsBbs.PKG_BASE + "NewArticle";
+	
+	private static final String TAG = "KidsBbsService"; 
 	
 	private UpdateTask mLastUpdate = null;
 	private Timer mUpdateTimer;
@@ -137,6 +144,7 @@ public class KidsBbsService extends Service {
 				KidsBbsProvider.KEYA_USER,
 				KidsBbsProvider.KEYA_DATE,
 				KidsBbsProvider.KEYA_TITLE,
+				KidsBbsProvider.KEYA_READ,
 			};
 			final int ST_DONE = 0;
 			final int ST_INSERT = 1;
@@ -156,11 +164,37 @@ public class KidsBbsService extends Service {
 					ArrayList<ArticleInfo> articles = getArticles(_urlString,
 							board, type, start);
 					if (articles.isEmpty()) {
+						state = ST_DONE;
 						break;
 					}
-					for (int j = 0; j < articles.size(); ++j) {
+					for (int j = 0; state != ST_DONE && j < articles.size();
+							++j) {
 						ArticleInfo info = articles.get(j);
 						String where = KidsBbsProvider.KEYA_SEQ + "=" + info.getSeq();
+						ArticleInfo old = null;
+						Cursor c = cr.query(uri, FIELDS, where, null, null);
+						if (c == null) {
+							// Unexpected...
+							state = ST_DONE;
+						} else {
+							if (c.getCount() > 0) {
+								// Cache the old entry.
+								int seq = c.getInt(c.getColumnIndex(
+										KidsBbsProvider.KEYA_SEQ));
+								String user = c.getString(c.getColumnIndex(
+										KidsBbsProvider.KEYA_USER));
+								String date = c.getString(c.getColumnIndex(
+										KidsBbsProvider.KEYA_DATE));
+								String title = c.getString(c.getColumnIndex(
+										KidsBbsProvider.KEYA_TITLE));
+								boolean read = Boolean.parseBoolean(
+										c.getString(c.getColumnIndex(
+												KidsBbsProvider.KEYA_READ)));
+								old = new ArticleInfo(tabname, seq, user, null,
+										date, title, null, null, 1, read);
+							}
+							c.close();
+						}
 						
 						ContentValues values = new ContentValues();
 						values.put(KidsBbsProvider.KEYA_SEQ, info.getSeq());
@@ -170,85 +204,52 @@ public class KidsBbsService extends Service {
 						values.put(KidsBbsProvider.KEYA_TITLE, info.getTitle());
 						values.put(KidsBbsProvider.KEYA_THREAD, info.getThread());
 						values.put(KidsBbsProvider.KEYA_BODY, info.getBody());
-						values.put(KidsBbsProvider.KEYA_READ, info.getRead());
 
-						// Try inserting or updating...
-						boolean result = true;
-						try {
-							switch (state) {
-							case ST_INSERT:
-								cr.insert(uri, values);
-								break;
-							case ST_UPDATE:
-								cr.update(uri, values, where, null);
-								break;
-							default:
-								state = ST_DONE;
-								break;
-							}
-						} catch (NullPointerException e) {
-							result = false;
-						} catch (SQLException e) {
-							result = false;
-						} finally {
+						boolean read = info.getRead();
+						if (state == ST_UPDATE) {
+							read = false;
+						} else if (old != null && old.getRead()) {
+							read = true;
 						}
-						
-						if (result) {
-							++total_count;
-						} else {
-							// It didn't work...
-							switch (state) {
-							case ST_INSERT:
-								Cursor c = cr.query(uri, FIELDS, where, null,
-										null);
-								if (c == null || c.getCount() != 1) {
-									if (c != null) {
-										c.close();
-									}
-									state = ST_DONE;
-								} else {
-									// Get the existing article information out.
-									int seq = c.getInt(c.getColumnIndex(
-											KidsBbsProvider.KEYA_SEQ));
-									String user = c.getString(c.getColumnIndex(
-											KidsBbsProvider.KEYA_USER));
-									String date = c.getString(c.getColumnIndex(
-											KidsBbsProvider.KEYA_DATE));
-									String title = c.getString(c.getColumnIndex(
-											KidsBbsProvider.KEYA_TITLE));
-									c.close();
+						values.put(KidsBbsProvider.KEYA_READ, read);
 
-									if (info.getUser() != user ||
-											!(info.getDateString() == ArticleInfo.DATE_INVALID ||
-													info.getDateString() == date) ||
-											info.getTitle() != title) {
-										state = ST_UPDATE;
-										result = true;
-										try {
-											cr.update(uri, values, where, null);
-										} catch (NullPointerException e) {
-											result = false;
-										} catch (SQLException e) {
-											result = false;
-										} finally {
-										}
-										if (!result) {
-											// Still didn't work...
-											state = ST_DONE;
-										}
-									} else {
-										// It's the same, so stop.
-										state = ST_DONE;
-									}
+						boolean result = true;
+						if (old == null) {
+							// Not there...
+							try {
+								switch (state) {
+								case ST_INSERT:
+									cr.insert(uri, values);
+									break;
+								case ST_UPDATE:
+									cr.update(uri, values, where, null);
+									break;
 								}
-								break;
-							case ST_UPDATE:
-								// TODO: Compare...
-								state = ST_DONE;
-								break;
-							default:
-								break;
+							} catch (SQLException e) {
+								result = false;
 							}
+						} else {
+							// Hmm... already there...
+							if (info.getUser() == old.getUser() &&
+									(info.getDateString() != ArticleInfo.DATE_INVALID &&
+											info.getDateString() == old.getDateString()) &&
+									info.getTitle() == old.getTitle()) {
+								// And the same.  Stop...
+								state = ST_DONE;
+							} else {
+								state = ST_UPDATE;
+								try {
+									cr.update(uri, values, where, null);
+								} catch (SQLException e) {
+									result = false;
+								}
+							}
+						}
+						if (result) {
+							if (!read) {
+								publishProgress(info);
+							}
+							++total_count;
 						}
 					}
 					start += articles.size();
@@ -259,6 +260,7 @@ public class KidsBbsService extends Service {
 		
 		@Override
 		protected void onProgressUpdate(ArticleInfo... _infos) {
+			announceNewArticle(_infos[0]);
 		}
 		
 		@Override
@@ -266,12 +268,16 @@ public class KidsBbsService extends Service {
 		}
 	}
 	
-	private void announceNewArticle(String _tabname, ArticleInfo _info) {
-		Intent intent = new Intent(NEW_ARTICLES_FOUND);
-		intent.putExtra(KidsBbsProvider.KEYB_TABNAME, _tabname);
-		intent.putExtra(KidsBbsProvider.KEYA_AUTHOR, _info.getAuthor());
-		intent.putExtra(KidsBbsProvider.KEYA_DATE, _info.getDateString());
-		intent.putExtra(KidsBbsProvider.KEYA_TITLE, _info.getTitle());
+	private void announceNewArticle(ArticleInfo _info) {
+		Intent intent = new Intent(NEW_ARTICLE);
+		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYB_TABNAME,
+				_info.getTabname());
+		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_AUTHOR,
+				_info.getAuthor());
+		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_DATE,
+				_info.getDateString());
+		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_TITLE,
+				_info.getTitle());
 		sendBroadcast(intent);
 	}
 	
@@ -283,9 +289,113 @@ public class KidsBbsService extends Service {
 		}
 	}
 	
-	private ArrayList<ArticleInfo> getArticles(String _base, String _board, int _type,
-			int _start) {
+	private class ParseException extends Exception {
+		public ParseException(String _message) {
+			super(_message);
+		}
+	}
+	
+	private ArticleInfo parseArticle(String _tabname, Element _item) {
+		NodeList nl;
+		Node n;
+		try {
+			nl = _item.getElementsByTagName("THREAD");
+			String thread;
+			if (nl == null || nl.getLength() <= 0) {
+				throw new ParseException("ParseException: THREAD");
+			}
+			n = ((Element)nl.item(0)).getFirstChild();
+			if (n == null) {
+				throw new ParseException("ParseException: THREAD");
+			}
+			thread = n.getNodeValue();
+
+			nl = _item.getElementsByTagName("TITLE");
+			if (nl == null || nl.getLength() <= 0) {
+				throw new ParseException("ParseException: TITLE");
+			}
+			n = ((Element)nl.item(0)).getFirstChild();
+			if (n == null) {
+				throw new ParseException("ParseException: TITLE");
+			}
+			String title = n.getNodeValue();
+
+			nl = _item.getElementsByTagName("SEQ");
+			if (nl == null || nl.getLength() <= 0) {
+				throw new ParseException("ParseException: SEQ");
+			}
+			n = ((Element)nl.item(0)).getFirstChild();
+			if (n == null) {
+				throw new ParseException("ParseException: SEQ");
+			}
+			int seq = Integer.parseInt(n.getNodeValue());
+
+			nl = _item.getElementsByTagName("DATE");
+			if (nl == null || nl.getLength() <= 0) {
+				throw new ParseException("ParseException: DATE");
+			}
+			n = ((Element)nl.item(0)).getFirstChild();
+			if (n == null) {
+				throw new ParseException("ParseException: DATE");
+			}
+			String date = n.getNodeValue();
+
+			nl = _item.getElementsByTagName("USER");
+			if (nl == null || nl.getLength() <= 0) {
+				throw new ParseException("ParseException: USER");
+			}
+			n = ((Element)nl.item(0)).getFirstChild();
+			if (n == null) {
+				throw new ParseException("ParseException: USER");
+			}
+			String user = n.getNodeValue();
+
+			nl = _item.getElementsByTagName("AUTHOR");
+			if (nl == null || nl.getLength() <= 0) {
+				throw new ParseException("ParseException: AUTHOR");
+			}
+			n = ((Element)nl.item(0)).getFirstChild();
+			if (n == null) {
+				throw new ParseException("ParseException: AUTHOR");
+			}
+			String author = n.getNodeValue();
+
+			nl = _item.getElementsByTagName("DESCRIPTION");
+			if (nl == null || nl.getLength() <= 0) {
+				throw new ParseException("ParseException: DESCRIPTION");
+			}
+			n = ((Element)nl.item(0)).getFirstChild();
+			if (n == null) {
+				throw new ParseException("ParseException: DESCRIPTION");
+			}
+			String desc = n.getNodeValue();
+			
+			boolean read = true;
+			Date local = ArticleInfo.toLocalDate(date);
+			if (local != null) {
+				Calendar calLocal = new GregorianCalendar();
+				Calendar calRecent = new GregorianCalendar();
+				calLocal.setTime(local);
+				calRecent.setTime(new Date());
+				// "Recent" one is marked unread.
+				calRecent.add(Calendar.DATE, -7);
+				if (calLocal.after(calRecent)) {
+					read = false;
+				}
+			}
+
+			return new ArticleInfo(_tabname, seq, user, author, date, title,
+					thread, desc, 1, read);
+		} catch (ParseException e) {
+			Log.w(TAG, e);
+			return null;
+		}
+	}
+	
+	private ArrayList<ArticleInfo> getArticles(String _base, String _board,
+			int _type, int _start) {
 		ArrayList<ArticleInfo> articles = new ArrayList<ArticleInfo>();
+		String tabname = BoardInfo.buildTabname(_board, _type);
 		String urlString = _base +
 				KidsBbs.PARAM_N_BOARD + "=" + _board +
 				"&" + KidsBbs.PARAM_N_TYPE + "=" + _type +
@@ -293,24 +403,24 @@ public class KidsBbsService extends Service {
 		HttpClient client = new DefaultHttpClient();
 		HttpGet get = new HttpGet(urlString);
 		try {
-			HttpResponse response = client.execute(get);
+			HttpResponse response = client.execute(get); // IOException
 			HttpEntity entity = response.getEntity();
 			if (entity == null) {
 				// ???
-			} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-				InputStream is = entity.getContent(); 
+			} else if (response.getStatusLine().getStatusCode() ==
+					HttpStatus.SC_OK) {
+				InputStream is = entity.getContent(); // IOException
 				DocumentBuilder db =
-					DocumentBuilderFactory.newInstance().newDocumentBuilder();
+					DocumentBuilderFactory.newInstance().newDocumentBuilder(); // ParserConfigurationException
 
 				// Parse the board list.
-				Document dom = db.parse(is);
+				Document dom = db.parse(is); // IOException, SAXException
 				Element docEle = dom.getDocumentElement();
 				NodeList nl;
 
 				nl = docEle.getElementsByTagName("ITEMS");
 				if (nl == null || nl.getLength() <= 0) {
-					throw new ParserConfigurationException(
-							"XMLParser failed: ITEMS");
+					throw new ParseException("ParseException: ITEMS");
 				}
 				Element items = (Element)nl.item(0);
 
@@ -318,104 +428,22 @@ public class KidsBbsService extends Service {
 				nl = items.getElementsByTagName("ITEM");
 				if (nl != null && nl.getLength() > 0) {
 					for (int i = 0; i < nl.getLength(); ++i) {
-						NodeList nl2;
-						Node n2;
-						Element item = (Element)nl.item(i);
-
-						nl2 = item.getElementsByTagName("THREAD");
-						String thread;
-						if (nl2 == null || nl2.getLength() <= 0) {
-							throw new ParserConfigurationException(
-									"XMLParser failed: THREAD");
+						ArticleInfo info = parseArticle(tabname,
+								(Element)nl.item(i));
+						if (info != null) {
+							articles.add(info);
 						}
-						n2 = ((Element)nl2.item(0)).getFirstChild();
-						if (n2 == null) {
-							throw new ParserConfigurationException(
-									"XMLParser failed: THREAD");
-						}
-						thread = n2.getNodeValue();
-
-						nl2 = item.getElementsByTagName("TITLE");
-						if (nl2 == null || nl2.getLength() <= 0) {
-							throw new ParserConfigurationException(
-									"XMLParser failed: TITLE");
-						}
-						n2 = ((Element)nl2.item(0)).getFirstChild();
-						if (n2 == null) {
-							throw new ParserConfigurationException(
-									"XMLParser failed: TITLE");
-						}
-						String title = n2.getNodeValue();
-
-						nl2 = item.getElementsByTagName("SEQ");
-						if (nl2 == null || nl2.getLength() <= 0) {
-							throw new ParserConfigurationException(
-									"XMLParser failed: SEQ");
-						}
-						n2 = ((Element)nl2.item(0)).getFirstChild();
-						if (n2 == null) {
-							throw new ParserConfigurationException(
-									"XMLParser failed: SEQ");
-						}
-						int seq = Integer.parseInt(n2.getNodeValue());
-
-						nl2 = item.getElementsByTagName("DATE");
-						if (nl2 == null || nl2.getLength() <= 0) {
-							throw new ParserConfigurationException(
-									"XMLParser failed: DATE");
-						}
-						n2 = ((Element)nl2.item(0)).getFirstChild();
-						if (n2 == null) {
-							throw new ParserConfigurationException(
-									"XMLParser failed: DATE");
-						}
-						String date = n2.getNodeValue();
-
-						nl2 = item.getElementsByTagName("USER");
-						if (nl2 == null || nl2.getLength() <= 0) {
-							throw new ParserConfigurationException(
-									"XMLParser failed: USER");
-						}
-						n2 = ((Element)nl2.item(0)).getFirstChild();
-						if (n2 == null) {
-							throw new ParserConfigurationException(
-									"XMLParser failed: USER");
-						}
-						String user = n2.getNodeValue();
-
-						nl2 = item.getElementsByTagName("AUTHOR");
-						if (nl2 == null || nl2.getLength() <= 0) {
-							throw new ParserConfigurationException(
-									"XMLParser failed: AUTHOR");
-						}
-						n2 = ((Element)nl2.item(0)).getFirstChild();
-						if (n2 == null) {
-							throw new ParserConfigurationException(
-									"XMLParser failed: AUTHOR");
-						}
-						String author = n2.getNodeValue();
-
-						nl2 = item.getElementsByTagName("DESCRIPTION");
-						if (nl2 == null || nl2.getLength() <= 0) {
-							throw new ParserConfigurationException(
-									"XMLParser failed: DESCRIPTION");
-						}
-						n2 = ((Element)nl2.item(0)).getFirstChild();
-						if (n2 == null) {
-							throw new ParserConfigurationException(
-									"XMLParser failed: DESCRIPTION");
-						}
-						String desc = n2.getNodeValue();
-
-						articles.add(new ArticleInfo(seq, user, author, date,
-								title, thread, desc, 1, false));
 					}
 				}
 			}
 		} catch (IOException e) {
+			Log.w(TAG, e);
 		} catch (ParserConfigurationException e) {
+			Log.w(TAG, e);
 		} catch (SAXException e) {
-		} finally {
+			Log.w(TAG, e);
+		} catch (ParseException e) {
+			Log.w(TAG, e);
 		}
 		return articles;
 	}

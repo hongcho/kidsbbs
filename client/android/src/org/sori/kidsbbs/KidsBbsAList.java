@@ -46,8 +46,10 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import android.app.ListActivity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -79,6 +81,7 @@ public abstract class KidsBbsAList extends ListActivity implements
 	private String mBoardTitle;
 	private String mBoardName;
 	private String mBoardType;
+	private String mTabname;
 
 	private TextView mStatusView;
 
@@ -116,6 +119,8 @@ public abstract class KidsBbsAList extends ListActivity implements
 		mBoardName = data.getQueryParameter(KidsBbs.PARAM_N_BOARD);
 		mBoardType = data.getQueryParameter(KidsBbs.PARAM_N_TYPE);
 		mBoardTitle = data.getQueryParameter(KidsBbs.PARAM_N_TITLE);
+		mTabname = BoardInfo.buildTabname(mBoardName,
+				Integer.parseInt(mBoardType));
 
 		mStatusView = (TextView)findViewById(R.id.status);
 		mStatusView.setVisibility(View.GONE);
@@ -316,8 +321,9 @@ public abstract class KidsBbsAList extends ListActivity implements
 							}
 							String desc = n2.getNodeValue();
 
-							mTList.add(new ArticleInfo(seq, user, null, date, title,
-									thread, desc, cnt, false));
+							mTList.add(new ArticleInfo(mTabname, seq, user,
+									null, date, title, thread, desc, cnt,
+									false));
 							publishProgress(mStart + mTList.size());
 						}
 					}
@@ -329,7 +335,6 @@ public abstract class KidsBbsAList extends ListActivity implements
 				result = ErrUtils.ERR_PARSER;
 			} catch (SAXException e) {
 				result = ErrUtils.ERR_SAX;
-			} finally {
 			}
 			return result;
 		}
@@ -445,5 +450,32 @@ public abstract class KidsBbsAList extends ListActivity implements
 			mItemTotal = save.total;
 			updateView(save.list, false);
 		}
+	}
+	
+	public class ArticleReceiver extends BroadcastReceiver {
+		@Override
+		public void onReceive(Context _context, Intent _intent) {
+			String tabname = _intent.getStringExtra(
+					KidsBbs.PKG_BASE + KidsBbsProvider.KEYB_TABNAME);
+			if (mTabname != null && tabname != null && mTabname == tabname) {
+				refreshList();
+			}
+		}
+	}
+	
+	private ArticleReceiver mReceiver;
+	
+	@Override
+	public void onResume() {
+		super.onResume();
+		IntentFilter filter = new IntentFilter(KidsBbsService.NEW_ARTICLE);
+		mReceiver = new ArticleReceiver();
+		registerReceiver(mReceiver, filter);
+	}
+	
+	@Override
+	public void onPause() {
+		super.onPause();
+		unregisterReceiver(mReceiver);
 	}
 }

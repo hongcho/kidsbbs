@@ -38,6 +38,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.sori.kidsbbs.KidsBbsAList.ArticleReceiver;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -45,7 +46,10 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -74,6 +78,7 @@ public class KidsBbsView extends Activity {
 	private String mBoardName;
 	private String mBoardType;
 	private String mBoardSeq;
+	private String mTabname;
 
 	private ArticleInfo mInfo = null;
 
@@ -89,6 +94,8 @@ public class KidsBbsView extends Activity {
 		mBoardType = data.getQueryParameter(KidsBbs.PARAM_N_TYPE);
 		mBoardTitle = data.getQueryParameter(KidsBbs.PARAM_N_TITLE);
 		mBoardSeq = data.getQueryParameter(KidsBbs.PARAM_N_SEQ);
+		mTabname = BoardInfo.buildTabname(mBoardName,
+				Integer.parseInt(mBoardType));
 		setTitle(mBoardSeq + " in [" + mBoardTitle + "]");
 
 		mStatusView = (TextView)findViewById(R.id.status);
@@ -244,8 +251,8 @@ public class KidsBbsView extends Activity {
 						n2 = ((Element)nl2.item(0)).getFirstChild();
 						String desc = n2 != null ? n2.getNodeValue() : "";
 
-						mTInfo = new ArticleInfo(seq, user, author, date,
-								title, thread, desc, 1, false);
+						mTInfo = new ArticleInfo(mTabname, seq, user, author,
+								date, title, thread, desc, 1, false);
 					}
 				}
 			} catch (IOException e) {
@@ -254,7 +261,6 @@ public class KidsBbsView extends Activity {
 				ret = ErrUtils.ERR_PARSER;
 			} catch (SAXException e) {
 				ret = ErrUtils.ERR_SAX;
-			} finally {
 			}
 			return ret;
 		}
@@ -352,5 +358,35 @@ public class KidsBbsView extends Activity {
 			mInfo = save.info;
 			updateView();
 		}
+	}
+	
+	public class ArticleReceiver extends BroadcastReceiver {
+		@Override
+		public void onReceive(Context _context, Intent _intent) {
+			String tabname = _intent.getStringExtra(
+					KidsBbs.PKG_BASE + KidsBbsProvider.KEYB_TABNAME);
+			String seq = _intent.getStringExtra(
+					KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_SEQ);
+			if (mTabname != null && tabname != null && mTabname == tabname &&
+					mBoardSeq != null && seq != null && mBoardSeq == seq) {
+				refreshView();
+			}
+		}
+	}
+	
+	private ArticleReceiver mReceiver;
+	
+	@Override
+	public void onResume() {
+		super.onResume();
+		IntentFilter filter = new IntentFilter(KidsBbsService.NEW_ARTICLE);
+		mReceiver = new ArticleReceiver();
+		registerReceiver(mReceiver, filter);
+	}
+	
+	@Override
+	public void onPause() {
+		super.onPause();
+		unregisterReceiver(mReceiver);
 	}
 }

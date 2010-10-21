@@ -43,6 +43,7 @@ public class ArticleInfo {
 	private static final DateFormat mFullFormat =
 		DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
 
+	private String mTabname;
 	private int mSeq;
 	private String mAuthor;
 	private String mUser;
@@ -54,6 +55,7 @@ public class ArticleInfo {
 	private String mDateShortString;
 	private boolean mRead;
 
+	public final String getTabname() { return mTabname; }
 	public final int getSeq() { return mSeq; }
 	public final String getAuthor() { return mAuthor; }
 	public final String getUser() { return mUser; } 
@@ -64,11 +66,28 @@ public class ArticleInfo {
 	public final String getDateString() { return mDateString; }
 	public final String getDateShortString() { return mDateShortString;}
 	public final boolean getRead() { return mRead; }
-	public final void setRead(boolean _read) { mRead = _read; }
 
-	public ArticleInfo(int _seq, String _user, String _author,
+	public static final Date toLocalDate(String _dateString) {
+		if (_dateString == DATE_INVALID) {
+			return null;
+		} else {
+			// Prepare date/time in the local time zone.
+			DateFormat dfKorea = new SimpleDateFormat(DATE_FORMAT);
+			dfKorea.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
+			try {
+				Date date = dfKorea.parse(_dateString);
+				_dateString = mFullFormat.format(date);
+				return mFullFormat.parse(_dateString);
+			} catch (ParseException e) {
+				return null;
+			}
+		}
+	}
+
+	public ArticleInfo(String _tabname, int _seq, String _user, String _author,
 			String _dateString, String _title, String _thread, String _body,
 			int _count, boolean _read) {
+		mTabname = _tabname;
 		mSeq = _seq;
 		mUser = _user;
 		mAuthor = _author;
@@ -76,32 +95,20 @@ public class ArticleInfo {
 		mThread = _thread;
 		mCount = _count;
 		mRead = _read;
-
-		if (_dateString.equals(DATE_INVALID)) {
+		
+		Date local = toLocalDate(_dateString);
+		if (local == null) {
 			mDateString = DATE_INVALID;
 			mDateShortString = DATESHORT_INVALID;
 		} else {
-			// Prepare date/time in the local time zone.
-			DateFormat dfKorea = new SimpleDateFormat(DATE_FORMAT);
-			dfKorea.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
-
-			try {
-				Date date = dfKorea.parse(_dateString);
-				mDateString = mFullFormat.format(date);
-
-				Date local = mFullFormat.parse(mDateString);
-				Date now = new Date();
-
-				if (now.getYear() == local.getYear()
-						&& now.getMonth() == local.getMonth()
-						&& now.getDate() == local.getDate()) {
-					mDateShortString = mTimeFormat.format(date);
-				} else {
-					mDateShortString = mDateFormat.format(date);
-				}
-			} catch (ParseException e) {
-				mDateString = DATE_INVALID;
-				mDateShortString = DATESHORT_INVALID;
+			mDateString = mFullFormat.format(local);
+			Date now = new Date();
+			if (now.getYear() == local.getYear()
+					&& now.getMonth() == local.getMonth()
+					&& now.getDate() == local.getDate()) {
+				mDateShortString = mTimeFormat.format(local);
+			} else {
+				mDateShortString = mDateFormat.format(local);
 			}
 		}
 
