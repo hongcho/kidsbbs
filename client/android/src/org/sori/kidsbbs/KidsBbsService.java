@@ -158,7 +158,9 @@ public class KidsBbsService extends Service {
 					if (articles.isEmpty()) {
 						break;
 					}
-					for (int j = 0; j < articles.size(); ++j) {
+					for (int j = 0;
+							state != ST_DONE && j < articles.size();
+							++j) {
 						ArticleInfo info = articles.get(j);
 						String where = KidsBbsProvider.KEYA_SEQ + "=" + info.getSeq();
 						
@@ -172,83 +174,68 @@ public class KidsBbsService extends Service {
 						values.put(KidsBbsProvider.KEYA_BODY, info.getBody());
 						values.put(KidsBbsProvider.KEYA_READ, info.getRead());
 
-						// Try inserting or updating...
-						boolean result = true;
-						try {
-							switch (state) {
-							case ST_INSERT:
-								cr.insert(uri, values);
-								break;
-							case ST_UPDATE:
-								cr.update(uri, values, where, null);
-								break;
-							default:
-								state = ST_DONE;
-								break;
-							}
-						} catch (NullPointerException e) {
-							result = false;
-						} catch (SQLException e) {
-							result = false;
-						} finally {
+						ArticleInfo infoOld = null;
+						Cursor c = cr.query(uri, FIELDS, where, null, null);
+						if (c == null) {
+							// Something's wrong...
+							continue;
+						} else if (c.getCount() != 0) {
+							// Cache the existing entry.
+							int seq = c.getInt(c.getColumnIndex(
+									KidsBbsProvider.KEYA_SEQ));
+							String user = c.getString(c.getColumnIndex(
+									KidsBbsProvider.KEYA_USER));
+							String date = c.getString(c.getColumnIndex(
+									KidsBbsProvider.KEYA_DATE));
+							String title = c.getString(c.getColumnIndex(
+									KidsBbsProvider.KEYA_TITLE));
+							infoOld = new ArticleInfo(seq, user, null, date,
+									title, null, null, 1, false);
 						}
+						c.close();
 						
+						boolean result = true;
+						if (infoOld == null) {
+							try {
+								switch (state) {
+								case ST_INSERT:
+									cr.insert(uri, values);
+									break;
+								case ST_UPDATE:
+									cr.update(uri, values, where, null);
+									break;
+								default:
+									state = ST_DONE;
+									break;
+								}
+							} catch (NullPointerException e) {
+								result = false;
+							} catch (SQLException e) {
+								result = false;
+							} finally {
+							}
+						} else {
+							// The seq already exists...
+							if (info.getUser() != infoOld.getUser() ||
+									(info.getDateString() != ArticleInfo.DATE_INVALID &&
+											info.getDateString() != infoOld.getDateString()) ||
+									info.getTitle() != infoOld.getTitle()) {
+								// Not the same...
+								state = ST_UPDATE;
+								try {
+									cr.update(uri, values, where, null);
+								} catch (NullPointerException e) {
+									result = false;
+								} catch (SQLException e) {
+									result = false;
+								} finally {
+								}
+							} else {
+								state = ST_DONE;
+							}
+						}
 						if (result) {
 							++total_count;
-						} else {
-							// It didn't work...
-							switch (state) {
-							case ST_INSERT:
-								Cursor c = cr.query(uri, FIELDS, where, null,
-										null);
-								if (c == null || c.getCount() != 1) {
-									if (c != null) {
-										c.close();
-									}
-									state = ST_DONE;
-								} else {
-									// Get the existing article information out.
-									int seq = c.getInt(c.getColumnIndex(
-											KidsBbsProvider.KEYA_SEQ));
-									String user = c.getString(c.getColumnIndex(
-											KidsBbsProvider.KEYA_USER));
-									String date = c.getString(c.getColumnIndex(
-											KidsBbsProvider.KEYA_DATE));
-									String title = c.getString(c.getColumnIndex(
-											KidsBbsProvider.KEYA_TITLE));
-									c.close();
-
-									if (info.getUser() != user ||
-											!(info.getDateString() == ArticleInfo.DATE_INVALID ||
-													info.getDateString() == date) ||
-											info.getTitle() != title) {
-										state = ST_UPDATE;
-										result = true;
-										try {
-											cr.update(uri, values, where, null);
-										} catch (NullPointerException e) {
-											result = false;
-										} catch (SQLException e) {
-											result = false;
-										} finally {
-										}
-										if (!result) {
-											// Still didn't work...
-											state = ST_DONE;
-										}
-									} else {
-										// It's the same, so stop.
-										state = ST_DONE;
-									}
-								}
-								break;
-							case ST_UPDATE:
-								// TODO: Compare...
-								state = ST_DONE;
-								break;
-							default:
-								break;
-							}
 						}
 					}
 					start += articles.size();
