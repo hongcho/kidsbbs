@@ -161,6 +161,11 @@ public class KidsBbsView extends Activity {
 		protected Integer doInBackground(Void... _args) {
 			int ret = 0;
 			ContentResolver cr = getContentResolver();
+
+			// Mark it read.
+			cr.update(mUri, KidsBbsProvider.V_READ_TRUE, mWhere, null);
+
+			// Retrieve the content.
 			Cursor c = cr.query(mUri, FIELDS, mWhere, null, null);
 			if (c != null) {
 				if (c.getCount() > 0) {

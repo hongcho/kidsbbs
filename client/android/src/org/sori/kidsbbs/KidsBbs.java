@@ -25,11 +25,36 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 
 public class KidsBbs extends Activity {
+	public static final String TAG = "KidsBbs";
 	public static final String PKG_BASE = "org.sori.kidsbbs.";
 	
 	private static final String URL_BASE = "http://sori.org/kids/kids.php?_o=1&";
@@ -55,6 +80,165 @@ public class KidsBbs extends Activity {
 	public static final String PARAM_N_START = "s";
 	public static final String PARAM_N_COUNT = "n";
 	public static final String PARAM_N_TABNAME = "tn";
+	
+	private static class ParseException extends Exception {
+		public ParseException(String _message) {
+			super(_message);
+		}
+	}
+	public static final ArticleInfo parseArticle(String _tabname,
+			Element _item) {
+		NodeList nl;
+		Node n;
+		try {
+			nl = _item.getElementsByTagName("THREAD");
+			String thread;
+			if (nl == null || nl.getLength() <= 0) {
+				throw new ParseException("ParseException: THREAD");
+			}
+			n = ((Element)nl.item(0)).getFirstChild();
+			if (n == null) {
+				throw new ParseException("ParseException: THREAD");
+			}
+			thread = n.getNodeValue();
+
+			nl = _item.getElementsByTagName("TITLE");
+			if (nl == null || nl.getLength() <= 0) {
+				throw new ParseException("ParseException: TITLE");
+			}
+			n = ((Element)nl.item(0)).getFirstChild();
+			if (n == null) {
+				throw new ParseException("ParseException: TITLE");
+			}
+			String title = n.getNodeValue();
+
+			nl = _item.getElementsByTagName("SEQ");
+			if (nl == null || nl.getLength() <= 0) {
+				throw new ParseException("ParseException: SEQ");
+			}
+			n = ((Element)nl.item(0)).getFirstChild();
+			if (n == null) {
+				throw new ParseException("ParseException: SEQ");
+			}
+			int seq = Integer.parseInt(n.getNodeValue());
+
+			nl = _item.getElementsByTagName("DATE");
+			if (nl == null || nl.getLength() <= 0) {
+				throw new ParseException("ParseException: DATE");
+			}
+			n = ((Element)nl.item(0)).getFirstChild();
+			if (n == null) {
+				throw new ParseException("ParseException: DATE");
+			}
+			String date = n.getNodeValue();
+
+			nl = _item.getElementsByTagName("USER");
+			if (nl == null || nl.getLength() <= 0) {
+				throw new ParseException("ParseException: USER");
+			}
+			n = ((Element)nl.item(0)).getFirstChild();
+			if (n == null) {
+				throw new ParseException("ParseException: USER");
+			}
+			String user = n.getNodeValue();
+
+			nl = _item.getElementsByTagName("AUTHOR");
+			if (nl == null || nl.getLength() <= 0) {
+				throw new ParseException("ParseException: AUTHOR");
+			}
+			n = ((Element)nl.item(0)).getFirstChild();
+			if (n == null) {
+				throw new ParseException("ParseException: AUTHOR");
+			}
+			String author = n.getNodeValue();
+
+			nl = _item.getElementsByTagName("DESCRIPTION");
+			if (nl == null || nl.getLength() <= 0) {
+				throw new ParseException("ParseException: DESCRIPTION");
+			}
+			n = ((Element)nl.item(0)).getFirstChild();
+			if (n == null) {
+				throw new ParseException("ParseException: DESCRIPTION");
+			}
+			String desc = n.getNodeValue();
+			
+			boolean read = true;
+			Date local = ArticleInfo.toLocalDate(date);
+			if (local != null) {
+				Calendar calLocal = new GregorianCalendar();
+				Calendar calRecent = new GregorianCalendar();
+				calLocal.setTime(local);
+				calRecent.setTime(new Date());
+				// "Recent" one is marked unread.
+				calRecent.add(Calendar.DATE, -7);
+				if (calLocal.after(calRecent)) {
+					read = false;
+				}
+			}
+
+			return new ArticleInfo(_tabname, seq, user, author, date, title,
+					thread, desc, 1, read);
+		} catch (ParseException e) {
+			Log.w(TAG, e);
+			return null;
+		}
+	}
+	
+	public static final ArrayList<ArticleInfo> getArticles(String _base,
+			String _board, int _type, int _start) {
+		ArrayList<ArticleInfo> articles = new ArrayList<ArticleInfo>();
+		String tabname = BoardInfo.buildTabname(_board, _type);
+		String urlString = _base +
+				KidsBbs.PARAM_N_BOARD + "=" + _board +
+				"&" + KidsBbs.PARAM_N_TYPE + "=" + _type +
+				"&" + KidsBbs.PARAM_N_START + "=" + _start;
+		HttpClient client = new DefaultHttpClient();
+		HttpGet get = new HttpGet(urlString);
+		try {
+			HttpResponse response = client.execute(get); // IOException
+			HttpEntity entity = response.getEntity();
+			if (entity == null) {
+				// ???
+			} else if (response.getStatusLine().getStatusCode() ==
+					HttpStatus.SC_OK) {
+				InputStream is = entity.getContent(); // IOException
+				DocumentBuilder db =
+					DocumentBuilderFactory.newInstance().newDocumentBuilder(); // ParserConfigurationException
+
+				// Parse the board list.
+				Document dom = db.parse(is); // IOException, SAXException
+				Element docEle = dom.getDocumentElement();
+				NodeList nl;
+
+				nl = docEle.getElementsByTagName("ITEMS");
+				if (nl == null || nl.getLength() <= 0) {
+					throw new ParseException("ParseException: ITEMS");
+				}
+				Element items = (Element)nl.item(0);
+
+				// Get a board item
+				nl = items.getElementsByTagName("ITEM");
+				if (nl != null && nl.getLength() > 0) {
+					for (int i = 0; i < nl.getLength(); ++i) {
+						ArticleInfo info = parseArticle(tabname,
+								(Element)nl.item(i));
+						if (info != null) {
+							articles.add(info);
+						}
+					}
+				}
+			}
+		} catch (IOException e) {
+			Log.w(TAG, e);
+		} catch (ParserConfigurationException e) {
+			Log.w(TAG, e);
+		} catch (SAXException e) {
+			Log.w(TAG, e);
+		} catch (ParseException e) {
+			Log.w(TAG, e);
+		}
+		return articles;
+	}
 
 	@Override
 	public void onCreate(Bundle _state) {

@@ -144,11 +144,6 @@ public class KidsBbsBlist extends ListActivity {
 	}
 
 	private class UpdateTask extends AsyncTask<Void, Integer, Integer> {
-		private final String[] FIELDS = {
-			KidsBbsProvider.KEYB_TABNAME,
-			KidsBbsProvider.KEYB_TITLE,
-		};
-		
 		private ArrayList<BoardInfo> mTList = new ArrayList<BoardInfo>();
 		private String mProgressBase;
 
@@ -160,9 +155,14 @@ public class KidsBbsBlist extends ListActivity {
 
 		@Override
 		protected Integer doInBackground(Void... _args) {
+			final String[] FIELDS = {
+				KidsBbsProvider.KEYB_TABNAME,
+				KidsBbsProvider.KEYB_TITLE,
+			};
+			final String where = KidsBbsProvider.KEYB_SELECTED;
 			ContentResolver cr = getContentResolver();
 			Cursor c = cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
-					null, null, null);
+					where, null, null);
 			if (c != null) {
 				if (c.moveToFirst()) {
 					do {
@@ -171,7 +171,7 @@ public class KidsBbsBlist extends ListActivity {
 						String title = c.getString(c.getColumnIndex(
 								KidsBbsProvider.KEYB_TITLE));
 						if (tabname != null && title != null) {
-							mTList.add(new BoardInfo(tabname, title));
+							mTList.add(new BoardInfo(tabname, title, true));
 							//publishProgress(mTList.size());
 						}
 					} while (c.moveToNext());

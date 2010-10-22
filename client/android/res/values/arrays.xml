@@ -77,13 +77,33 @@
     	<item>육아</item>
     </string-array>
     
+    <string-array name="default_board_tables">
+        <item>b0_anonymous</item>
+    </string-array>
+    
     <string-array name="board_table_names">
+        <item>b0_anonymous</item>
+        <item>b0_AnonymousSerious</item>
+        <item>b0_guest</item>
+        <item>b0_garbages</item>
+        <item>b0_ToSysop</item>
+        <item>b0_notice</item>
+
+        <item>b0_CinemaPlay</item>
+        <item>b0_ComicsAnim</item>
+        <item>b0_ComputerGamenia</item>
+        <item>b0_Music</item>
+        <item>b0_OpenDiary</item>
+        <item>b0_p</item>
+        <item>b0_QuizWit</item>
+        <item>b0_Season</item>
+        <item>b0_sExLife</item>
+        <item>b0_SportsLeisure</item>
+
 		<item>b0_2000</item>
 		<item>b0_386</item>
 		<item>b0_AfterWeddingMarch</item>
 		<item>b0_AJou</item>
-		<item>b0_anonymous</item>
-		<item>b0_AnonymousSerious</item>
 		<item>b0_Arizona</item>
 		<item>b0_AUstralia</item>
 		<item>b0_Buddhism</item>
@@ -94,14 +114,11 @@
 		<item>b0_catholic</item>
 		<item>b0_CAU</item>
 		<item>b0_CBNU</item>
-		<item>b0_CinemaPlay</item>
 		<item>b0_Christian</item>
 		<item>b0_ChungNam</item>
 		<item>b0_CMU</item>
 		<item>b0_CNU</item>
 		<item>b0_CnUnix</item>
-		<item>b0_ComicsAnim</item>
-		<item>b0_ComputerGamenia</item>
 		<item>b0_consumer</item>
 		<item>b0_cooKing</item>
 		<item>b0_CultureOfKids</item>
@@ -123,9 +140,7 @@
 		<item>b0_fleaMarket</item>
 		<item>b0_freeeXpression</item>
 		<item>b0_Fun</item>
-		<item>b0_garbages</item>
 		<item>b0_GoodPlaces</item>
-		<item>b0_guest</item>
 		<item>b0_Guru</item>
 		<item>b0_HallymUnv</item>
 		<item>b0_HangulKorean</item>
@@ -153,12 +168,9 @@
 		<item>b0_military</item>
 		<item>b0_MIT</item>
 		<item>b0_MUD</item>
-		<item>b0_Music</item>
 		<item>b0_MyongJi</item>
-		<item>b0_notice</item>
 		<item>b0_NWU</item>
-		<item>b0_OpenDiary</item>
-		<item>b0_p</item>
+        <item>b0_OpenLetter</item>
 		<item>b0_pC</item>
 		<item>b0_pet</item>
 		<item>b0_PhilosophyThought</item>
@@ -168,25 +180,19 @@
 		<item>b0_Politics</item>
 		<item>b0_POSTECH</item>
 		<item>b0_purdue</item>
-		<item>b0_QuizWit</item>
 		<item>b0_salaryMan</item>
 		<item>b0_sciEncE</item>
-		<item>b0_Season</item>
-		<item>b0_sExLife</item>
 		<item>b0_SKK</item>
 		<item>b0_SNU</item>
 		<item>b0_SoGang</item>
 		<item>b0_SookMyung</item>
 		<item>b0_SoongSil</item>
-		<item>b0_SportsLeisure</item>
 		<item>b0_SquareMemo</item>
-		<item>b0_OpenLetter</item>
 		<item>b0_Stanford</item>
 		<item>b0_studyingabroad</item>
 		<item>b0_SungShin</item>
 		<item>b0_TAMU</item>
 		<item>b0_Teach</item>
-		<item>b0_ToSysop</item>
 		<item>b0_Travel</item>
 		<item>b0_tV</item>
 		<item>b0_UCLA</item>
