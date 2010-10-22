@@ -117,19 +117,23 @@ public class KidsBbsProvider extends ContentProvider {
 					"query: Unsupported URI: " + _uri);
 		}
 		SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
-		String order = KEYA_SEQ + " DESC";
+		String orderby = KEYA_SEQ + " DESC";
+		String groupby = null;
 		int type = sUriMatcher.match(_uri);
 		switch (type) {
-		case TYPE_LIST_ID:
 		case TYPE_TLIST_ID:
 			qb.appendWhere(KEY_ID + "=" + _uri.getPathSegments().get(2));
-		case TYPE_LIST:
 		case TYPE_TLIST:
+			groupby = KEYA_THREAD;
+			break;
+		case TYPE_LIST_ID:
+			qb.appendWhere(KEY_ID + "=" + _uri.getPathSegments().get(2));
+		case TYPE_LIST:
 			break;
 		case TYPE_BOARDS_ID:
 			qb.appendWhere(KEY_ID + "=" + _uri.getPathSegments().get(1));
 		case TYPE_BOARDS:
-			order = "LOWER(" + KEYB_TITLE + ")";
+			orderby = "LOWER(" + KEYB_TITLE + ")";
 			break;
 		default:
 			throw new IllegalArgumentException(
@@ -138,11 +142,11 @@ public class KidsBbsProvider extends ContentProvider {
 		qb.setTables(table);
 
 		if (!TextUtils.isEmpty(_sortOrder)) {
-			order = _sortOrder;
+			orderby = _sortOrder;
 		}
 
-		Cursor c = qb.query(mDB, _projection, _selection, _selectionArgs, null,
-				null, order);
+		Cursor c = qb.query(mDB, _projection, _selection, _selectionArgs, groupby,
+				null, orderby);
 		if (c != null) {
 			// Register the context's ContentResolver to be notified
 			// if the cursor result set changes.
@@ -248,10 +252,11 @@ public class KidsBbsProvider extends ContentProvider {
 	private String getTableName(Uri _uri) {
 		int type = sUriMatcher.match(_uri);
 		switch (type) {
-		case TYPE_LIST_ID:
 		case TYPE_TLIST_ID:
-		case TYPE_LIST:
 		case TYPE_TLIST:
+			return getViewname(_uri.getPathSegments().get(1));
+		case TYPE_LIST_ID:
+		case TYPE_LIST:
 			return _uri.getPathSegments().get(1);
 		case TYPE_BOARDS_ID:
 		case TYPE_BOARDS:
@@ -295,8 +300,8 @@ public class KidsBbsProvider extends ContentProvider {
 		return Uri.parse(uriString);
 	}
 	
-	private static final String getThreadedTabname(String _tabname) {
-		return _tabname + "_threaded";
+	private static final String getViewname(String _tabname) {
+		return _tabname + "_view";
 	}
 
 	// Common ID...
@@ -311,6 +316,9 @@ public class KidsBbsProvider extends ContentProvider {
 	public static final String KEYB_TITLE = "title";
 	private static final String KEYB_TITLE_DEF =
 			KEYB_TITLE + " VARCHAR(40) NOT NULL";
+	public static final String KEYB_SELECTED = "selected";
+	private static final String KEYB_SELECTED_DEF =
+			KEYB_SELECTED + " BOOLEAN DEFAULT FALSE";
 
 	// Article table
 	public static final String KEYA_SEQ = "seq";
@@ -344,6 +352,17 @@ public class KidsBbsProvider extends ContentProvider {
 	public static final String KEYT_COUNT = "count";
 	private static final String KEYT_COUNT_DEF =
 			KEYT_COUNT + " INTEGER NOT NULL";
+	
+	public static final ContentValues V_READ_TRUE;
+	public static final ContentValues V_READ_FALSE;
+	static {
+		V_READ_TRUE = new ContentValues();
+		V_READ_TRUE.put(KidsBbsProvider.KEYA_READ, true);
+		V_READ_FALSE = new ContentValues();
+		V_READ_FALSE.put(KidsBbsProvider.KEYA_READ, false);
+	}
+	
+	public static final String ORDER_BY_ID = KEY_ID + " ASC";
 
 	private static final String DB_NAME = "kidsbbs.db";
 	private static final int DB_VERSION = 1;
@@ -352,69 +371,89 @@ public class KidsBbsProvider extends ContentProvider {
 	private SQLiteDatabase mDB;
 
 	private static class DBHelper extends SQLiteOpenHelper {
-		private final String[] FIELDS1 = { KEYB_TITLE };   
-		
-		private String[] mTabnames;
-		private String[] mTypeNames;
-		private String[] mNameMapKeys;
-		private String[] mNameMapValues;
-		private HashMap<String, String> mNameMap = new HashMap<String, String>();
+		private Context mContext;
+		private HashMap<String, Boolean> mUpdateMap =
+				new HashMap<String, Boolean>();
 		
 		public DBHelper(Context _context, String _name, CursorFactory _factory,
 				int _version) {
 			super(_context, _name, _factory, _version);
-			
-			// Board table...
-			mTabnames = _context.getResources().getStringArray(
-					R.array.board_table_names);
-			mTypeNames = _context.getResources().getStringArray(
-					R.array.board_type_names);
-			mNameMapKeys = _context.getResources().getStringArray(
-					R.array.board_name_map_in);
-			mNameMapValues = _context.getResources().getStringArray(
-					R.array.board_name_map_out);
-			for (int i = 0; i < mNameMapKeys.length; ++i) {
-				mNameMap.put(mNameMapKeys[i], mNameMapValues[i]);
-			}
+			mContext = _context;
 		}
 
 		@Override
 		public void onCreate(SQLiteDatabase _db) {
 			createMainTable(_db);
 			
+			// Board table...
+			String[] tabnames = mContext.getResources().getStringArray(
+					R.array.board_table_names);
+			String[] typeNames = mContext.getResources().getStringArray(
+					R.array.board_type_names);
+			String[] nameMapKeys = mContext.getResources().getStringArray(
+					R.array.board_name_map_in);
+			String[] nameMapValues = mContext.getResources().getStringArray(
+					R.array.board_name_map_out);
+			String[] defaultMapKeys = mContext.getResources().getStringArray(
+					R.array.default_board_tables);
+			
+			HashMap<String, String> nameMap = new HashMap<String, String>();
+			for (int i = 0; i < nameMapKeys.length; ++i) {
+				nameMap.put(nameMapKeys[i], nameMapValues[i]);
+			}
+			if (mUpdateMap.isEmpty()) {
+				for (int i = 0; i < tabnames.length; ++i) {
+					mUpdateMap.put(tabnames[i], false);
+				}
+				for (int i = 0; i < defaultMapKeys.length; ++i) {
+					mUpdateMap.put(defaultMapKeys[i], true);
+				}
+			}
+			
 			// Populate...
-			for (int i = 0; i < mTabnames.length; ++i) {
-				String[] p = BoardInfo.parseTabname(mTabnames[i]);
+			for (int i = 0; i < tabnames.length; ++i) {
+				String[] p = BoardInfo.parseTabname(tabnames[i]);
 				int type = Integer.parseInt(p[0]);
 				String name = p[1];
 				String title;
-				if (type > 0 && type < mTypeNames.length) {
-					title = mTypeNames[type] + " ";
+				if (type > 0 && type < typeNames.length) {
+					title = typeNames[type] + " ";
 				} else {
 					title = "";
 				}
-				String mapped = mNameMap.get(name);
+				String mapped = nameMap.get(name);
 				if (mapped != null) {
 					title += mapped;
 				} else {
 					title += name;
 				}
-				addBoard(_db, new BoardInfo(mTabnames[i], title));
+				addBoard(_db, new BoardInfo(tabnames[i], title,
+						mUpdateMap.get(tabnames[i])));
 			}
 		}
 
 		@Override
 		public void onUpgrade(SQLiteDatabase _db, int _old, int _new) {
+			final String[] FIELDS = {
+				KEYB_TITLE,
+				KEYB_SELECTED,
+			};   
 			Log.w(TAG, "Upgrading database from version " + _old + " to " +
 					_new + ", which will destroy all old data");
 			
+			mUpdateMap.clear();
 			SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
 			qb.setTables(DB_TABLE);
-			Cursor c = qb.query(_db, FIELDS1, null, null, null, null, null);
+			Cursor c = qb.query(_db, FIELDS, null, null, null, null, null);
 			if (c != null && c.moveToFirst()) {
 				do {
 					String tabname = c.getString(c.getColumnIndex(KEYB_TABNAME));
-					dropArticleTable(_db, tabname);
+					boolean update = Boolean.parseBoolean(c.getString(
+							c.getColumnIndex(KEYB_SELECTED)));
+					if (tabname != null) {
+						mUpdateMap.put(tabname, update);
+						dropArticleTable(_db, tabname);
+					}
 				} while (c.moveToNext());
 			}
 			c.close();
@@ -427,6 +466,7 @@ public class KidsBbsProvider extends ContentProvider {
 			ContentValues values = new ContentValues();
 			values.put(KEYB_TABNAME, _info.getTabname());
 			values.put(KEYB_TITLE, _info.getTitle());
+			values.put(KEYB_SELECTED, _info.getSelected());
 			if (_db.insert(DB_TABLE, null, values) < 0) {
 				throw new SQLException(
 						"addBoard: Failed to insert row into " + DB_TABLE);
@@ -438,7 +478,8 @@ public class KidsBbsProvider extends ContentProvider {
 			_db.execSQL("CREATE TABLE " + DB_TABLE + " (" +
 					KEY_ID_DEF + "," +
 					KEYB_TABNAME_DEF + "," +
-					KEYB_TITLE_DEF + ");");
+					KEYB_TITLE_DEF + "," +
+					KEYB_SELECTED_DEF + ");");
 		}
 		
 		private void dropMainTable(SQLiteDatabase _db) {
@@ -456,21 +497,14 @@ public class KidsBbsProvider extends ContentProvider {
 					KEYA_THREAD_DEF + "," +
 					KEYA_BODY_DEF + "," +
 					KEYA_READ_DEF + ");");
-			//_db.execSQL("CREATE TABLE " + getThreadedTabname(_tabname) + " (" +
-			//		KEY_ID_DEF + "," +
-			//		KEYA_SEQ_DEF + "," +
-			//		KEYA_AUTHOR_DEF + "," +
-			//		KEYA_DATE_DEF + "," +
-			//		KEYA_TITLE_DEF + "," +
-			//		KEYA_THREAD_DEF + "," +
-			//		KEYA_BODY_DEF + "," +
-			//		KEYT_COUNT_DEF + ");");
+			_db.execSQL("CREATE VIEW " + getViewname(_tabname) + " AS " +
+					"SELECT * FROM " + _tabname +
+					" ORDER BY " + KEYA_SEQ + " DESC;");
 		}
 		
 		private void dropArticleTable(SQLiteDatabase _db, String _tabname) {
 			_db.execSQL("DROP TABLE IF EXISTS " + _tabname);
-			//_db.execSQL("DROP TABLE IF EXISTS " +
-			//		getThreadedTabname(_tabname));
+			_db.execSQL("DROP VIEW IF EXISTS " + getViewname(_tabname));
 		}
 	}
 }
