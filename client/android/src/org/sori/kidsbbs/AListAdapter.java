@@ -46,7 +46,7 @@ public class AListAdapter extends ArrayAdapter<ArticleInfo> {
 			(LayoutInflater)getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 	}
 	
-	static class ViewHolder {
+	private class ViewHolder {
 		TextView title;
 		TextView date;
 		TextView username;
