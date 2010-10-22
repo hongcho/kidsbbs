@@ -79,7 +79,7 @@ public class KidsBbsService extends Service {
     			PreferenceManager.getDefaultSharedPreferences(
     					getApplicationContext());
     	int updateFreq = Integer.parseInt(prefs.getString(
-    			Preferences.PREF_UPDATE_FREQ, "0"));
+    			Preferences.PREF_UPDATE_FREQ, "15"));
     	
     	mUpdateTimer.cancel();
     	if (updateFreq > 0) {

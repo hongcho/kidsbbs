@@ -46,7 +46,7 @@ public class BListAdapter extends ArrayAdapter<BoardInfo> {
 			(LayoutInflater)getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 	}
 	
-	static class ViewHolder {
+	private class ViewHolder {
 		TextView title;
 	}
 	

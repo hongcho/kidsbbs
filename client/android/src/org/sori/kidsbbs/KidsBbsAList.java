@@ -67,6 +67,8 @@ public abstract class KidsBbsAList extends ListActivity implements
 	private String mTabname;
 
 	private TextView mStatusView;
+	
+	private ContextMenu mContextMenu;
 
 	private ErrUtils mErrUtils;
 	private UpdateTask mLastUpdate = null;
@@ -105,12 +107,14 @@ public abstract class KidsBbsAList extends ListActivity implements
 		mStatusView = (TextView)findViewById(R.id.status);
 		mStatusView.setVisibility(View.GONE);
 
-		setListAdapter(new AListAdapter(this, R.layout.article_info_item, mList));
+		setListAdapter(new AListAdapter(this, R.layout.article_info_item,
+				mList));
 		getListView().setOnScrollListener(this);
 	}
 
 	@Override
-	protected void onListItemClick(ListView _l, View _v, int _position, long _id) {
+	protected void onListItemClick(ListView _l, View _v, int _position,
+			long _id) {
 		super.onListItemClick(_l, _v, _position, _id);
 		showItem(_position);
 	}
@@ -146,14 +150,22 @@ public abstract class KidsBbsAList extends ListActivity implements
 		}
 		return false;
 	}
+	
+	protected final void setContextMenuTitle(String _title) {
+		if (mContextMenu != null) {
+			mContextMenu.setHeaderTitle(_title);
+		}
+	}
 
 	@Override
 	public void onCreateContextMenu(ContextMenu _menu, View _v,
 			ContextMenu.ContextMenuInfo _menuInfo) {
 		super.onCreateOptionsMenu(_menu);
 
-		_menu.setHeaderTitle(getResources().getString(R.string.alist_cm_header));
-		_menu.add(0, MENU_SHOW, Menu.NONE, R.string.read_text);
+		mContextMenu = _menu;
+		setContextMenuTitle(getResources().getString(
+				R.string.alist_cm_header));
+		mContextMenu.add(0, MENU_SHOW, Menu.NONE, R.string.read_text);
 	}
 
 	@Override
@@ -161,7 +173,8 @@ public abstract class KidsBbsAList extends ListActivity implements
 		super.onContextItemSelected(_item);
 		switch (_item.getItemId()) {
 		case MENU_SHOW:
-			showItem(((AdapterView.AdapterContextMenuInfo)_item.getMenuInfo()).position);
+			showItem(((AdapterView.AdapterContextMenuInfo)
+					_item.getMenuInfo()).position);
 			return true;
 		}
 		return false;
@@ -189,7 +202,8 @@ public abstract class KidsBbsAList extends ListActivity implements
 
 		@Override
 		protected void onPreExecute() {
-			mStatusView.setText(getResources().getString(R.string.update_text));
+			mStatusView.setText(getResources().getString(
+					R.string.update_text));
 			mStatusView.setVisibility(View.VISIBLE);
 		}
 
@@ -218,7 +232,8 @@ public abstract class KidsBbsAList extends ListActivity implements
 						int cnt = c.getInt(c.getColumnIndex(
 								KidsBbsProvider.KEYA_CNT)); 
 						if (seq > 0 && user != null && date != null &&
-								title != null && thread != null && body != null) {
+								title != null && thread != null &&
+								body != null) {
 							mTList.add(new ArticleInfo(mTabname, seq, user,
 									null, date, title, thread, body, cnt,
 									false));
@@ -307,7 +322,8 @@ public abstract class KidsBbsAList extends ListActivity implements
 		setSelection(pos);
 	}
 
-	public void onScroll(AbsListView _v, int _first, int _nVisible, int _nTotal) {
+	public void onScroll(AbsListView _v, int _first, int _nVisible,
+			int _nTotal) {
 		if (_nTotal > 0 && _first + _nVisible >= _nTotal - 1 &&
 				_nTotal == mList.size() && mList.size() < mItemTotal) {
 			updateList(true);
