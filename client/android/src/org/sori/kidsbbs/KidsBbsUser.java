@@ -41,8 +41,8 @@ public class KidsBbsUser extends KidsBbsAList {
         mBoardUser = data.getQueryParameter(KidsBbs.PARAM_N_USER);
         
         updateTitle("");
-    	setUrlBase(KidsBbs.URL_USER,
-    			"&" + KidsBbs.PARAM_N_USER + "=" + mBoardUser);
+        setQueryBase(KidsBbsProvider.CONTENT_URISTR_LIST,
+        		KidsBbsProvider.KEYA_USER + "=" + mBoardUser);
         
         registerForContextMenu(getListView());
         updateFromPreferences();

@@ -25,31 +25,13 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
-import java.io.IOException;
-import java.io.InputStream;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.sori.kidsbbs.KidsBbsAList.ArticleReceiver;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
-
 import android.app.Activity;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -75,10 +57,11 @@ public class KidsBbsView extends Activity {
 	private ErrUtils mErrUtils;
 
 	private String mBoardTitle;
-	private String mBoardName;
-	private String mBoardType;
 	private String mBoardSeq;
 	private String mTabname;
+	
+	private Uri mUri;
+	private String mWhere;
 
 	private ArticleInfo mInfo = null;
 
@@ -90,13 +73,13 @@ public class KidsBbsView extends Activity {
 		mErrUtils = new ErrUtils(this, R.array.err_strings);
 
 		Uri data = getIntent().getData();
-		mBoardName = data.getQueryParameter(KidsBbs.PARAM_N_BOARD);
-		mBoardType = data.getQueryParameter(KidsBbs.PARAM_N_TYPE);
+		mTabname = data.getQueryParameter(KidsBbs.PARAM_N_TABNAME);
 		mBoardTitle = data.getQueryParameter(KidsBbs.PARAM_N_TITLE);
 		mBoardSeq = data.getQueryParameter(KidsBbs.PARAM_N_SEQ);
-		mTabname = BoardInfo.buildTabname(mBoardName,
-				Integer.parseInt(mBoardType));
 		setTitle(mBoardSeq + " in [" + mBoardTitle + "]");
+		
+		mUri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + mTabname);
+		mWhere = KidsBbsProvider.KEYA_SEQ + "=" + mBoardSeq;
 
 		mStatusView = (TextView)findViewById(R.id.status);
 		mStatusView.setVisibility(View.GONE);
@@ -157,8 +140,17 @@ public class KidsBbsView extends Activity {
 				!mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED);
 	}
 
-	private class UpdateTask extends AsyncTask<String, String, Integer> {
+	private class UpdateTask extends AsyncTask<Void, Void, Integer> {
 		private ArticleInfo mTInfo;
+		
+		private final String[] FIELDS = {
+			KidsBbsProvider.KEYA_USER,
+			KidsBbsProvider.KEYA_AUTHOR,
+			KidsBbsProvider.KEYA_DATE,
+			KidsBbsProvider.KEYA_TITLE,
+			KidsBbsProvider.KEYA_THREAD,
+			KidsBbsProvider.KEYA_BODY,
+		};
 
 		@Override
 		protected void onPreExecute() {
@@ -166,103 +158,36 @@ public class KidsBbsView extends Activity {
 		}
 
 		@Override
-		protected Integer doInBackground(String... _args) {
+		protected Integer doInBackground(Void... _args) {
 			int ret = 0;
-			HttpClient client = new DefaultHttpClient();
-			HttpGet get = new HttpGet(_args[0]);
-			try {
-				HttpResponse response = client.execute(get);
-				HttpEntity entity = response.getEntity();
-				if (entity == null) {
-				} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-					InputStream is = entity.getContent(); 
-					DocumentBuilder db =
-							DocumentBuilderFactory.newInstance().newDocumentBuilder();
-
-					// Parse the board list.
-					Document dom = db.parse(is);
-					Element docEle = dom.getDocumentElement();
-
-					// Get a board item
-					NodeList nl = docEle.getElementsByTagName("ITEM");
-					if (nl != null && nl.getLength() > 0) {
-						NodeList nl2;
-						Node n2;
-						Element item = (Element)nl.item(0);
-
-						nl2 = item.getElementsByTagName("THREAD");
-						if (nl2 == null || nl2.getLength() <= 0) {
-							return ErrUtils.ERR_XMLPARSING;
-						}
-						n2 = ((Element)nl2.item(0)).getFirstChild();
-						String thread = n2 != null ? n2.getNodeValue() : "";
-
-						nl2 = item.getElementsByTagName("TITLE");
-						if (nl2 == null || nl2.getLength() <= 0) {
-							return ErrUtils.ERR_XMLPARSING;
-						}
-						n2 = ((Element)nl2.item(0)).getFirstChild();
-						if (n2 == null) {
-							return ErrUtils.ERR_XMLPARSING;
-						}
-						String title = n2.getNodeValue();
-
-						nl2 = item.getElementsByTagName("SEQ");
-						if (nl2 == null || nl2.getLength() <= 0) {
-							return ErrUtils.ERR_XMLPARSING;
-						}
-						n2 = ((Element)nl2.item(0)).getFirstChild();
-						if (n2 == null) {
-							return ErrUtils.ERR_XMLPARSING;
-						}
-						int seq = Integer.parseInt(n2.getNodeValue());
-
-						nl2 = item.getElementsByTagName("DATE");
-						if (nl2 == null || nl2.getLength() <= 0) {
-							return ErrUtils.ERR_XMLPARSING;
-						}
-						n2 = ((Element)nl2.item(0)).getFirstChild();
-						if (n2 == null) {
-							return ErrUtils.ERR_XMLPARSING;
-						}
-						String date = n2.getNodeValue();
-
-						nl2 = item.getElementsByTagName("USER");
-						if (nl2 == null || nl2.getLength() <= 0) {
-							return ErrUtils.ERR_XMLPARSING;
-						}
-						n2 = ((Element)nl2.item(0)).getFirstChild();
-						if (n2 == null) {
-							return ErrUtils.ERR_XMLPARSING;
-						}
-						String user = n2.getNodeValue();
-
-						nl2 = item.getElementsByTagName("AUTHOR");
-						if (nl2 == null || nl2.getLength() <= 0) {
-							return ErrUtils.ERR_XMLPARSING;
-						}
-						n2 = ((Element)nl2.item(0)).getFirstChild();
-						String author = n2 != null ? n2.getNodeValue() : "";
-
-						nl2 = item.getElementsByTagName("DESCRIPTION");
-						if (nl2 == null || nl2.getLength() <= 0) {
-							return ErrUtils.ERR_XMLPARSING;
-						}
-						n2 = ((Element)nl2.item(0)).getFirstChild();
-						String desc = n2 != null ? n2.getNodeValue() : "";
-
-						mTInfo = new ArticleInfo(mTabname, seq, user, author,
-								date, title, thread, desc, 1, false);
+			ContentResolver cr = getContentResolver();
+			Cursor c = cr.query(mUri, FIELDS, mWhere, null, null);
+			if (c != null) {
+				if (c.getCount() > 0) {
+					c.moveToFirst();
+					String user = c.getString(c.getColumnIndex(
+							KidsBbsProvider.KEYA_USER));
+					String author = c.getString(c.getColumnIndex(
+							KidsBbsProvider.KEYA_AUTHOR));
+					String date = c.getString(c.getColumnIndex(
+							KidsBbsProvider.KEYA_DATE));
+					String title = c.getString(c.getColumnIndex(
+							KidsBbsProvider.KEYA_TITLE));
+					String thread = c.getString(c.getColumnIndex(
+							KidsBbsProvider.KEYA_THREAD));
+					String body = c.getString(c.getColumnIndex(
+							KidsBbsProvider.KEYA_BODY));
+					if (user != null && author != null && date != null &&
+							title != null && thread != null && body != null) {
+						mTInfo = new ArticleInfo(mTabname,
+								Integer.parseInt(mBoardSeq), user, author, date,
+								title, thread, body, 1, true);
+						++ret;
 					}
 				}
-			} catch (IOException e) {
-				ret = ErrUtils.ERR_IO;
-			} catch (ParserConfigurationException e) {
-				ret = ErrUtils.ERR_PARSER;
-			} catch (SAXException e) {
-				ret = ErrUtils.ERR_SAX;
+				c.close();
 			}
-			return ret;
+			return ret > 0 ? 0 : ErrUtils.ERR_EMPTY;
 		}
 
 		@Override
@@ -287,18 +212,14 @@ public class KidsBbsView extends Activity {
 	private void refreshView() {
 		if (!isUpdating()) {
 			mLastUpdate = new UpdateTask();
-			mLastUpdate.execute(KidsBbs.URL_VIEW +
-					KidsBbs.PARAM_N_BOARD + "=" + mBoardName +
-					"&" + KidsBbs.PARAM_N_TYPE + "=" + mBoardType +
-					"&" + KidsBbs.PARAM_N_SEQ + "=" + mBoardSeq);
+			mLastUpdate.execute();
 		}
 	}
 
 	private void startThreadView() {
 		if (mInfo != null) {
-			Uri data = Uri.parse(KidsBbs.URI_INTENT_THREAD
-					+ KidsBbs.PARAM_N_BOARD + "=" + mBoardName +
-					"&" + KidsBbs.PARAM_N_TYPE + "=" + mBoardType +
+			Uri data = Uri.parse(KidsBbs.URI_INTENT_THREAD +
+					KidsBbs.PARAM_N_TABNAME + "=" + mTabname +
 					"&" + KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle +
 					"&" + KidsBbs.PARAM_N_THREAD + "=" + mInfo.getThread());
 			Intent i = new Intent(this, KidsBbsThread.class);
@@ -311,9 +232,8 @@ public class KidsBbsView extends Activity {
 
 	private void startUserView() {
 		if (mInfo != null) {
-			Uri data = Uri.parse(KidsBbs.URI_INTENT_USER
-					+ KidsBbs.PARAM_N_BOARD + "=" + mBoardName +
-					"&" + KidsBbs.PARAM_N_TYPE + "=" + mBoardType +
+			Uri data = Uri.parse(KidsBbs.URI_INTENT_USER +
+					KidsBbs.PARAM_N_TABNAME + "=" + mTabname +
 					"&" + KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle +
 					"&" + KidsBbs.PARAM_N_USER + "=" + mInfo.getUser());
 			Intent i = new Intent(this, KidsBbsUser.class);

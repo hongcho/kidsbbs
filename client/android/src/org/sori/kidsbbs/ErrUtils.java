@@ -33,6 +33,7 @@ public class ErrUtils {
 	public static final int ERR_PARSER = -3;
 	public static final int ERR_SAX = -4;
 	public static final int ERR_XMLPARSING = -5;
+	public static final int ERR_EMPTY = -6;
 
 	private final String[] mErrStrings;
 	

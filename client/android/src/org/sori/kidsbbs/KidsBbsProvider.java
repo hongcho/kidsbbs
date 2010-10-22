@@ -55,10 +55,6 @@ public class KidsBbsProvider extends ContentProvider {
 			CONTENT_URI_BASE + "list/";
 	public static final String CONTENT_URISTR_TLIST =
 			CONTENT_URI_BASE + "tlist/";
-	public static final String CONTENT_URISTR_THREAD =
-			CONTENT_URI_BASE + "thread/";
-	public static final String CONTENT_URISTR_USER =
-			CONTENT_URI_BASE + "user/";
 	
 	private static final int TYPE_BOARDS = 0;
 	private static final int TYPE_BOARDS_ID = 1;
@@ -66,10 +62,6 @@ public class KidsBbsProvider extends ContentProvider {
 	private static final int TYPE_LIST_ID = 3;
 	private static final int TYPE_TLIST = 4;
 	private static final int TYPE_TLIST_ID = 5;
-	private static final int TYPE_THREAD = 6;
-	private static final int TYPE_THREAD_ID = 7;
-	private static final int TYPE_USER = 8;
-	private static final int TYPE_USER_ID = 9;
 
 	private static final UriMatcher sUriMatcher;
 	static {
@@ -80,10 +72,6 @@ public class KidsBbsProvider extends ContentProvider {
 		sUriMatcher.addURI(PROVIDER, "list/*/#", TYPE_LIST_ID);
 		sUriMatcher.addURI(PROVIDER, "tlist/*", TYPE_TLIST);
 		sUriMatcher.addURI(PROVIDER, "tlist/*/#", TYPE_TLIST_ID);
-		sUriMatcher.addURI(PROVIDER, "thread/*", TYPE_THREAD);
-		sUriMatcher.addURI(PROVIDER, "thread/*/#", TYPE_THREAD_ID);
-		sUriMatcher.addURI(PROVIDER, "user/*", TYPE_USER);
-		sUriMatcher.addURI(PROVIDER, "user/*/#", TYPE_USER_ID);
 	}
 	
 	private static final String TYPESTR_BASE = "vnd.sori.cursor.";
@@ -115,14 +103,6 @@ public class KidsBbsProvider extends ContentProvider {
 			return TYPESTR_DIR_BASE + "tlist";
 		case TYPE_TLIST_ID:
 			return TYPESTR_ITEM_BASE + "tlist";
-		case TYPE_THREAD:
-			return TYPESTR_DIR_BASE + "thread";
-		case TYPE_THREAD_ID:
-			return TYPESTR_ITEM_BASE + "thread";
-		case TYPE_USER:
-			return TYPESTR_DIR_BASE + "user";
-		case TYPE_USER_ID:
-			return TYPESTR_ITEM_BASE + "user";
 		}
 		Log.e(TAG, "getType: Unsupported URI: " + _uri);
 		return null;
@@ -142,13 +122,9 @@ public class KidsBbsProvider extends ContentProvider {
 		switch (type) {
 		case TYPE_LIST_ID:
 		case TYPE_TLIST_ID:
-		case TYPE_THREAD_ID:
-		case TYPE_USER_ID:
 			qb.appendWhere(KEY_ID + "=" + _uri.getPathSegments().get(2));
 		case TYPE_LIST:
 		case TYPE_TLIST:
-		case TYPE_THREAD:
-		case TYPE_USER:
 			break;
 		case TYPE_BOARDS_ID:
 			qb.appendWhere(KEY_ID + "=" + _uri.getPathSegments().get(1));
@@ -204,14 +180,10 @@ public class KidsBbsProvider extends ContentProvider {
 		switch (sUriMatcher.match(_uri)) {
 		case TYPE_LIST_ID:
 		case TYPE_TLIST_ID:
-		case TYPE_THREAD_ID:
-		case TYPE_USER_ID:
 			idString = _uri.getPathSegments().get(2);
 			break;
 		case TYPE_LIST:
 		case TYPE_TLIST:
-		case TYPE_THREAD:
-		case TYPE_USER:
 			break;
 		case TYPE_BOARDS_ID:
 			idString = _uri.getPathSegments().get(1);
@@ -247,14 +219,10 @@ public class KidsBbsProvider extends ContentProvider {
 		switch (sUriMatcher.match(_uri)) {
 		case TYPE_LIST_ID:
 		case TYPE_TLIST_ID:
-		case TYPE_THREAD_ID:
-		case TYPE_USER_ID:
 			idString = _uri.getPathSegments().get(2);
 			break;
 		case TYPE_LIST:
 		case TYPE_TLIST:
-		case TYPE_THREAD:
-		case TYPE_USER:
 			break;
 		case TYPE_BOARDS_ID:
 			idString = _uri.getPathSegments().get(1);
@@ -282,12 +250,8 @@ public class KidsBbsProvider extends ContentProvider {
 		switch (type) {
 		case TYPE_LIST_ID:
 		case TYPE_TLIST_ID:
-		case TYPE_THREAD_ID:
-		case TYPE_USER_ID:
 		case TYPE_LIST:
 		case TYPE_TLIST:
-		case TYPE_THREAD:
-		case TYPE_USER:
 			return _uri.getPathSegments().get(1);
 		case TYPE_BOARDS_ID:
 		case TYPE_BOARDS:
@@ -306,8 +270,6 @@ public class KidsBbsProvider extends ContentProvider {
 		switch (sUriMatcher.match(_uri)) {
 		case TYPE_LIST_ID:
 		case TYPE_TLIST_ID:
-		case TYPE_THREAD_ID:
-		case TYPE_USER_ID:
 			if (length != 3) {
 				Log.e(TAG, "getContentUriWithoutId: Unsupported URI: " + _uri);
 				return null;
@@ -316,8 +278,6 @@ public class KidsBbsProvider extends ContentProvider {
 			break;
 		case TYPE_LIST:
 		case TYPE_TLIST:
-		case TYPE_THREAD:
-		case TYPE_USER:
 			if (length != 2) {
 				Log.e(TAG, "getConentUriWithoutId: Unsupported URI: " + _uri);
 				return null;
@@ -377,6 +337,9 @@ public class KidsBbsProvider extends ContentProvider {
 	public static final String KEYA_READ = "read";
 	private static final String KEYA_READ_DEF =
 			KEYA_READ + " BOOLEAN DEFAULT FALSE";
+
+	public static final String KEYA_CNT = "cnt";
+	public static final String KEYA_CNT_FIELD = "COUNT(*) AS " + KEYA_CNT;
 	
 	public static final String KEYT_COUNT = "count";
 	private static final String KEYT_COUNT_DEF =
