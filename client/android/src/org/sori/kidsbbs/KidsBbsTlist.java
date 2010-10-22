@@ -35,7 +35,7 @@ public class KidsBbsTlist extends KidsBbsAList {
         super.onCreate(_state);
         
         updateTitle("");
-    	setUrlBase(KidsBbs.URL_TLIST, "");
+        setQueryBase(KidsBbsProvider.CONTENT_URISTR_TLIST, null);
         
         registerForContextMenu(getListView());
         updateFromPreferences();

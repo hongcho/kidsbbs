@@ -41,8 +41,8 @@ public class KidsBbsThread extends KidsBbsAList {
         mBoardThread = data.getQueryParameter(KidsBbs.PARAM_N_THREAD);
         
         updateTitle("");
-        setUrlBase(KidsBbs.URL_THREAD,
-        		"&" + KidsBbs.PARAM_N_THREAD + "=" + mBoardThread);
+        setQueryBase(KidsBbsProvider.CONTENT_URISTR_LIST,
+        		KidsBbsProvider.KEYA_THREAD + "=" + mBoardThread);
         
         registerForContextMenu(getListView());
         updateFromPreferences();

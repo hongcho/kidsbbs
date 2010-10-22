@@ -144,7 +144,7 @@ public class KidsBbsBlist extends ListActivity {
 	}
 
 	private class UpdateTask extends AsyncTask<Void, Integer, Integer> {
-		private String[] FIELDS = {
+		private final String[] FIELDS = {
 			KidsBbsProvider.KEYB_TABNAME,
 			KidsBbsProvider.KEYB_TITLE,
 		};
@@ -163,18 +163,21 @@ public class KidsBbsBlist extends ListActivity {
 			ContentResolver cr = getContentResolver();
 			Cursor c = cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
 					null, null, null);
-			if (c.moveToFirst()) {
-				do {
-					String tabname = c.getString(c.getColumnIndex(
-							KidsBbsProvider.KEYB_TABNAME));
-					String title = c.getString(c.getColumnIndex(
-							KidsBbsProvider.KEYB_TITLE));
-					
-					mTList.add(new BoardInfo(tabname, title));
-					publishProgress(mTList.size());
-				} while (c.moveToNext());
+			if (c != null) {
+				if (c.moveToFirst()) {
+					do {
+						String tabname = c.getString(c.getColumnIndex(
+								KidsBbsProvider.KEYB_TABNAME));
+						String title = c.getString(c.getColumnIndex(
+								KidsBbsProvider.KEYB_TITLE));
+						if (tabname != null && title != null) {
+							mTList.add(new BoardInfo(tabname, title));
+							//publishProgress(mTList.size());
+						}
+					} while (c.moveToNext());
+				}
+				c.close();
 			}
-			c.close();
 			return mTList.size();
 		}
 
@@ -208,8 +211,7 @@ public class KidsBbsBlist extends ListActivity {
 	private void showItem(int _index) {
 		BoardInfo info = (BoardInfo)getListView().getItemAtPosition(_index);
 		Uri data = Uri.parse(KidsBbs.URI_INTENT_TLIST +
-				KidsBbs.PARAM_N_BOARD + "=" + info.getBoard() +
-				"&" + KidsBbs.PARAM_N_TYPE + "=" + info.getType() +
+				KidsBbs.PARAM_N_TABNAME + "=" + info.getTabname() +
 				"&" + KidsBbs.PARAM_N_TITLE + "=" + info.getTitle());
 		Intent i = new Intent(this, KidsBbsTlist.class);
 		i.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);

@@ -54,12 +54,13 @@ public class KidsBbs extends Activity {
 	public static final String PARAM_N_SEQ = "p";
 	public static final String PARAM_N_START = "s";
 	public static final String PARAM_N_COUNT = "n";
+	public static final String PARAM_N_TABNAME = "tn";
 
 	@Override
 	public void onCreate(Bundle _state) {
 		super.onCreate(_state);
 
-		//startService(new Intent(this, KidsBbsService.class));
+		startService(new Intent(this, KidsBbsService.class));
 
 		startActivity(new Intent(this, KidsBbsBlist.class));
 		finish();

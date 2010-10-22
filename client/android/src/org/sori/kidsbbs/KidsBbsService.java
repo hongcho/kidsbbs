@@ -153,6 +153,7 @@ public class KidsBbsService extends Service {
 			// Update each board in the list.
 			ContentResolver cr = getContentResolver();
 			for (int i = 0; i < tabnames.size(); ++i) {
+				int count = 0;
 				String tabname = tabnames.get(i);
 				String[] parsed = BoardInfo.parseTabname(tabname);
 				String board = parsed[1];
@@ -178,6 +179,7 @@ public class KidsBbsService extends Service {
 							state = ST_DONE;
 						} else {
 							if (c.getCount() > 0) {
+								c.moveToFirst();
 								// Cache the old entry.
 								int seq = c.getInt(c.getColumnIndex(
 										KidsBbsProvider.KEYA_SEQ));
@@ -190,8 +192,11 @@ public class KidsBbsService extends Service {
 								boolean read = Boolean.parseBoolean(
 										c.getString(c.getColumnIndex(
 												KidsBbsProvider.KEYA_READ)));
-								old = new ArticleInfo(tabname, seq, user, null,
-										date, title, null, null, 1, read);
+								if (seq == info.getSeq() && user != null &&
+										date != null && title != null) {
+									old = new ArticleInfo(tabname, seq, user, null,
+											date, title, null, null, 1, read);
+								}
 							}
 							c.close();
 						}
@@ -249,11 +254,13 @@ public class KidsBbsService extends Service {
 							if (!read) {
 								publishProgress(info);
 							}
-							++total_count;
+							++count;
 						}
 					}
 					start += articles.size();
-				};
+				}
+				Log.i(TAG, "Updated " + count + " for " + tabname);
+				total_count += count;
 			}
 			return total_count;
 		}
