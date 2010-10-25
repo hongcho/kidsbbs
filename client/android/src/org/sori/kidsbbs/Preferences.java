@@ -25,36 +25,65 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
-import android.content.Intent;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 
 public class Preferences extends PreferenceActivity {
 	public static final String PREF_UPDATE_FREQ = "PREF_UPDATE_FREQ";
-	public static final String PREF_ABOUT = "PREF_ABOUT";
+	public static final String PREF_ABOUT_KIDSBBS = "PREF_ABOUT_KIDSBBS";
+	public static final String PREF_ABOUT_APP = "PREF_ABOUT_APP";
+	
+	private static final int ABOUT_APP_ID = 0;
+	private static final int ABOUT_KIDSBBS_ID = 1;
 	
 	SharedPreferences prefs;
-	
-	private void onAbout() {
-		Intent i = new Intent(Intent.ACTION_VIEW,
-				Uri.parse(getResources().getString(R.string.about_url)));
-    	startActivity(i);
-	}
 	
 	@Override
 	public void onCreate(Bundle _state) {
 		super.onCreate(_state);
 		addPreferencesFromResource(R.xml.userpreferences);
 		
-		findPreference(PREF_ABOUT).setOnPreferenceClickListener(
+		findPreference(PREF_ABOUT_KIDSBBS).setOnPreferenceClickListener(
 				new Preference.OnPreferenceClickListener() {
 					public boolean onPreferenceClick(Preference preference) {
-						onAbout();
+						showDialog(ABOUT_KIDSBBS_ID);
 						return true;
 					}
 				});
+		
+		findPreference(PREF_ABOUT_APP).setOnPreferenceClickListener(
+				new Preference.OnPreferenceClickListener() {
+					public boolean onPreferenceClick(Preference preference) {
+						showDialog(ABOUT_APP_ID);
+						return true;
+					}
+				});
+	}
+	
+	@Override
+	protected Dialog onCreateDialog(int _id) {
+		AlertDialog.Builder builder;
+		AlertDialog dialog;
+		switch(_id) {
+		case ABOUT_KIDSBBS_ID:
+			builder = new AlertDialog.Builder(this);
+			builder.setTitle(R.string.about_kidsbbs_title);
+			builder.setMessage(R.string.about_kidsbbs_text);
+			dialog = builder.create();
+			break;
+		case ABOUT_APP_ID:
+			builder = new AlertDialog.Builder(this);
+			builder.setTitle(R.string.about_app_title);
+			builder.setMessage(R.string.about_app_text);
+			dialog = builder.create();
+			break;
+		default:
+			dialog = null;
+		}
+		return dialog;
 	}
 }
