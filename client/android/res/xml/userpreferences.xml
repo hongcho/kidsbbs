@@ -43,10 +43,13 @@
 	<PreferenceCategory
 		android:title="@string/settings_general"
 		>
-		<PreferenceScreen
-			android:key="PREF_ABOUT"
-			android:title="@string/about_title"
-			android:summary="@string/about_url"
+		<DialogPreference
+			android:key="PREF_ABOUT_KIDSBBS"
+			android:title="@string/about_kidsbbs_title"
+			/>
+		<DialogPreference
+			android:key="PREF_ABOUT_APP"
+			android:title="@string/about_app_title"
 			/>
 	</PreferenceCategory>
 </PreferenceScreen>

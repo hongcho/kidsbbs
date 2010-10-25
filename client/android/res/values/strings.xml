@@ -49,8 +49,20 @@
     <string name="update_freq_title">업데이트 주기</string>
     <string name="update_freq_summary">아직 적용되지 않습니다...</string>
 	<string name="settings_general">일반 옵션</string>
-    <string name="about_title">이 앱에 대해서</string>
-    <string name="about_url">http://kidsbbs.googlecode.com/</string>
+    <string name="about_kidsbbs_title">키즈 비비에스란?</string>
+    <string name="about_app_title">이 앱에 대하여</string>
+    
+    <string name="about_kidsbbs_text">
+    	키즈는 KIDS (Korea Internet Dream Space 또는 Korea Internet DataService
+    	System) 로 불리기도 하는 텔넷 (최근엔 SSH도 지원) 을 기반으로한 온라인
+    	모임입니다.
+    	주소는 kids.kornet.net 입니다.
+    </string>
+    <string name="about_app_text">
+    	이 앱은 키즈와는 직접적으로는 관련이 전혀 없습니다.
+    	
+    	프로젝트 정보는 http://kidsbbs.googlecode.com/ 에 있습니다.
+    </string>
     
     <string name="update_text">불러오고 있습니다...</string>
 </resources>
