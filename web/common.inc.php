@@ -211,7 +211,7 @@ function get_dbquery($m)
   case 'rss':
     return "SELECT a0_seq,a1_username,a2_author,a4_date,a5_title,a7_body ".
       "FROM $tn ".
-      "WHERE a4_date+0>CONVERT_TZ(NOW(),'US/Mountain','Asia/Seoul')-60000 ".
+      "WHERE a4_date+0>CONVERT_TZ(NOW(),'US/Mountain','Asia/Seoul')-240000 ".
       "ORDER BY a0_seq DESC";
     break;
   case 'rss1':
@@ -219,7 +219,7 @@ function get_dbquery($m)
       "FROM $tn ORDER BY a0_seq DESC LIMIT 1";
     break;
   case 'list':
-    return "SELECT a0_seq,a1_username,a2_author,a4_date,a5_title,a6_thread,a7_body ".
+    return "SELECT a0_seq,a1_username,a4_date,a5_title,a6_thread ".
       "FROM $tn ORDER BY a0_seq DESC";
   case 'tlist':
     return "SELECT a0_seq,a1_username,a4_date,a5_title,a6_thread,COUNT(*) AS cnt,a7_body ".
@@ -338,7 +338,9 @@ function gen_xml_item($thread, $cnt,
   if ($author != NULL) {
     echo "<AUTHOR><![CDATA[$author]]></AUTHOR>\n";
   }
-  echo "<DESCRIPTION><![CDATA[$desc]]></DESCRIPTION>\n";
+  if ($desc != NULL) {
+    echo "<DESCRIPTION><![CDATA[$desc]]></DESCRIPTION>\n";
+  }
   echo "</ITEM>\n";
 }
 // generate list
@@ -354,16 +356,13 @@ function gen_list(&$qr)
   for ($i = $s; $i < $s + $n; ++$i) {
     $seq = mysql_result($qr, $i, 'a0_seq');
     $username = mysql_result($qr, $i, 'a1_username');
-    $author = mysql_result($qr, 0, 'a2_author');
     $date = mysql_result($qr, $i, 'a4_date');
     $title = mysql_result($qr, $i, 'a5_title');
     $thread = mysql_result($qr, $i, 'a6_thread');
-    $body = mysql_result($qr, $i, 'a7_body');
 
     switch ($_o) {
     case 0:
       $title = pad_title($title);
-      $body = get_summary($body);
       echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
       echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
       echo "<TR><TD><FONT size=\"4pt\" style=\"font-family:monospace\"><A href=\"?m=view&b=$b&t=$t&p=$seq\">$title</A>&nbsp;</FONT>\n";
@@ -371,15 +370,13 @@ function gen_list(&$qr)
       echo "</TABLE>\n";
       echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
       echo "<TR><TD width=\"60\"><FONT size=\"2pt\"><A href=\"?m=user&b=$_b&t=$_t&u=$username\">$username</A>&nbsp;</FONT>\n";
-      echo "<TD><FONT size=\"2pt\" style=\"font-family:monospace\">$body</FONT>\n";
+      echo "<TD>\n";
       echo "<TD align=\"right\"><FONT size=\"2pt\"><A href=\"?m=view&b=$_b&t=$_t&p=$seq\">$date</A></FONT>\n";
       echo "</TABLE>\n";
       echo "</TABLE>\n";
       break;
     case 1:
-      $body = remove_kids_html($body);
-      $body = trim_broken_korean($body, strlen($body));
-      gen_xml_item($thread, 1, $seq, $username, $author, $date, $title, $body);
+      gen_xml_item($thread, 1, $seq, $username, NULL, $date, $title, NULL);
       break;
     }
   }
