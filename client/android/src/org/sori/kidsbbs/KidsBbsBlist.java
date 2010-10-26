@@ -44,9 +44,10 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 public class KidsBbsBlist extends ListActivity {
-	static final private int MENU_REFRESH = Menu.FIRST;
+	private static final int MENU_REFRESH = Menu.FIRST;
 	private static final int MENU_PREFERENCES = Menu.FIRST + 1;
 	private static final int MENU_SHOW = Menu.FIRST + 2;
+	private static final int MENU_SELECT = Menu.FIRST + 3;
 
 	private static final int SHOW_PREFERENCES = 1;
 
@@ -87,16 +88,22 @@ public class KidsBbsBlist extends ListActivity {
 	public boolean onCreateOptionsMenu(Menu _menu) {
 		super.onCreateOptionsMenu(_menu);
 
+		MenuItem itemSelect = _menu.add(0, MENU_SELECT, Menu.NONE,
+				R.string.menu_select);
+		itemSelect.setIcon(getResources().getIdentifier(
+				"android:drawable/ic_menu_add", null, null));
+		itemSelect.setShortcut('0', 's');
+
 		MenuItem itemUpdate = _menu.add(0, MENU_REFRESH, Menu.NONE,
 				R.string.menu_refresh);
 		itemUpdate.setIcon(getResources().getIdentifier(
 				"android:drawable/ic_menu_refresh", null, null));
-		itemUpdate.setShortcut('0', 'r');
+		itemUpdate.setShortcut('1', 'r');
 
 		MenuItem itemPreferences = _menu.add(0, MENU_PREFERENCES, Menu.NONE,
 				R.string.menu_preferences);
 		itemPreferences.setIcon(android.R.drawable.ic_menu_preferences);
-		itemPreferences.setShortcut('1', 'p');
+		itemPreferences.setShortcut('2', 'p');
 
 		return true;
 	}
@@ -115,6 +122,8 @@ public class KidsBbsBlist extends ListActivity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		super.onOptionsItemSelected(item);
 		switch (item.getItemId()) {
+		case MENU_SELECT:
+			return true;
 		case MENU_REFRESH:
 			refreshList();
 			return true;
@@ -158,8 +167,13 @@ public class KidsBbsBlist extends ListActivity {
 			final String[] FIELDS = {
 				KidsBbsProvider.KEYB_TABNAME,
 				KidsBbsProvider.KEYB_TITLE,
+				KidsBbsProvider.KEYB_STATE,
 			};
-			final String where = KidsBbsProvider.KEYB_SELECTED;
+			final String where =
+					KidsBbsProvider.KEYB_STATE + "!=" +
+						KidsBbsProvider.STATE_UNDEF + " AND " +
+					KidsBbsProvider.KEYB_STATE + "!=" +
+						KidsBbsProvider.STATE_PAUSED;
 			ContentResolver cr = getContentResolver();
 			Cursor c = cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
 					where, null, null);
@@ -170,8 +184,10 @@ public class KidsBbsBlist extends ListActivity {
 								KidsBbsProvider.KEYB_TABNAME));
 						String title = c.getString(c.getColumnIndex(
 								KidsBbsProvider.KEYB_TITLE));
+						int state = c.getInt(c.getColumnIndex(
+								KidsBbsProvider.KEYB_STATE));
 						if (tabname != null && title != null) {
-							mTList.add(new BoardInfo(tabname, title, true));
+							mTList.add(new BoardInfo(tabname, title, state));
 							//publishProgress(mTList.size());
 						}
 					} while (c.moveToNext());

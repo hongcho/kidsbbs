@@ -28,8 +28,12 @@ package org.sori.kidsbbs;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.TimeZone;
+
+import org.sori.kidsbbs.KidsBbs.ParseMode;
 
 public class ArticleInfo {
 	public static final String DATE_INVALID = "0000-00-00 00:00:00";
@@ -66,6 +70,7 @@ public class ArticleInfo {
 	public final String getDateString() { return mDateString; }
 	public final String getDateShortString() { return mDateShortString;}
 	public final boolean getRead() { return mRead; }
+	public final void setRead(boolean _read) { mRead = _read; }
 
 	public static final Date toLocalDate(String _dateString) {
 		if (_dateString == DATE_INVALID) {
@@ -82,6 +87,23 @@ public class ArticleInfo {
 				return null;
 			}
 		}
+	}
+	
+	public static final boolean isRecent(String _dateString) {
+		boolean read = true;
+		Date local = ArticleInfo.toLocalDate(_dateString);
+		if (local != null) {
+			Calendar calLocal = new GregorianCalendar();
+			Calendar calRecent = new GregorianCalendar();
+			calLocal.setTime(local);
+			calRecent.setTime(new Date());
+			// "Recent" one is marked unread.
+			calRecent.add(Calendar.DATE, -7);
+			if (calLocal.after(calRecent)) {
+				read = false;
+			}
+		}
+		return read;
 	}
 
 	public ArticleInfo(String _tabname, int _seq, String _user, String _author,

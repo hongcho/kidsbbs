@@ -37,16 +37,25 @@ import android.widget.TextView;
 public class AListAdapter extends ArrayAdapter<ArticleInfo> {
 	private int mResource;
 	private LayoutInflater mInflater;
+
+	private int mReadId;
+	private int mUnreadId;
 	
 	public AListAdapter(Context _context, int _resource,
 			List<ArticleInfo> _items) {
 		super(_context, _resource, _items);
 		mResource = _resource;
-		mInflater =
-			(LayoutInflater)getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		mInflater = (LayoutInflater)getContext().getSystemService(
+					Context.LAYOUT_INFLATER_SERVICE);
+
+		mUnreadId = getContext().getResources().getIdentifier(
+				"?android/attr:textColorSecondaryInverse", null, null);
+		mReadId = getContext().getResources().getIdentifier(
+				"?android/attr:colorBackground", null, null);
 	}
 	
 	private class ViewHolder {
+		View item;
 		TextView title;
 		TextView date;
 		TextView username;
@@ -56,6 +65,7 @@ public class AListAdapter extends ArrayAdapter<ArticleInfo> {
 	@Override
 	public View getView(int _position, View _convertView, ViewGroup _parent) {
 		ArticleInfo info = getItem(_position);
+		int color = info.getRead() ? mReadId : mUnreadId;
 		String title = info.getTitle();
 		String date = info.getDateShortString();
 		String user = info.getUser();
@@ -69,6 +79,7 @@ public class AListAdapter extends ArrayAdapter<ArticleInfo> {
 		if (_convertView == null) {
 			_convertView = mInflater.inflate(mResource, _parent, false);
 			holder = new ViewHolder();
+			holder.item = (View)_convertView.findViewById(R.id.item);
 			holder.title = (TextView)_convertView.findViewById(R.id.title);
 			holder.date = (TextView)_convertView.findViewById(R.id.date);
 			holder.username = (TextView)_convertView.findViewById(R.id.username);
@@ -77,6 +88,7 @@ public class AListAdapter extends ArrayAdapter<ArticleInfo> {
 		} else {
 			holder = (ViewHolder)_convertView.getTag();
 		}
+		holder.item.setBackgroundResource(color);
 		holder.title.setText(title);
 		holder.date.setText(date);
 		holder.username.setText(user);

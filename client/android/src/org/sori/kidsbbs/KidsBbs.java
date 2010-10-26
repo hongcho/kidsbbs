@@ -81,36 +81,51 @@ public class KidsBbs extends Activity {
 	public static final String PARAM_N_COUNT = "n";
 	public static final String PARAM_N_TABNAME = "tn";
 	
-	private static class ParseException extends Exception {
-		public ParseException(String _message) {
-			super(_message);
-		}
-	}
-	public static final ArticleInfo parseArticle(String _tabname,
-			Element _item) {
+	public static enum ParseMode {
+		VIEW,
+		ALIST,
+		TLIST,
+		LIST,
+	};
+	
+	public static final ArticleInfo parseArticle(ParseMode _mode,
+			String _tabname, Element _item) {
 		NodeList nl;
 		Node n;
 		try {
-			nl = _item.getElementsByTagName("THREAD");
-			String thread;
-			if (nl == null || nl.getLength() <= 0) {
-				throw new ParseException("ParseException: THREAD");
+			String thread = null;
+			if (_mode != ParseMode.ALIST) {
+				nl = _item.getElementsByTagName("THREAD");
+				if (nl == null || nl.getLength() <= 0) {
+					throw new ParseException("ParseException: THREAD");
+				}
+				n = ((Element)nl.item(0)).getFirstChild();
+				if (n == null) {
+					throw new ParseException("ParseException: THREAD");
+				}
+				thread = n != null ? n.getNodeValue() : null;
 			}
-			n = ((Element)nl.item(0)).getFirstChild();
-			if (n == null) {
-				throw new ParseException("ParseException: THREAD");
+			
+			int cnt = 1;
+			if (_mode == ParseMode.ALIST ||
+					_mode == ParseMode.TLIST) {
+				nl = _item.getElementsByTagName("COUNT");
+				if (nl == null || nl.getLength() <= 0) {
+					throw new ParseException("ParseException: COUNT");
+				}
+				n = ((Element)nl.item(0)).getFirstChild();
+				if (n == null) {
+					throw new ParseException("ParseException: COUNT");
+				}
+				cnt = n != null ? Integer.parseInt(n.getNodeValue()) : 1;
 			}
-			thread = n.getNodeValue();
 
 			nl = _item.getElementsByTagName("TITLE");
 			if (nl == null || nl.getLength() <= 0) {
 				throw new ParseException("ParseException: TITLE");
 			}
 			n = ((Element)nl.item(0)).getFirstChild();
-			if (n == null) {
-				throw new ParseException("ParseException: TITLE");
-			}
-			String title = n.getNodeValue();
+			String title = n != null ? n.getNodeValue() : "";
 
 			nl = _item.getElementsByTagName("SEQ");
 			if (nl == null || nl.getLength() <= 0) {
@@ -142,42 +157,28 @@ public class KidsBbs extends Activity {
 			}
 			String user = n.getNodeValue();
 
-			nl = _item.getElementsByTagName("AUTHOR");
-			if (nl == null || nl.getLength() <= 0) {
-				throw new ParseException("ParseException: AUTHOR");
-			}
-			n = ((Element)nl.item(0)).getFirstChild();
-			if (n == null) {
-				throw new ParseException("ParseException: AUTHOR");
-			}
-			String author = n.getNodeValue();
-
-			nl = _item.getElementsByTagName("DESCRIPTION");
-			if (nl == null || nl.getLength() <= 0) {
-				throw new ParseException("ParseException: DESCRIPTION");
-			}
-			n = ((Element)nl.item(0)).getFirstChild();
-			if (n == null) {
-				throw new ParseException("ParseException: DESCRIPTION");
-			}
-			String desc = n.getNodeValue();
-			
-			boolean read = true;
-			Date local = ArticleInfo.toLocalDate(date);
-			if (local != null) {
-				Calendar calLocal = new GregorianCalendar();
-				Calendar calRecent = new GregorianCalendar();
-				calLocal.setTime(local);
-				calRecent.setTime(new Date());
-				// "Recent" one is marked unread.
-				calRecent.add(Calendar.DATE, -7);
-				if (calLocal.after(calRecent)) {
-					read = false;
+			String author = null;
+			if (_mode == ParseMode.VIEW) {
+				nl = _item.getElementsByTagName("AUTHOR");
+				if (nl == null || nl.getLength() <= 0) {
+					throw new ParseException("ParseException: AUTHOR");
 				}
+				n = ((Element)nl.item(0)).getFirstChild();
+				if (n == null) {
+					throw new ParseException("ParseException: AUTHOR");
+				}
+				author = n != null ? n.getNodeValue() : null;
+			}
+
+			String desc = "";
+			nl = _item.getElementsByTagName("DESCRIPTION");
+			if (nl != null && nl.getLength() > 0) {
+				n = ((Element)nl.item(0)).getFirstChild();
+				desc = n != null ? n.getNodeValue() : "";
 			}
 
 			return new ArticleInfo(_tabname, seq, user, author, date, title,
-					thread, desc, 1, read);
+					thread, desc, cnt, false);
 		} catch (ParseException e) {
 			Log.w(TAG, e);
 			return null;
@@ -220,8 +221,8 @@ public class KidsBbs extends Activity {
 				nl = items.getElementsByTagName("ITEM");
 				if (nl != null && nl.getLength() > 0) {
 					for (int i = 0; i < nl.getLength(); ++i) {
-						ArticleInfo info = parseArticle(tabname,
-								(Element)nl.item(i));
+						ArticleInfo info = parseArticle(ParseMode.LIST,
+								tabname, (Element)nl.item(i));
 						if (info != null) {
 							articles.add(info);
 						}
@@ -238,6 +239,12 @@ public class KidsBbs extends Activity {
 			Log.w(TAG, e);
 		}
 		return articles;
+	}
+	
+	private static class ParseException extends Exception {
+		public ParseException(String _message) {
+			super(_message);
+		}
 	}
 
 	@Override

@@ -25,6 +25,8 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
+import org.sori.kidsbbs.KidsBbs.ParseMode;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -35,7 +37,9 @@ public class KidsBbsTlist extends KidsBbsAList {
         super.onCreate(_state);
         
         updateTitle("");
-        setQueryBase(KidsBbsProvider.CONTENT_URISTR_TLIST, null);
+        setQueryBase(KidsBbs.URL_TLIST, "",
+        		KidsBbsProvider.CONTENT_URISTR_TLIST, null,
+        		ParseMode.TLIST);
         
         registerForContextMenu(getListView());
         updateFromPreferences();
