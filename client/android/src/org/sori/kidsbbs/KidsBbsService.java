@@ -37,7 +37,6 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -148,11 +147,9 @@ public class KidsBbsService extends Service {
 				ContentValues values = new ContentValues();
 				values.put(KidsBbsProvider.KEYA_SEQ, info.getSeq());
 				values.put(KidsBbsProvider.KEYA_USER, info.getUser());
-				values.put(KidsBbsProvider.KEYA_AUTHOR, info.getAuthor());
 				values.put(KidsBbsProvider.KEYA_DATE, info.getDateString());
 				values.put(KidsBbsProvider.KEYA_TITLE, info.getTitle());
 				values.put(KidsBbsProvider.KEYA_THREAD, info.getThread());
-				values.put(KidsBbsProvider.KEYA_BODY, info.getBody());
 
 				boolean read = info.getRead();
 				if (state == ST_UPDATE) {
@@ -211,7 +208,11 @@ public class KidsBbsService extends Service {
 		final String[] FIELDS = {
 			KidsBbsProvider.KEYB_TABNAME
 		};
-		final String WHERE = KidsBbsProvider.KEYB_SELECTED;
+		final String WHERE =
+				KidsBbsProvider.KEYB_STATE + "=" +
+					KidsBbsProvider.STATE_INITIALIZE + " OR " +
+				KidsBbsProvider.KEYB_STATE + "=" +
+					KidsBbsProvider.STATE_DONE;
 		final String ORDERBY = KidsBbsProvider.KEY_ID + " ASC";
 
 		int total_count = 0;
@@ -243,8 +244,6 @@ public class KidsBbsService extends Service {
 		Intent intent = new Intent(NEW_ARTICLE);
 		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYB_TABNAME,
 				_info.getTabname());
-		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_AUTHOR,
-				_info.getAuthor());
 		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_DATE,
 				_info.getDateString());
 		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_TITLE,

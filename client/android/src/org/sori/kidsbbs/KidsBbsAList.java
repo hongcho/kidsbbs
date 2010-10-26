@@ -25,15 +25,32 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.sori.kidsbbs.KidsBbs.ParseMode;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import android.app.ListActivity;
 import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -60,10 +77,14 @@ public abstract class KidsBbsAList extends ListActivity implements
 	private ArrayList<ArticleInfo> mList = new ArrayList<ArticleInfo>();
 	private int mItemTotal = 0;
 
+	private String mUrlBaseString;
 	private String mUriBase;
 	private String mWhere;
+	private ParseMode mMode;
 
 	private String mBoardTitle;
+	private String mBoardName;
+	private String mBoardType;
 	private String mTabname;
 
 	private TextView mStatusView;
@@ -103,6 +124,9 @@ public abstract class KidsBbsAList extends ListActivity implements
 		Uri data = getIntent().getData();
 		mTabname = data.getQueryParameter(KidsBbs.PARAM_N_TABNAME);
 		mBoardTitle = data.getQueryParameter(KidsBbs.PARAM_N_TITLE);
+		String[] parsed = BoardInfo.parseTabname(mTabname);
+		mBoardType = parsed[0];
+		mBoardName = parsed[1];
 
 		mStatusView = (TextView)findViewById(R.id.status);
 		mStatusView.setVisibility(View.GONE);
@@ -185,20 +209,11 @@ public abstract class KidsBbsAList extends ListActivity implements
 			!mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED);
 	}
 
-	private class UpdateTask extends AsyncTask<Integer, Integer, Integer> {
+	private class UpdateTask extends AsyncTask<String, Integer, Integer> {
 		private ArrayList<ArticleInfo> mTList = new ArrayList<ArticleInfo>();
+		private int mStart = 0;
 		private boolean mIsAppend = false;
 		private int mTotalCount = 0;
-		
-		private final String[] FIELDS = {
-			KidsBbsProvider.KEYA_SEQ,
-			KidsBbsProvider.KEYA_USER,
-			KidsBbsProvider.KEYA_DATE,
-			KidsBbsProvider.KEYA_TITLE,
-			KidsBbsProvider.KEYA_THREAD,
-			KidsBbsProvider.KEYA_BODY,
-			KidsBbsProvider.KEYA_CNT_FIELD,
-		};
 
 		@Override
 		protected void onPreExecute() {
@@ -208,42 +223,74 @@ public abstract class KidsBbsAList extends ListActivity implements
 		}
 
 		@Override
-		protected Integer doInBackground(Integer... _args) {
-			int start = _args[0];
-			mIsAppend = start > 0;
-			Uri uri = Uri.parse(mUriBase);
-			ContentResolver cr = getContentResolver();
-			Cursor c = cr.query(uri, FIELDS, mWhere, null, null);
-			if (c != null) {
-				if (c.moveToFirst()) {
-					do {
-						int seq = c.getInt(c.getColumnIndex(
-								KidsBbsProvider.KEYA_SEQ));
-						String user = c.getString(c.getColumnIndex(
-								KidsBbsProvider.KEYA_USER));
-						String date = c.getString(c.getColumnIndex(
-								KidsBbsProvider.KEYA_DATE));
-						String title = c.getString(c.getColumnIndex(
-								KidsBbsProvider.KEYA_TITLE));
-						String thread = c.getString(c.getColumnIndex(
-								KidsBbsProvider.KEYA_THREAD));
-						String body = c.getString(c.getColumnIndex(
-								KidsBbsProvider.KEYA_BODY));
-						int cnt = c.getInt(c.getColumnIndex(
-								KidsBbsProvider.KEYA_CNT)); 
-						if (seq > 0 && user != null && date != null &&
-								title != null && thread != null &&
-								body != null) {
-							mTList.add(new ArticleInfo(mTabname, seq, user,
-									null, date, title, thread, body, cnt,
-									false));
-							publishProgress(start + mTList.size());
-						}
-					} while (c.moveToNext());
-				}
-				c.close();
+		protected Integer doInBackground(String... _args) {
+			int result = 0;
+			String _urlString = _args[0];
+			mStart = Integer.parseInt(_args[1]);
+			mIsAppend = mStart > 0;
+			if (mIsAppend) {
+				_urlString += "&" + KidsBbs.PARAM_N_START + "=" + mStart;
 			}
-			return mTList.size();
+			HttpClient client = new DefaultHttpClient();
+			HttpGet get = new HttpGet(_urlString);
+			try {
+				HttpResponse response = client.execute(get); // IOException
+				HttpEntity entity = response.getEntity();
+				if (entity == null) {
+					// Do something?
+				} else if (response.getStatusLine().getStatusCode() ==
+						HttpStatus.SC_OK) {
+					InputStream is = entity.getContent();
+					DocumentBuilder db = DocumentBuilderFactory.newInstance()
+							.newDocumentBuilder(); // ParserConfigurationException
+					
+					// Parse the board list.
+					Document dom = db.parse(is); // IOException, SAXException
+					Element doc = dom.getDocumentElement();
+					NodeList nl;
+					Node n;
+					
+					nl = doc.getElementsByTagName("ITEMS");
+					if (nl == null || nl.getLength() <= 0) {
+						return ErrUtils.ERR_XMLPARSING;
+					}
+					Element items = (Element)nl.item(0);
+					
+					nl = items.getElementsByTagName("TOTALCOUNT");
+					if (nl == null || nl.getLength() <= 0) {
+						return ErrUtils.ERR_XMLPARSING;
+					}
+					n = ((Element)nl.item(0)).getFirstChild();
+					mTotalCount = n != null ?
+							Integer.parseInt(n.getNodeValue()) : 0;
+							
+					// Get a board item
+					nl = items.getElementsByTagName("ITEM");
+					if (nl != null && nl.getLength() > 0) {
+						for (int i = 0; i < nl.getLength(); ++i) {
+							ArticleInfo info = KidsBbs.parseArticle(
+									mMode, mTabname, (Element)nl.item(i));
+							if (info == null) {
+								return ErrUtils.ERR_XMLPARSING;
+							}
+							info.setRead(mTList.size() % 2 == 1);
+							
+							// TODO: query for read/unread... KEYA_ALLREAD
+							
+							mTList.add(info);
+							publishProgress(mStart + mTList.size());
+						}
+					}
+				}
+				result = mTList.size();
+			} catch(IOException e) {
+				result = ErrUtils.ERR_IO;
+			} catch(ParserConfigurationException e) {
+				result = ErrUtils.ERR_PARSER;
+			} catch(SAXException e) {
+				result = ErrUtils.ERR_SAX;
+			}
+			return result;
 		}
 
 		@Override
@@ -276,15 +323,23 @@ public abstract class KidsBbsAList extends ListActivity implements
 	}
 
 	private void updateList(boolean _append) {
-		if (mUriBase != null && !isUpdating()) {
+		if (mUrlBaseString != null && mUriBase != null && !isUpdating()) {
 			mLastUpdate = new UpdateTask();
-			mLastUpdate.execute(_append ? mList.size() : 0);
+			mLastUpdate.execute(mUrlBaseString,
+					Integer.toString(_append ? mList.size() : 0),
+					mUriBase);
 		}
 	}
 
-	protected final void setQueryBase(String _base, String _where) {
-		mUriBase = _base + mTabname + "/";
+	protected final void setQueryBase(String _urlBase, String _urlExtra,
+			String _uriBase, String _where, ParseMode _mode) {
+		mUrlBaseString = _urlBase +
+				KidsBbs.PARAM_N_BOARD + "=" + mBoardName +
+				"&" + KidsBbs.PARAM_N_TYPE + "=" + mBoardType +
+				_urlExtra;
+		mUriBase = _uriBase + mTabname + "/";
 		mWhere = _where;
+		mMode = _mode;
 	}
 
 	protected final void refreshListCommon() {

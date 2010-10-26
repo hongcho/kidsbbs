@@ -30,13 +30,13 @@ public class BoardInfo {
 	private String mTitle;
 	private int mType;
 	private String mBoard;
-	private boolean mSelected;
+	private int mState;
 	
 	public String getTabname() { return mTabname; }
 	public String getTitle() { return mTitle; }
 	public int getType() { return mType; }
 	public String getBoard() { return mBoard; }
-	public boolean getSelected() { return mSelected; }
+	public int getState() { return mState; }
 	
 	public static final String buildTabname(String _board, int _type) {
 		return "b" + _type + "_" + _board;
@@ -48,10 +48,10 @@ public class BoardInfo {
 		return parsed;
 	}
 	
-	public BoardInfo(String _tabname, String _title, boolean _selected) {
+	public BoardInfo(String _tabname, String _title, int _state) {
 		mTabname = _tabname;
 		mTitle = _title;
-		mSelected = _selected;
+		mState = _state;
 
 		String[] parsed = parseTabname(mTabname);
 		mType = Integer.parseInt(parsed[0]);

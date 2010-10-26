@@ -54,31 +54,23 @@ public class KidsBbsProvider extends ContentProvider {
 	public static final String CONTENT_URISTR_LIST =
 			CONTENT_URI_BASE + "list/";
 	public static final String CONTENT_URISTR_TLIST =
-			CONTENT_URI_BASE + "tlist/";
+		CONTENT_URI_BASE + "tlist/";
 	
 	private static final int TYPE_BOARDS = 0;
-	private static final int TYPE_BOARDS_ID = 1;
-	private static final int TYPE_LIST = 2;
-	private static final int TYPE_LIST_ID = 3;
-	private static final int TYPE_TLIST = 4;
-	private static final int TYPE_TLIST_ID = 5;
+	private static final int TYPE_LIST = 1;
+	private static final int TYPE_TLIST = 2;
 
 	private static final UriMatcher sUriMatcher;
 	static {
 		sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 		sUriMatcher.addURI(PROVIDER, "boards", TYPE_BOARDS);
-		sUriMatcher.addURI(PROVIDER, "boards/#", TYPE_BOARDS_ID);
 		sUriMatcher.addURI(PROVIDER, "list/*", TYPE_LIST);
-		sUriMatcher.addURI(PROVIDER, "list/*/#", TYPE_LIST_ID);
 		sUriMatcher.addURI(PROVIDER, "tlist/*", TYPE_TLIST);
-		sUriMatcher.addURI(PROVIDER, "tlist/*/#", TYPE_TLIST_ID);
 	}
 	
 	private static final String TYPESTR_BASE = "vnd.sori.cursor.";
 	private static final String TYPESTR_DIR_BASE =
 			TYPESTR_BASE + "dir/vnd.sori.";
-	private static final String TYPESTR_ITEM_BASE =
-			TYPESTR_BASE + "item/vnd.sori.";
 
 	@Override
 	public boolean onCreate() {
@@ -93,16 +85,10 @@ public class KidsBbsProvider extends ContentProvider {
 		switch (sUriMatcher.match(_uri)) {
 		case TYPE_BOARDS:
 			return TYPESTR_DIR_BASE + "boards";
-		case TYPE_BOARDS_ID:
-			return TYPESTR_ITEM_BASE + "boards";
 		case TYPE_LIST:
 			return TYPESTR_DIR_BASE + "list";
-		case TYPE_LIST_ID:
-			return TYPESTR_ITEM_BASE + "list";
 		case TYPE_TLIST:
 			return TYPESTR_DIR_BASE + "tlist";
-		case TYPE_TLIST_ID:
-			return TYPESTR_ITEM_BASE + "tlist";
 		}
 		Log.e(TAG, "getType: Unsupported URI: " + _uri);
 		return null;
@@ -121,17 +107,9 @@ public class KidsBbsProvider extends ContentProvider {
 		String groupby = null;
 		int type = sUriMatcher.match(_uri);
 		switch (type) {
-		case TYPE_TLIST_ID:
-			qb.appendWhere(KEY_ID + "=" + _uri.getPathSegments().get(2));
-		case TYPE_TLIST:
-			groupby = KEYA_THREAD;
-			break;
-		case TYPE_LIST_ID:
-			qb.appendWhere(KEY_ID + "=" + _uri.getPathSegments().get(2));
 		case TYPE_LIST:
+		case TYPE_TLIST:
 			break;
-		case TYPE_BOARDS_ID:
-			qb.appendWhere(KEY_ID + "=" + _uri.getPathSegments().get(1));
 		case TYPE_BOARDS:
 			orderby = "LOWER(" + KEYB_TITLE + ")";
 			break;
@@ -164,8 +142,7 @@ public class KidsBbsProvider extends ContentProvider {
 		}
 		long row = mDB.insert(table, null, _values);
 		if (row > 0) {
-			Uri uri = ContentUris.withAppendedId(getContentUriWithoutId(_uri),
-					row);
+			Uri uri = ContentUris.withAppendedId(_uri, row);
 			getContext().getContentResolver().notifyChange(uri, null);
 			return uri;
 		}
@@ -179,33 +156,7 @@ public class KidsBbsProvider extends ContentProvider {
 			throw new IllegalArgumentException(
 					"delete: Unsupported URI: " + _uri);
 		}
-		int count;
-		String idString = "";
-		switch (sUriMatcher.match(_uri)) {
-		case TYPE_LIST_ID:
-		case TYPE_TLIST_ID:
-			idString = _uri.getPathSegments().get(2);
-			break;
-		case TYPE_LIST:
-		case TYPE_TLIST:
-			break;
-		case TYPE_BOARDS_ID:
-			idString = _uri.getPathSegments().get(1);
-		case TYPE_BOARDS:
-			break;
-		default:
-			throw new IllegalArgumentException(
-					"delete: Unsupported URI: " + _uri);
-		}
-		if (idString.equals("")) {
-			count = mDB.delete(table, _selection, _selectionArgs);
-		} else {
-			count = mDB.delete(table,
-					KEY_ID  + "=" + idString +
-						(!TextUtils.isEmpty(_selection) ?
-							" AND (" + _selection + ")" : ""),
-					_selectionArgs);
-		}
+		int count = mDB.delete(table, _selection, _selectionArgs);
 		getContext().getContentResolver().notifyChange(_uri, null);
 		return count;
 	}
@@ -218,33 +169,7 @@ public class KidsBbsProvider extends ContentProvider {
 			throw new IllegalArgumentException(
 					"update: Unsupported URI: " + _uri);
 		}
-		int count;
-		String idString = "";
-		switch (sUriMatcher.match(_uri)) {
-		case TYPE_LIST_ID:
-		case TYPE_TLIST_ID:
-			idString = _uri.getPathSegments().get(2);
-			break;
-		case TYPE_LIST:
-		case TYPE_TLIST:
-			break;
-		case TYPE_BOARDS_ID:
-			idString = _uri.getPathSegments().get(1);
-		case TYPE_BOARDS:
-			break;
-		default:
-			throw new IllegalArgumentException(
-					"update: Unsupported URI: " + _uri);
-		}
-		if (idString.equals("")) {
-			count = mDB.update(table, _values, _selection, _selectionArgs);
-		} else {
-			count = mDB.update(table, _values,
-					KEY_ID  + "=" + idString +
-					(!TextUtils.isEmpty(_selection) ?
-							" AND (" + _selection + ")" : ""),
-					_selectionArgs);
-		}
+		int count = mDB.update(table, _values, _selection, _selectionArgs);
 		getContext().getContentResolver().notifyChange(_uri, null);
 		return count;
 	}
@@ -252,54 +177,21 @@ public class KidsBbsProvider extends ContentProvider {
 	private String getTableName(Uri _uri) {
 		int type = sUriMatcher.match(_uri);
 		switch (type) {
-		case TYPE_TLIST_ID:
-		case TYPE_TLIST:
-			return getViewname(_uri.getPathSegments().get(1));
-		case TYPE_LIST_ID:
 		case TYPE_LIST:
-			return _uri.getPathSegments().get(1);
-		case TYPE_BOARDS_ID:
+		case TYPE_TLIST:
+			List<String> segments = _uri.getPathSegments();
+			if (segments.size() == 2) {
+				return segments.get(1);
+			}
+			break;
 		case TYPE_BOARDS:
 			return DB_TABLE;
-		default:
-			Log.e(TAG, "getTableName: Unsupported URI (" + type + "): " +
-					_uri);
-			return null;
 		}
+		Log.e(TAG, "getTableName: Unsupported URI (" + type + "): " +
+				_uri);
+		return null;
 	}
 
-	private Uri getContentUriWithoutId(Uri _uri) {
-		List<String> segments = _uri.getPathSegments();
-		int length = segments.size();
-		String uriString = CONTENT_URI_BASE;
-		switch (sUriMatcher.match(_uri)) {
-		case TYPE_LIST_ID:
-		case TYPE_TLIST_ID:
-			if (length != 3) {
-				Log.e(TAG, "getContentUriWithoutId: Unsupported URI: " + _uri);
-				return null;
-			}
-			uriString += segments.get(0) + "/" + segments.get(1);
-			break;
-		case TYPE_LIST:
-		case TYPE_TLIST:
-			if (length != 2) {
-				Log.e(TAG, "getConentUriWithoutId: Unsupported URI: " + _uri);
-				return null;
-			}
-			uriString += segments.get(0) + "/" + segments.get(1);
-			break;
-		case TYPE_BOARDS_ID:
-		case TYPE_BOARDS:
-			uriString += segments.get(0);
-			break;
-		default:
-			Log.e(TAG, "getContentUriWithoutId: Unsupported URI: " + _uri);
-			return null;
-		}
-		return Uri.parse(uriString);
-	}
-	
 	private static final String getViewname(String _tabname) {
 		return _tabname + "_view";
 	}
@@ -316,9 +208,16 @@ public class KidsBbsProvider extends ContentProvider {
 	public static final String KEYB_TITLE = "title";
 	private static final String KEYB_TITLE_DEF =
 			KEYB_TITLE + " VARCHAR(40) NOT NULL";
-	public static final String KEYB_SELECTED = "selected";
-	private static final String KEYB_SELECTED_DEF =
-			KEYB_SELECTED + " BOOLEAN DEFAULT FALSE";
+	public static final String KEYB_STATE = "state";
+	private static final String KEYB_STATE_DEF =
+			KEYB_STATE + " TINYINT DEFAULT 0";
+
+	public static final int STATE_UNDEF = 0; // first update is not done yet
+	public static final int STATE_INITIALIZE = 1; // table is created, not updated
+	public static final int STATE_INITIALIZING = 2; // first updating is going on
+	public static final int STATE_DONE = 3; // update is done
+	public static final int STATE_UPDATING = 4; // incremental update is going on
+	public static final int STATE_PAUSED = 5; // no longer updating
 
 	// Article table
 	public static final String KEYA_SEQ = "seq";
@@ -327,9 +226,6 @@ public class KidsBbsProvider extends ContentProvider {
 	public static final String KEYA_USER = "user";
 	private static final String KEYA_USER_DEF =
 			KEYA_USER + " CHAR(12) NOT NULL";
-	public static final String KEYA_AUTHOR = "author";
-	private static final String KEYA_AUTHOR_DEF =
-			KEYA_AUTHOR + " VARCHAR(40) NOT NULL";
 	public static final String KEYA_DATE = "date";
 	private static final String KEYA_DATE_DEF =
 			KEYA_DATE + " DATETIME NOT NULL";
@@ -339,19 +235,16 @@ public class KidsBbsProvider extends ContentProvider {
 	public static final String KEYA_THREAD = "thread";
 	private static final String KEYA_THREAD_DEF =
 			KEYA_THREAD + " CHAR(32) NOT NULL";
-	public static final String KEYA_BODY = "body";
-	private static final String KEYA_BODY_DEF =
-			KEYA_BODY + " TEXT";
 	public static final String KEYA_READ = "read";
 	private static final String KEYA_READ_DEF =
 			KEYA_READ + " BOOLEAN DEFAULT FALSE";
+	
+	public static final String KEYA_ALLREAD = "allread";
+	public static final String KEYA_ALLREAD_FIELD =
+			"MIN(" + KEYA_READ + ") AS " + KEYA_ALLREAD;
 
 	public static final String KEYA_CNT = "cnt";
 	public static final String KEYA_CNT_FIELD = "COUNT(*) AS " + KEYA_CNT;
-	
-	public static final String KEYT_COUNT = "count";
-	private static final String KEYT_COUNT_DEF =
-			KEYT_COUNT + " INTEGER NOT NULL";
 	
 	public static final ContentValues V_READ_TRUE;
 	public static final ContentValues V_READ_FALSE;
@@ -428,7 +321,8 @@ public class KidsBbsProvider extends ContentProvider {
 					title += name;
 				}
 				addBoard(_db, new BoardInfo(tabnames[i], title,
-						mUpdateMap.get(tabnames[i])));
+						mUpdateMap.get(tabnames[i]) ?
+								STATE_INITIALIZE : STATE_UNDEF));
 			}
 		}
 
@@ -436,7 +330,7 @@ public class KidsBbsProvider extends ContentProvider {
 		public void onUpgrade(SQLiteDatabase _db, int _old, int _new) {
 			final String[] FIELDS = {
 				KEYB_TITLE,
-				KEYB_SELECTED,
+				KEYB_STATE,
 			};   
 			Log.w(TAG, "Upgrading database from version " + _old + " to " +
 					_new + ", which will destroy all old data");
@@ -448,10 +342,11 @@ public class KidsBbsProvider extends ContentProvider {
 			if (c != null && c.moveToFirst()) {
 				do {
 					String tabname = c.getString(c.getColumnIndex(KEYB_TABNAME));
-					boolean update = Boolean.parseBoolean(c.getString(
-							c.getColumnIndex(KEYB_SELECTED)));
+					int state = Integer.parseInt(c.getString(
+							c.getColumnIndex(KEYB_STATE)));
 					if (tabname != null) {
-						mUpdateMap.put(tabname, update);
+						mUpdateMap.put(tabname,
+								state != STATE_UNDEF && state != STATE_PAUSED);
 						dropArticleTable(_db, tabname);
 					}
 				} while (c.moveToNext());
@@ -466,7 +361,7 @@ public class KidsBbsProvider extends ContentProvider {
 			ContentValues values = new ContentValues();
 			values.put(KEYB_TABNAME, _info.getTabname());
 			values.put(KEYB_TITLE, _info.getTitle());
-			values.put(KEYB_SELECTED, _info.getSelected());
+			values.put(KEYB_STATE, _info.getState());
 			if (_db.insert(DB_TABLE, null, values) < 0) {
 				throw new SQLException(
 						"addBoard: Failed to insert row into " + DB_TABLE);
@@ -479,7 +374,7 @@ public class KidsBbsProvider extends ContentProvider {
 					KEY_ID_DEF + "," +
 					KEYB_TABNAME_DEF + "," +
 					KEYB_TITLE_DEF + "," +
-					KEYB_SELECTED_DEF + ");");
+					KEYB_STATE_DEF + ");");
 		}
 		
 		private void dropMainTable(SQLiteDatabase _db) {
@@ -491,11 +386,9 @@ public class KidsBbsProvider extends ContentProvider {
 					KEY_ID_DEF + "," +
 					KEYA_SEQ_DEF + "," +
 					KEYA_USER_DEF + "," +
-					KEYA_AUTHOR_DEF + "," +
 					KEYA_DATE_DEF + "," +
 					KEYA_TITLE_DEF + "," +
 					KEYA_THREAD_DEF + "," +
-					KEYA_BODY_DEF + "," +
 					KEYA_READ_DEF + ");");
 			_db.execSQL("CREATE VIEW " + getViewname(_tabname) + " AS " +
 					"SELECT * FROM " + _tabname +

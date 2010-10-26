@@ -25,6 +25,8 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
+import org.sori.kidsbbs.KidsBbs.ParseMode;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
@@ -41,8 +43,11 @@ public class KidsBbsThread extends KidsBbsAList {
         mBoardThread = data.getQueryParameter(KidsBbs.PARAM_N_THREAD);
         
         updateTitle("");
-        setQueryBase(KidsBbsProvider.CONTENT_URISTR_LIST,
-        		KidsBbsProvider.KEYA_THREAD + "=" + mBoardThread);
+        setQueryBase(KidsBbs.URL_THREAD,
+        		"&" + KidsBbs.PARAM_N_THREAD + "=" + mBoardThread,
+        		KidsBbsProvider.CONTENT_URISTR_LIST,
+        		KidsBbsProvider.KEYA_THREAD + "=" + mBoardThread,
+        		ParseMode.ALIST);
         
         registerForContextMenu(getListView());
         updateFromPreferences();

@@ -27,10 +27,12 @@ package org.sori.kidsbbs;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.webkit.WebView;
 
 public class Preferences extends PreferenceActivity {
 	public static final String PREF_UPDATE_FREQ = "PREF_UPDATE_FREQ";
@@ -40,12 +42,18 @@ public class Preferences extends PreferenceActivity {
 	private static final int ABOUT_APP_ID = 0;
 	private static final int ABOUT_KIDSBBS_ID = 1;
 	
-	SharedPreferences prefs;
+	//private SharedPreferences prefs;
+	private LayoutInflater mInflater;
+
+	private String mAboutKidsbbsString;
+	private String mAboutAppString;
 	
 	@Override
 	public void onCreate(Bundle _state) {
 		super.onCreate(_state);
 		addPreferencesFromResource(R.xml.userpreferences);
+		
+		mInflater = LayoutInflater.from(this);
 		
 		findPreference(PREF_ABOUT_KIDSBBS).setOnPreferenceClickListener(
 				new Preference.OnPreferenceClickListener() {
@@ -67,23 +75,30 @@ public class Preferences extends PreferenceActivity {
 	@Override
 	protected Dialog onCreateDialog(int _id) {
 		AlertDialog.Builder builder;
-		AlertDialog dialog;
+		View v;
+		WebView tv;
 		switch(_id) {
 		case ABOUT_KIDSBBS_ID:
+			mAboutKidsbbsString = getResources().getString(
+					R.string.about_kidsbbs_text);
 			builder = new AlertDialog.Builder(this);
 			builder.setTitle(R.string.about_kidsbbs_title);
-			builder.setMessage(R.string.about_kidsbbs_text);
-			dialog = builder.create();
-			break;
+			v = mInflater.inflate(R.layout.about_dialog, null);
+			builder.setView(v);
+			tv = (WebView)v.findViewById(R.id.about_text);
+			tv.loadData(mAboutKidsbbsString, "text/html", "utf-8");
+			return builder.create();
 		case ABOUT_APP_ID:
+			mAboutAppString = getResources().getString(
+					R.string.about_app_text);
 			builder = new AlertDialog.Builder(this);
 			builder.setTitle(R.string.about_app_title);
-			builder.setMessage(R.string.about_app_text);
-			dialog = builder.create();
-			break;
-		default:
-			dialog = null;
+			v = mInflater.inflate(R.layout.about_dialog, null);
+			builder.setView(v);
+			tv = (WebView)v.findViewById(R.id.about_text);
+			tv.loadData(mAboutAppString, "text/html", "utf-8");;
+			return builder.create();
 		}
-		return dialog;
+		return null;
 	}
 }
