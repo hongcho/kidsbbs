@@ -178,7 +178,8 @@ public class KidsBbsBlist extends ListActivity {
 			Cursor c = cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
 					where, null, null);
 			if (c != null) {
-				if (c.moveToFirst()) {
+				if (c.getCount() > 0) {
+					c.moveToFirst();
 					do {
 						String tabname = c.getString(c.getColumnIndex(
 								KidsBbsProvider.KEYB_TABNAME));
@@ -186,10 +187,8 @@ public class KidsBbsBlist extends ListActivity {
 								KidsBbsProvider.KEYB_TITLE));
 						int state = c.getInt(c.getColumnIndex(
 								KidsBbsProvider.KEYB_STATE));
-						if (tabname != null && title != null) {
-							mTList.add(new BoardInfo(tabname, title, state));
-							//publishProgress(mTList.size());
-						}
+						mTList.add(new BoardInfo(tabname, title, state));
+						//publishProgress(mTList.size());
 					} while (c.moveToNext());
 				}
 				c.close();

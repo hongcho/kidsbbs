@@ -33,8 +33,6 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
-import org.sori.kidsbbs.KidsBbs.ParseMode;
-
 public class ArticleInfo {
 	public static final String DATE_INVALID = "0000-00-00 00:00:00";
 	private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";

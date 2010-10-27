@@ -339,19 +339,20 @@ public class KidsBbsProvider extends ContentProvider {
 			SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
 			qb.setTables(DB_TABLE);
 			Cursor c = qb.query(_db, FIELDS, null, null, null, null, null);
-			if (c != null && c.moveToFirst()) {
-				do {
-					String tabname = c.getString(c.getColumnIndex(KEYB_TABNAME));
-					int state = Integer.parseInt(c.getString(
-							c.getColumnIndex(KEYB_STATE)));
-					if (tabname != null) {
+			if (c != null) {
+				if (c.getCount() > 0) {
+					c.moveToFirst();
+					do {
+						String tabname = c.getString(c.getColumnIndex(KEYB_TABNAME));
+						int state = Integer.parseInt(c.getString(
+								c.getColumnIndex(KEYB_STATE)));
 						mUpdateMap.put(tabname,
 								state != STATE_UNDEF && state != STATE_PAUSED);
 						dropArticleTable(_db, tabname);
-					}
-				} while (c.moveToNext());
+					} while (c.moveToNext());
+				}
+				c.close();
 			}
-			c.close();
 
 			dropMainTable(_db);
 			onCreate(_db);
