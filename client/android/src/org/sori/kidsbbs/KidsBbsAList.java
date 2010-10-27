@@ -48,6 +48,7 @@ import org.xml.sax.SAXException;
 
 import android.app.ListActivity;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -78,7 +79,7 @@ public abstract class KidsBbsAList extends ListActivity implements
 	private int mItemTotal = 0;
 
 	private String mUrlBaseString;
-	private String mUriBase;
+	private Uri mUri;
 	private String mWhere;
 	private ParseMode mMode;
 
@@ -214,11 +215,15 @@ public abstract class KidsBbsAList extends ListActivity implements
 		private int mStart = 0;
 		private boolean mIsAppend = false;
 		private int mTotalCount = 0;
-		private Context mContext;
+		private ContentResolver mCR;
+		
+		public UpdateTask(ContentResolver _cr) {
+			super();
+			mCR = _cr;
+		}
 
 		@Override
 		protected void onPreExecute() {
-			mContext = KidsBbsAList.this;
 			mStatusView.setText(getResources().getString(
 					R.string.update_text));
 			mStatusView.setVisibility(View.VISIBLE);
@@ -275,8 +280,8 @@ public abstract class KidsBbsAList extends ListActivity implements
 							if (info == null) {
 								return ErrUtils.ERR_XMLPARSING;
 							}
-							//info.setRead(KidsBbs.getArticleRead(mContext,
-							//		mUriBase, mWhere, info));
+							info.setRead(KidsBbs.getArticleRead(mCR, mUri,
+									mWhere, info));
 							mTList.add(info);
 							publishProgress(mStart + mTList.size());
 						}
@@ -323,8 +328,8 @@ public abstract class KidsBbsAList extends ListActivity implements
 	}
 
 	private void updateList(boolean _append) {
-		if (mUrlBaseString != null && mUriBase != null && !isUpdating()) {
-			mLastUpdate = new UpdateTask();
+		if (mUrlBaseString != null && mUri != null && !isUpdating()) {
+			mLastUpdate = new UpdateTask(getContentResolver());
 			mLastUpdate.execute(mUrlBaseString,
 					Integer.toString(_append ? mList.size() : 0));
 		}
@@ -336,7 +341,7 @@ public abstract class KidsBbsAList extends ListActivity implements
 				KidsBbs.PARAM_N_BOARD + "=" + mBoardName +
 				"&" + KidsBbs.PARAM_N_TYPE + "=" + mBoardType +
 				_urlExtra;
-		mUriBase = _uriBase + mTabname + "/";
+		mUri = Uri.parse(_uriBase + mTabname);
 		mWhere = _where;
 		mMode = _mode;
 	}
@@ -450,6 +455,6 @@ public abstract class KidsBbsAList extends ListActivity implements
 	public void onPause() {
 		super.onPause();
 		unregisterReceiver(mReceiverUpdated);
-		unregisterReceiver(mReceiverUpdated);
+		unregisterReceiver(mReceiverNew);
 	}
 }
