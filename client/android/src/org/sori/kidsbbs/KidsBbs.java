@@ -28,9 +28,6 @@ package org.sori.kidsbbs;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -49,7 +46,12 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import android.app.Activity;
+import android.content.ContentResolver;
+import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -57,6 +59,9 @@ public class KidsBbs extends Activity {
 	public static final String TAG = "KidsBbs";
 	public static final String PKG_BASE = "org.sori.kidsbbs.";
 	
+	public static final String NEW_ARTICLE = PKG_BASE + "NewArticle";
+	public static final String ARTICLE_UPDATED = PKG_BASE + "ArticleUpdated";
+
 	private static final String URL_BASE = "http://sori.org/kids/kids.php?_o=1&";
 	public static final String URL_BLIST = URL_BASE; 
 	public static final String URL_LIST = URL_BASE + "m=list&";
@@ -239,6 +244,93 @@ public class KidsBbs extends Activity {
 			Log.w(TAG, e);
 		}
 		return articles;
+	}
+	
+	public static boolean updateArticleRead(Context _context,
+			ArticleInfo _info) {
+		final String[] FIELDS = {
+				KidsBbsProvider.KEYA_READ,
+		};
+		ContentResolver cr = _context.getContentResolver();
+		Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST +
+				_info.getTabname());
+		String where = KidsBbsProvider.KEYA_SEQ + "=" + _info.getSeq();
+		
+		boolean readOld = false;
+		Cursor c = cr.query(uri, FIELDS, where, null, null);
+		if (c != null) {
+			if (c.getCount() > 0) {
+				c.moveToFirst();
+				readOld = Boolean.parseBoolean(c.getString(c.getColumnIndex(
+						KidsBbsProvider.KEYA_READ)));
+			}
+			c.close();
+		}
+		if (readOld == _info.getRead()) {
+			return false;
+		}
+		
+		ContentValues values = new ContentValues();
+		values.put(KidsBbsProvider.KEYA_READ, _info.getRead());
+		int count = cr.update(uri, values, where, null);
+		if (count > 0) {
+			announceArticleUpdated(_context, _info);
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	public static boolean getArticleRead(Context _context, String _uriBase,
+			String _where, ArticleInfo _info) {
+		final String[] FIELDS = {
+				KidsBbsProvider.KEYA_ALLREAD,
+		};
+		ContentResolver cr = _context.getContentResolver();
+		Uri uri = Uri.parse(_uriBase + _info.getTabname());
+		boolean read = false;
+		Cursor c = cr.query(uri, FIELDS, _where, null, null);
+		if (c != null) {
+			if (c.getCount() > 0) {
+				c.moveToFirst();
+				read = Boolean.parseBoolean(c.getString(c.getColumnIndex(
+						KidsBbsProvider.KEYA_ALLREAD)));
+			}
+			c.close();
+		}
+		return read;
+	}
+	
+	public static void announceNewArticle(Context _context,
+			ArticleInfo _info) {
+		Intent intent = new Intent(KidsBbs.NEW_ARTICLE);
+		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYB_TABNAME,
+				_info.getTabname());
+		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_SEQ,
+				_info.getSeq());
+		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_USER,
+				_info.getUser());
+		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_DATE,
+				_info.getDateString());
+		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_TITLE,
+				_info.getTitle());
+		_context.sendBroadcast(intent);
+	}
+	
+	public static void announceArticleUpdated(Context _context,
+			ArticleInfo _info) {
+		Intent intent = new Intent(KidsBbs.ARTICLE_UPDATED);
+		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYB_TABNAME,
+				_info.getTabname());
+		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_SEQ,
+				_info.getSeq());
+		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_USER,
+				_info.getUser());
+		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_DATE,
+				_info.getDateString());
+		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_TITLE,
+				_info.getTitle());
+		_context.sendBroadcast(intent);
 	}
 	
 	private static class ParseException extends Exception {

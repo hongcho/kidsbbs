@@ -41,7 +41,6 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.sori.kidsbbs.KidsBbs.ParseMode;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -79,9 +78,6 @@ public class KidsBbsView extends Activity {
 	private String mBoardType;
 	private String mBoardSeq;
 	private String mTabname;
-	
-	private Uri mUri;
-	private String mWhere;
 
 	private ArticleInfo mInfo = null;
 
@@ -100,9 +96,6 @@ public class KidsBbsView extends Activity {
 		mBoardType = parsed[0];
 		mBoardName = parsed[1];
 		setTitle(mBoardSeq + " in [" + mBoardTitle + "]");
-		
-		mUri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + mTabname);
-		mWhere = KidsBbsProvider.KEYA_SEQ + "=" + mBoardSeq;
 
 		mStatusView = (TextView)findViewById(R.id.status);
 		mStatusView.setVisibility(View.GONE);
@@ -163,7 +156,7 @@ public class KidsBbsView extends Activity {
 				!mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED);
 	}
 
-	private class UpdateTask extends AsyncTask<String, String, Integer> {
+	private class UpdateTask extends AsyncTask<String, Void, Integer> {
 		private ArticleInfo mTInfo;
 
 		@Override
@@ -199,8 +192,8 @@ public class KidsBbsView extends Activity {
 						if (info == null) {
 							ret = ErrUtils.ERR_XMLPARSING;
 						}
+						info.setRead(true);
 						mTInfo = info;
-						// TODO: mark it as read.
 					}
 				}
 			} catch(IOException e) {
@@ -216,6 +209,7 @@ public class KidsBbsView extends Activity {
 		@Override
 		protected void onPostExecute(Integer _result) {
 			if (_result >= 0) {
+				//KidsBbs.updateArticleRead(KidsBbsView.this, mTInfo);
 				mInfo = mTInfo;
 				updateView();
 			} else {
@@ -306,7 +300,7 @@ public class KidsBbsView extends Activity {
 		}
 	}
 	
-	public class ArticleReceiver extends BroadcastReceiver {
+	private class ArticleUpdatedReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
 			String tabname = _intent.getStringExtra(
@@ -320,13 +314,13 @@ public class KidsBbsView extends Activity {
 		}
 	}
 	
-	private ArticleReceiver mReceiver;
+	private ArticleUpdatedReceiver mReceiver;
 	
 	@Override
 	public void onResume() {
 		super.onResume();
-		IntentFilter filter = new IntentFilter(KidsBbsService.NEW_ARTICLE);
-		mReceiver = new ArticleReceiver();
+		IntentFilter filter = new IntentFilter(KidsBbs.ARTICLE_UPDATED);
+		mReceiver = new ArticleUpdatedReceiver();
 		registerReceiver(mReceiver, filter);
 	}
 	

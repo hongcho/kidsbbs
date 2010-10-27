@@ -42,9 +42,6 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 public class KidsBbsService extends Service {
-	public static final String NEW_ARTICLE =
-			KidsBbs.PKG_BASE + "NewArticle";
-	
 	private static final String TAG = "KidsBbsService"; 
 	
 	private Timer mUpdateTimer;
@@ -193,7 +190,7 @@ public class KidsBbsService extends Service {
 				}
 				if (result) {
 					if (!read) {
-						announceNewArticle(info);
+						KidsBbs.announceNewArticle(KidsBbsService.this, info);
 					}
 					++count;
 				}
@@ -222,13 +219,16 @@ public class KidsBbsService extends Service {
 		// Get all the boards...
 		Cursor c = cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
 				WHERE, null, ORDERBY);
-		if (c.moveToFirst()) {
-			do {
-				tabnames.add(c.getString(c.getColumnIndex(
-						KidsBbsProvider.KEYB_TABNAME)));
-			} while (c.moveToNext());
+		if (c != null) {
+			if (c.getCount() > 0) {
+				c.moveToFirst();
+				do {
+					tabnames.add(c.getString(c.getColumnIndex(
+							KidsBbsProvider.KEYB_TABNAME)));
+				} while (c.moveToNext());
+			}
+			c.close();
 		}
-		c.close();
 		
 		// Update each board in the list.
 		for (int i = 0; i < tabnames.size(); ++i) {
@@ -238,17 +238,6 @@ public class KidsBbsService extends Service {
 			total_count += count;
 		}
 		return total_count;
-	}
-	
-	private void announceNewArticle(ArticleInfo _info) {
-		Intent intent = new Intent(NEW_ARTICLE);
-		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYB_TABNAME,
-				_info.getTabname());
-		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_DATE,
-				_info.getDateString());
-		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_TITLE,
-				_info.getTitle());
-		sendBroadcast(intent);
 	}
 	
 	private void refreshArticles() {
@@ -284,6 +273,14 @@ public class KidsBbsService extends Service {
 				")!='' AND JULIANDAY(" + KidsBbsProvider.KEYA_DATE +
 				")<=JULIANDAY('now','-9 hours','-14 days')";
 		final String ORDERBY = "seq DESC";
+		final int MIN_ARTICLES = 15;
+		
+		// At least 15...
+		int limit = getBoardTableSize(_tabname) - MIN_ARTICLES;
+		if (limit <= 0) {
+			return;
+		}
+		
 		ContentResolver cr = getContentResolver();
 		Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
 		
@@ -300,7 +297,9 @@ public class KidsBbsService extends Service {
 		
 		// Now delete old stuff...
 		if (seq > 0) {
-			String where = "seq<=" + seq;
+			// A "hack" to add "LIMIT" to the SQL statement.
+			String where = KidsBbsProvider.KEYA_SEQ + "<=" + seq +
+					" LIMIT " + limit;
 			cr.delete(uri, where, null);
 		}
 	}
