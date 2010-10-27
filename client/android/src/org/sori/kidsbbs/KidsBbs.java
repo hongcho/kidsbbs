@@ -246,18 +246,17 @@ public class KidsBbs extends Activity {
 		return articles;
 	}
 	
-	public static boolean updateArticleRead(Context _context,
+	public static boolean updateArticleRead(ContentResolver _cr,
 			ArticleInfo _info) {
 		final String[] FIELDS = {
 				KidsBbsProvider.KEYA_READ,
 		};
-		ContentResolver cr = _context.getContentResolver();
 		Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST +
 				_info.getTabname());
 		String where = KidsBbsProvider.KEYA_SEQ + "=" + _info.getSeq();
 		
 		boolean readOld = false;
-		Cursor c = cr.query(uri, FIELDS, where, null, null);
+		Cursor c = _cr.query(uri, FIELDS, where, null, null);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -272,24 +271,17 @@ public class KidsBbs extends Activity {
 		
 		ContentValues values = new ContentValues();
 		values.put(KidsBbsProvider.KEYA_READ, _info.getRead());
-		int count = cr.update(uri, values, where, null);
-		if (count > 0) {
-			announceArticleUpdated(_context, _info);
-			return true;
-		} else {
-			return false;
-		}
+		int count = _cr.update(uri, values, where, null);
+		return (count > 0);
 	}
 	
-	public static boolean getArticleRead(Context _context, String _uriBase,
+	public static boolean getArticleRead(ContentResolver _cr, Uri _uri,
 			String _where, ArticleInfo _info) {
 		final String[] FIELDS = {
-				KidsBbsProvider.KEYA_ALLREAD,
+				KidsBbsProvider.KEYA_ALLREAD_FIELD,
 		};
-		ContentResolver cr = _context.getContentResolver();
-		Uri uri = Uri.parse(_uriBase + _info.getTabname());
 		boolean read = false;
-		Cursor c = cr.query(uri, FIELDS, _where, null, null);
+		Cursor c = _cr.query(_uri, FIELDS, _where, null, null);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();

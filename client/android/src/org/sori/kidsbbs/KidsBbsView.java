@@ -46,6 +46,7 @@ import org.xml.sax.SAXException;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -158,6 +159,12 @@ public class KidsBbsView extends Activity {
 
 	private class UpdateTask extends AsyncTask<String, Void, Integer> {
 		private ArticleInfo mTInfo;
+		private ContentResolver mCR;
+		
+		public UpdateTask(ContentResolver _cr) {
+			super();
+			mCR = _cr;
+		}
 
 		@Override
 		protected void onPreExecute() {
@@ -209,7 +216,9 @@ public class KidsBbsView extends Activity {
 		@Override
 		protected void onPostExecute(Integer _result) {
 			if (_result >= 0) {
-				//KidsBbs.updateArticleRead(KidsBbsView.this, mTInfo);
+				if (KidsBbs.updateArticleRead(mCR, mTInfo)) {
+					KidsBbs.announceArticleUpdated(KidsBbsView.this, mTInfo);
+				}
 				mInfo = mTInfo;
 				updateView();
 			} else {
@@ -228,7 +237,7 @@ public class KidsBbsView extends Activity {
 
 	private void refreshView() {
 		if (!isUpdating()) {
-			mLastUpdate = new UpdateTask();
+			mLastUpdate = new UpdateTask(getContentResolver());
 			mLastUpdate.execute(KidsBbs.URL_VIEW +
 					KidsBbs.PARAM_N_BOARD + "=" + mBoardName +
 					"&" + KidsBbs.PARAM_N_TYPE + "=" + mBoardType +
