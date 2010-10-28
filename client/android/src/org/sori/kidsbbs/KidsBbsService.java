@@ -129,9 +129,8 @@ public class KidsBbsService extends Service {
 								KidsBbsProvider.KEYA_DATE));
 						String title = c.getString(c.getColumnIndex(
 								KidsBbsProvider.KEYA_TITLE));
-						boolean read = Boolean.parseBoolean(
-								c.getString(c.getColumnIndex(
-										KidsBbsProvider.KEYA_READ)));
+						boolean read = c.getInt(c.getColumnIndex(
+								KidsBbsProvider.KEYA_READ)) != 0;
 						if (seq == info.getSeq() && user != null &&
 								date != null && title != null) {
 							old = new ArticleInfo(_tabname, seq, user, null,
@@ -154,7 +153,7 @@ public class KidsBbsService extends Service {
 				} else if (old != null && old.getRead()) {
 					read = true;
 				}
-				values.put(KidsBbsProvider.KEYA_READ, read);
+				values.put(KidsBbsProvider.KEYA_READ, read ? 1 : 0);
 
 				boolean result = true;
 				if (old == null) {
@@ -175,8 +174,8 @@ public class KidsBbsService extends Service {
 					// Hmm... already there...
 					if (info.getUser() == old.getUser() &&
 							(info.getDateString() != ArticleInfo.DATE_INVALID &&
-									info.getDateString() == old.getDateString()) &&
-							info.getTitle() == old.getTitle()) {
+									info.getDateString().equals(old.getDateString())) &&
+							info.getTitle().equals(old.getTitle())) {
 						// And the same.  Stop...
 						state = ST_DONE;
 					} else {

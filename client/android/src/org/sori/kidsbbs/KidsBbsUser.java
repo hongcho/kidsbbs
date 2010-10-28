@@ -46,7 +46,7 @@ public class KidsBbsUser extends KidsBbsAList {
         setQueryBase(KidsBbs.URL_USER,
         		"&" + KidsBbs.PARAM_N_USER + "=" + mBoardUser,
         		KidsBbsProvider.CONTENT_URISTR_LIST,
-        		KidsBbsProvider.KEYA_USER + "=" + mBoardUser,
+        		KidsBbsProvider.KEYA_SEQ + "=?",
         		ParseMode.ALIST);
         
         registerForContextMenu(getListView());

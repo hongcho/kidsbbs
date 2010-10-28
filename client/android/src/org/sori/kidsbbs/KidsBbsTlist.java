@@ -38,7 +38,8 @@ public class KidsBbsTlist extends KidsBbsAList {
         
         updateTitle("");
         setQueryBase(KidsBbs.URL_TLIST, "",
-        		KidsBbsProvider.CONTENT_URISTR_TLIST, null,
+        		KidsBbsProvider.CONTENT_URISTR_TLIST,
+        		KidsBbsProvider.KEYA_THREAD + "=?",
         		ParseMode.TLIST);
         
         registerForContextMenu(getListView());
