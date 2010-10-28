@@ -27,7 +27,6 @@ package org.sori.kidsbbs;
 
 import java.util.ArrayList;
 
-import android.app.Activity;
 import android.app.ListActivity;
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -48,8 +47,6 @@ public class KidsBbsBlist extends ListActivity {
 	private static final int MENU_PREFERENCES = Menu.FIRST + 1;
 	private static final int MENU_SHOW = Menu.FIRST + 2;
 	private static final int MENU_SELECT = Menu.FIRST + 3;
-
-	private static final int SHOW_PREFERENCES = 1;
 
 	private static final String KEY_SELECTED_ITEM = "KEY_SELECTED_ITEM";
 
@@ -72,7 +69,6 @@ public class KidsBbsBlist extends ListActivity {
 				mList));
 
 		registerForContextMenu(getListView());
-		restoreUIState();
 
 		initializeStates();
 	}
@@ -128,8 +124,7 @@ public class KidsBbsBlist extends ListActivity {
 			refreshList();
 			return true;
 		case MENU_PREFERENCES:
-			Intent i = new Intent(this, Preferences.class);
-			startActivityForResult(i, SHOW_PREFERENCES);
+			startActivity(new Intent(this, Preferences.class));
 			return true;
 		}
 		return false;
@@ -235,24 +230,6 @@ public class KidsBbsBlist extends ListActivity {
 		startActivity(i);
 	}
 
-	private void updateFromPreferences() {
-	}
-
-	@Override
-	public void onActivityResult(int _reqCode, int _resCode, Intent _data) {
-		super.onActivityResult(_reqCode, _resCode, _data);
-		if (_reqCode == SHOW_PREFERENCES) {
-			if (_resCode == Activity.RESULT_OK) {
-				updateFromPreferences();
-				// refreshBoardList();
-			}
-		}
-	}
-
-	private void restoreUIState() {
-		// SharedPreferences prefs = getPreferences(Activity.MODE_PRIVATE);
-	}
-
 	@Override
 	public void onSaveInstanceState(Bundle _state) {
 		super.onSaveInstanceState(_state);
@@ -285,7 +262,6 @@ public class KidsBbsBlist extends ListActivity {
 	private void initializeStates() {
 		SavedStates save = (SavedStates)getLastNonConfigurationInstance();
 		if (save == null) {
-			updateFromPreferences();
 			refreshList();
 		} else {
 			updateView(save.list);

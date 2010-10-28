@@ -26,6 +26,9 @@
 package org.sori.kidsbbs;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -34,6 +37,7 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.net.Uri;
@@ -41,8 +45,13 @@ import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-public class KidsBbsService extends Service {
+public class KidsBbsService extends Service
+		implements OnSharedPreferenceChangeListener {
 	private static final String TAG = "KidsBbsService"; 
+
+	private static final int MIN_ARTICLES = 15;
+	private static final String KST_DIFF = "'-9 hours'";
+	private static final String MAX_TIME = "'-" + KidsBbs.MAX_DAYS + " days'";
 	
 	private Timer mUpdateTimer;
 	
@@ -52,13 +61,25 @@ public class KidsBbsService extends Service {
     	SharedPreferences prefs =
     			PreferenceManager.getDefaultSharedPreferences(
     					getApplicationContext());
-    	int updateFreq = Integer.parseInt(prefs.getString(
-    			Preferences.PREF_UPDATE_FREQ, "15"));
-    	
+    	setupTimer(Integer.parseInt(prefs.getString(
+    			Preferences.PREF_UPDATE_FREQ,
+    			Preferences.DEFAULT_UPDATE_FREQ)));
+	}
+	
+	public void onSharedPreferenceChanged(SharedPreferences _prefs,
+			String _key) {
+		if (_key.equals(Preferences.PREF_UPDATE_FREQ)) {
+			setupTimer(Integer.parseInt(_prefs.getString(_key,
+					Preferences.DEFAULT_UPDATE_FREQ)));
+		}
+	}
+	
+	private void setupTimer(int _updateFreq) {
     	mUpdateTimer.cancel();
-    	if (updateFreq > 0) {
+    	if (_updateFreq > 0) {
     		mUpdateTimer = new Timer("KidsBbsUpdates");
-    		mUpdateTimer.scheduleAtFixedRate(doRefresh, 0, updateFreq*60*1000);
+    		mUpdateTimer.scheduleAtFixedRate(doRefresh, 0,
+    				_updateFreq*60*1000);
     	}
 	}
 	
@@ -71,6 +92,11 @@ public class KidsBbsService extends Service {
 	@Override
 	public void onCreate() {
 		mUpdateTimer = new Timer("KidsBbsUpdates");
+
+		SharedPreferences prefs =
+			PreferenceManager.getDefaultSharedPreferences(
+					getApplicationContext());
+		prefs.registerOnSharedPreferenceChangeListener(this);
 	}
 	
 	@Override
@@ -108,12 +134,19 @@ public class KidsBbsService extends Service {
 				state = ST_DONE;
 				break;
 			}
-			for (int j = 0; state != ST_DONE && j < articles.size();
-					++j) {
-				ArticleInfo info = articles.get(j);
-				String where = KidsBbsProvider.KEYA_SEQ + "=" + info.getSeq();
+			for (int i = 0; state != ST_DONE && i < articles.size();
+					++i) {
+				ArticleInfo info = articles.get(i);
+				if (count >= MIN_ARTICLES && !isRecent(info.getDateString())) {
+					state = ST_DONE;
+					break;
+				}
+				String[] whereArgs = new String[] {
+						Integer.toString(info.getSeq())
+				};
 				ArticleInfo old = null;
-				Cursor c = cr.query(uri, FIELDS, where, null, null);
+				Cursor c = cr.query(uri, FIELDS, KidsBbsProvider.WHERE_SEQ,
+						whereArgs, null);
 				if (c == null) {
 					// Unexpected...
 					state = ST_DONE;
@@ -164,7 +197,8 @@ public class KidsBbsService extends Service {
 							cr.insert(uri, values);
 							break;
 						case ST_UPDATE:
-							cr.update(uri, values, where, null);
+							cr.update(uri, values, KidsBbsProvider.WHERE_SEQ,
+									whereArgs);
 							break;
 						}
 					} catch (SQLException e) {
@@ -181,7 +215,8 @@ public class KidsBbsService extends Service {
 					} else {
 						state = ST_UPDATE;
 						try {
-							cr.update(uri, values, where, null);
+							cr.update(uri, values, KidsBbsProvider.WHERE_SEQ,
+									whereArgs);
 						} catch (SQLException e) {
 							result = false;
 						}
@@ -266,13 +301,10 @@ public class KidsBbsService extends Service {
 				KidsBbsProvider.KEYA_SEQ,
 				KidsBbsProvider.KEYA_CNT_FIELD,
 			};
-		// '-9 hours': KST -> UTC
-		// '-14 days': anything older than this...
 		final String WHERE = "DATE(" + KidsBbsProvider.KEYA_DATE +
 				")!='' AND JULIANDAY(" + KidsBbsProvider.KEYA_DATE +
-				")<=JULIANDAY('now','-9 hours','-14 days')";
+				")<=JULIANDAY('now'," + KST_DIFF + "," + MAX_TIME + ")";
 		final String ORDERBY = "seq DESC";
-		final int MIN_ARTICLES = 15;
 		
 		// At least 15...
 		int limit = getBoardTableSize(_tabname) - MIN_ARTICLES;
@@ -301,5 +333,22 @@ public class KidsBbsService extends Service {
 					" LIMIT " + limit;
 			cr.delete(uri, where, null);
 		}
+	}
+	
+	private static final boolean isRecent(String _dateString) {
+		boolean read = true;
+		Date local = ArticleInfo.toLocalDate(_dateString);
+		if (local != null) {
+			Calendar calLocal = new GregorianCalendar();
+			Calendar calRecent = new GregorianCalendar();
+			calLocal.setTime(local);
+			calRecent.setTime(new Date());
+			// "Recent" one is marked unread.
+			calRecent.add(Calendar.DATE, -KidsBbs.MAX_DAYS);
+			if (calLocal.after(calRecent)) {
+				read = false;
+			}
+		}
+		return read;
 	}
 }

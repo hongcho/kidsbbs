@@ -246,6 +246,8 @@ public class KidsBbsProvider extends ContentProvider {
 	public static final String KEYA_CNT = "cnt";
 	public static final String KEYA_CNT_FIELD = "COUNT(*) AS " + KEYA_CNT;
 	
+	public static final String WHERE_SEQ = KEYA_SEQ + "=?";
+	
 	public static final String ORDER_BY_ID = KEY_ID + " ASC";
 
 	private static final String DB_NAME = "kidsbbs.db";

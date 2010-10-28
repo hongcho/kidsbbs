@@ -58,9 +58,11 @@ import android.util.Log;
 public class KidsBbs extends Activity {
 	public static final String TAG = "KidsBbs";
 	public static final String PKG_BASE = "org.sori.kidsbbs.";
+	public static final String BCAST_BASE = PKG_BASE + "broadcast.";
+	public static final String PARAM_BASE = PKG_BASE + "param.";
 	
-	public static final String NEW_ARTICLE = PKG_BASE + "NewArticle";
-	public static final String ARTICLE_UPDATED = PKG_BASE + "ArticleUpdated";
+	public static final String NEW_ARTICLE = BCAST_BASE + "NewArticle";
+	public static final String ARTICLE_UPDATED = BCAST_BASE + "ArticleUpdated";
 
 	private static final String URL_BASE = "http://sori.org/kids/kids.php?_o=1&";
 	public static final String URL_BLIST = URL_BASE; 
@@ -85,6 +87,8 @@ public class KidsBbs extends Activity {
 	public static final String PARAM_N_START = "s";
 	public static final String PARAM_N_COUNT = "n";
 	public static final String PARAM_N_TABNAME = "tn";
+	
+	public static final int MAX_DAYS = 14;
 	
 	public static enum ParseMode {
 		VIEW,
@@ -253,10 +257,11 @@ public class KidsBbs extends Activity {
 		};
 		Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST +
 				_info.getTabname());
-		String where = KidsBbsProvider.KEYA_SEQ + "=" + _info.getSeq();
+		String[] whereArgs = new String[] { Integer.toString(_info.getSeq()) };
 		
 		boolean readOld = false;
-		Cursor c = _cr.query(uri, FIELDS, where, null, null);
+		Cursor c = _cr.query(uri, FIELDS, KidsBbsProvider.WHERE_SEQ, whereArgs,
+				null);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -271,7 +276,8 @@ public class KidsBbs extends Activity {
 		
 		ContentValues values = new ContentValues();
 		values.put(KidsBbsProvider.KEYA_READ, _info.getRead() ? 1 : 0);
-		int count = _cr.update(uri, values, where, null);
+		int count = _cr.update(uri, values, KidsBbsProvider.WHERE_SEQ,
+				whereArgs);
 		return (count > 0);
 	}
 	
@@ -285,8 +291,8 @@ public class KidsBbs extends Activity {
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
-				read = Boolean.parseBoolean(c.getString(c.getColumnIndex(
-						KidsBbsProvider.KEYA_ALLREAD)));
+				read = c.getInt(c.getColumnIndex(
+						KidsBbsProvider.KEYA_ALLREAD)) != 0;
 			}
 			c.close();
 		}
@@ -296,34 +302,20 @@ public class KidsBbs extends Activity {
 	public static void announceNewArticle(Context _context,
 			ArticleInfo _info) {
 		Intent intent = new Intent(KidsBbs.NEW_ARTICLE);
-		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYB_TABNAME,
+		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME,
 				_info.getTabname());
-		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_SEQ,
+		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_SEQ,
 				_info.getSeq());
-		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_USER,
-				_info.getUser());
-		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_DATE,
-				_info.getDateString());
-		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_TITLE,
-				_info.getTitle());
 		_context.sendBroadcast(intent);
 	}
 	
 	public static void announceArticleUpdated(Context _context,
 			ArticleInfo _info) {
 		Intent intent = new Intent(KidsBbs.ARTICLE_UPDATED);
-		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYB_TABNAME,
+		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME,
 				_info.getTabname());
-		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_SEQ,
+		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_SEQ,
 				_info.getSeq());
-		//intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_USER,
-		//		_info.getUser());
-		//intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_DATE,
-		//		_info.getDateString());
-		//intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_TITLE,
-		//		_info.getTitle());
-		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_READ,
-				_info.getRead() ? 1 : 0);
 		_context.sendBroadcast(intent);
 	}
 	
