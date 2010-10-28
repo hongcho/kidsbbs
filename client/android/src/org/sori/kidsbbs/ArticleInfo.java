@@ -28,9 +28,7 @@ package org.sori.kidsbbs;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
 public class ArticleInfo {
@@ -85,23 +83,6 @@ public class ArticleInfo {
 				return null;
 			}
 		}
-	}
-	
-	public static final boolean isRecent(String _dateString) {
-		boolean read = true;
-		Date local = ArticleInfo.toLocalDate(_dateString);
-		if (local != null) {
-			Calendar calLocal = new GregorianCalendar();
-			Calendar calRecent = new GregorianCalendar();
-			calLocal.setTime(local);
-			calRecent.setTime(new Date());
-			// "Recent" one is marked unread.
-			calRecent.add(Calendar.DATE, -7);
-			if (calLocal.after(calRecent)) {
-				read = false;
-			}
-		}
-		return read;
 	}
 
 	public ArticleInfo(String _tabname, int _seq, String _user, String _author,

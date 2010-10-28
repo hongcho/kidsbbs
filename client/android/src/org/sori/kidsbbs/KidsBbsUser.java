@@ -27,8 +27,6 @@ package org.sori.kidsbbs;
 
 import org.sori.kidsbbs.KidsBbs.ParseMode;
 
-import android.app.Activity;
-import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -50,7 +48,6 @@ public class KidsBbsUser extends KidsBbsAList {
         		ParseMode.ALIST);
         
         registerForContextMenu(getListView());
-        updateFromPreferences();
         
         initializeStates();
     }
@@ -68,23 +65,5 @@ public class KidsBbsUser extends KidsBbsAList {
 		ArticleInfo info = getItem(_index);
 		showItemCommon(this, KidsBbsView.class, KidsBbs.URI_INTENT_VIEW,
 				"&" + KidsBbs.PARAM_N_SEQ + "=" + info.getSeq());
-    }
-    
-    protected void showPreference() {
-		Intent intent = new Intent(this, Preferences.class);
-		startActivityForResult(intent, SHOW_PREFERENCES);
-    }
-    
-    private void updateFromPreferences() {
-    }
-    
-    @Override
-    public void onActivityResult(int _reqCode, int _resCode, Intent _data) {
-    	super.onActivityResult(_reqCode, _resCode, _data);
-    	if (_reqCode == SHOW_PREFERENCES) {
-    		if (_resCode == Activity.RESULT_OK) {
-    			updateFromPreferences();
-    		}
-    	}
     }
 }

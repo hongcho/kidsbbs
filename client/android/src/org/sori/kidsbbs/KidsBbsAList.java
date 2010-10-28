@@ -71,12 +71,12 @@ public abstract class KidsBbsAList extends ListActivity implements
 	protected static final int MENU_PREFERENCES = Menu.FIRST + 2;
 	protected static final int MENU_LAST = MENU_PREFERENCES;
 
-	protected static final int SHOW_PREFERENCES = 1;
-
 	private static final String KEY_SELECTED_ITEM = "KEY_SELECTED_ITEM";
 
 	private ArrayList<ArticleInfo> mList = new ArrayList<ArticleInfo>();
 	private int mItemTotal = 0;
+	
+	private ContentResolver mCR;
 
 	private String mUrlBaseString;
 	private Uri mUri;
@@ -103,9 +103,6 @@ public abstract class KidsBbsAList extends ListActivity implements
 
 	// Call showItemCommon() with custom parameters.
 	abstract protected void showItem(int _index);
-
-	// Handle preference stuff.
-	abstract protected void showPreference();
 
 	protected final String getBoardTitle() {
 		return mBoardTitle;
@@ -135,6 +132,8 @@ public abstract class KidsBbsAList extends ListActivity implements
 		setListAdapter(new AListAdapter(this, R.layout.article_info_item,
 				mList));
 		getListView().setOnScrollListener(this);
+		
+		mCR = getContentResolver();
 
 		mReceiverNew = new NewArticleReceiver();
 		IntentFilter filterNew = new IntentFilter(KidsBbs.NEW_ARTICLE);
@@ -222,12 +221,6 @@ public abstract class KidsBbsAList extends ListActivity implements
 		private int mStart = 0;
 		private boolean mIsAppend = false;
 		private int mTotalCount = 0;
-		private ContentResolver mCR;
-		
-		public UpdateTask(ContentResolver _cr) {
-			super();
-			mCR = _cr;
-		}
 
 		@Override
 		protected void onPreExecute() {
@@ -287,24 +280,7 @@ public abstract class KidsBbsAList extends ListActivity implements
 							if (info == null) {
 								return ErrUtils.ERR_XMLPARSING;
 							}
-							boolean read;
-							switch (mMode) {
-							case TLIST:
-								read = KidsBbs.getArticleRead(mCR, mUri,
-										mWhereBase,
-										new String[] { info.getThread() },
-										info);
-								break;
-							default:
-								read = KidsBbs.getArticleRead(mCR, mUri,
-										mWhereBase,
-										new String[] {
-											Integer.toString(info.getSeq())
-										},
-										info);
-								break;
-							}
-							info.setRead(read);
+							info.setRead(getReadStatus(info));
 							mTList.add(info);
 							publishProgress(mStart + mTList.size());
 						}
@@ -352,7 +328,7 @@ public abstract class KidsBbsAList extends ListActivity implements
 
 	private void updateList(boolean _append) {
 		if (mUrlBaseString != null && mUri != null && !isUpdating()) {
-			mLastUpdate = new UpdateTask(getContentResolver());
+			mLastUpdate = new UpdateTask();
 			mLastUpdate.execute(mUrlBaseString,
 					Integer.toString(_append ? mList.size() : 0));
 		}
@@ -385,6 +361,10 @@ public abstract class KidsBbsAList extends ListActivity implements
 		intent.setData(Uri.parse(uriString));
 		startActivity(intent);
 	}
+    
+    protected void showPreference() {
+		startActivity(new Intent(this, Preferences.class));
+    }
 
 	@Override
 	public void onSaveInstanceState(Bundle _state) {
@@ -438,15 +418,23 @@ public abstract class KidsBbsAList extends ListActivity implements
 		}
 	}
 	
-	private boolean updateReadStatus(int _seq, boolean _read) {
+	private boolean getReadStatus(ArticleInfo _info) {
+		switch (mMode) {
+		case TLIST:
+			return KidsBbs.getArticleRead(mCR, mUri, mWhereBase,
+					new String[] { _info.getThread() }, _info);
+		default:
+			return KidsBbs.getArticleRead(mCR, mUri, mWhereBase,
+					new String[] { Integer.toString(_info.getSeq()) }, _info);
+		}
+	}
+	
+	private boolean updateReadStatus(int _seq) {
 		ArticleInfo info;
 		for (int i = 0; i < mList.size(); ++i) {
 			info = mList.get(i);
 			if (info.getSeq() == _seq) {
-				if (info.getRead() == _read) {
-					return false;
-				}
-				info.setRead(_read);
+				info.setRead(getReadStatus(info));
 				mList.set(i, info);
 				return true;
 			}
@@ -458,9 +446,9 @@ public abstract class KidsBbsAList extends ListActivity implements
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
 			String tabname = _intent.getStringExtra(
-					KidsBbs.PKG_BASE + KidsBbsProvider.KEYB_TABNAME);
+					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME);
 			int seq = _intent.getIntExtra(
-					KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_SEQ, -1);
+					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_SEQ, -1);
 			if (mTabname != null && tabname != null &&
 					tabname.equals(mTabname) && seq != -1) {
 				//refreshList();
@@ -472,14 +460,12 @@ public abstract class KidsBbsAList extends ListActivity implements
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
 			String tabname = _intent.getStringExtra(
-					KidsBbs.PKG_BASE + KidsBbsProvider.KEYB_TABNAME);
+					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME);
 			int seq = _intent.getIntExtra(
-					KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_SEQ, -1);
-			boolean read = _intent.getIntExtra(
-					KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_READ, 1) != 0;
+					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_SEQ, -1);
 			if (mTabname != null && tabname != null &&
 					tabname.equals(mTabname) && seq != -1 &&
-					updateReadStatus(seq, read)) {
+					updateReadStatus(seq)) {
 				((AListAdapter)getListAdapter()).notifyDataSetChanged();
 			}
 		}

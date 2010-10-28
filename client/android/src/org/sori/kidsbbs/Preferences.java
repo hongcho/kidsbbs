@@ -39,6 +39,8 @@ public class Preferences extends PreferenceActivity {
 	public static final String PREF_ABOUT_KIDSBBS = "PREF_ABOUT_KIDSBBS";
 	public static final String PREF_ABOUT_APP = "PREF_ABOUT_APP";
 	
+	public static final String DEFAULT_UPDATE_FREQ = "15";
+	
 	private static final int ABOUT_APP_ID = 0;
 	private static final int ABOUT_KIDSBBS_ID = 1;
 	

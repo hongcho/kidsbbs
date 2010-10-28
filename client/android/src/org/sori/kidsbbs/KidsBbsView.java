@@ -313,9 +313,9 @@ public class KidsBbsView extends Activity {
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
 			String tabname = _intent.getStringExtra(
-					KidsBbs.PKG_BASE + KidsBbsProvider.KEYB_TABNAME);
+					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME);
 			String seq = _intent.getStringExtra(
-					KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_SEQ);
+					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_SEQ);
 			if (mTabname != null && tabname != null && tabname.equals(mTabname) &&
 					mBoardSeq != null && seq != null && mBoardSeq == seq) {
 				refreshView();
