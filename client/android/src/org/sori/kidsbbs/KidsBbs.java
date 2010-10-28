@@ -260,8 +260,8 @@ public class KidsBbs extends Activity {
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
-				readOld = Boolean.parseBoolean(c.getString(c.getColumnIndex(
-						KidsBbsProvider.KEYA_READ)));
+				readOld = c.getInt(c.getColumnIndex(
+						KidsBbsProvider.KEYA_READ)) != 0;
 			}
 			c.close();
 		}
@@ -270,18 +270,18 @@ public class KidsBbs extends Activity {
 		}
 		
 		ContentValues values = new ContentValues();
-		values.put(KidsBbsProvider.KEYA_READ, _info.getRead());
+		values.put(KidsBbsProvider.KEYA_READ, _info.getRead() ? 1 : 0);
 		int count = _cr.update(uri, values, where, null);
 		return (count > 0);
 	}
 	
 	public static boolean getArticleRead(ContentResolver _cr, Uri _uri,
-			String _where, ArticleInfo _info) {
+			String _where, String[] _whereArgs, ArticleInfo _info) {
 		final String[] FIELDS = {
 				KidsBbsProvider.KEYA_ALLREAD_FIELD,
 		};
 		boolean read = false;
-		Cursor c = _cr.query(_uri, FIELDS, _where, null, null);
+		Cursor c = _cr.query(_uri, FIELDS, _where, _whereArgs, null);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -316,12 +316,14 @@ public class KidsBbs extends Activity {
 				_info.getTabname());
 		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_SEQ,
 				_info.getSeq());
-		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_USER,
-				_info.getUser());
-		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_DATE,
-				_info.getDateString());
-		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_TITLE,
-				_info.getTitle());
+		//intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_USER,
+		//		_info.getUser());
+		//intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_DATE,
+		//		_info.getDateString());
+		//intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_TITLE,
+		//		_info.getTitle());
+		intent.putExtra(KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_READ,
+				_info.getRead() ? 1 : 0);
 		_context.sendBroadcast(intent);
 	}
 	

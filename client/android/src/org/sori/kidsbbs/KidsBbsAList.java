@@ -80,7 +80,7 @@ public abstract class KidsBbsAList extends ListActivity implements
 
 	private String mUrlBaseString;
 	private Uri mUri;
-	private String mWhere;
+	private String mWhereBase;
 	private ParseMode mMode;
 
 	private String mBoardTitle;
@@ -135,6 +135,13 @@ public abstract class KidsBbsAList extends ListActivity implements
 		setListAdapter(new AListAdapter(this, R.layout.article_info_item,
 				mList));
 		getListView().setOnScrollListener(this);
+
+		mReceiverNew = new NewArticleReceiver();
+		IntentFilter filterNew = new IntentFilter(KidsBbs.NEW_ARTICLE);
+		registerReceiver(mReceiverNew, filterNew);
+		mReceiverUpdated = new ArticleUpdatedReceiver();
+		IntentFilter filterUpdated = new IntentFilter(KidsBbs.ARTICLE_UPDATED);
+		registerReceiver(mReceiverUpdated, filterUpdated);
 	}
 
 	@Override
@@ -280,8 +287,24 @@ public abstract class KidsBbsAList extends ListActivity implements
 							if (info == null) {
 								return ErrUtils.ERR_XMLPARSING;
 							}
-							info.setRead(KidsBbs.getArticleRead(mCR, mUri,
-									mWhere, info));
+							boolean read;
+							switch (mMode) {
+							case TLIST:
+								read = KidsBbs.getArticleRead(mCR, mUri,
+										mWhereBase,
+										new String[] { info.getThread() },
+										info);
+								break;
+							default:
+								read = KidsBbs.getArticleRead(mCR, mUri,
+										mWhereBase,
+										new String[] {
+											Integer.toString(info.getSeq())
+										},
+										info);
+								break;
+							}
+							info.setRead(read);
 							mTList.add(info);
 							publishProgress(mStart + mTList.size());
 						}
@@ -336,13 +359,13 @@ public abstract class KidsBbsAList extends ListActivity implements
 	}
 
 	protected final void setQueryBase(String _urlBase, String _urlExtra,
-			String _uriBase, String _where, ParseMode _mode) {
+			String _uriBase, String _whereBase, ParseMode _mode) {
 		mUrlBaseString = _urlBase +
 				KidsBbs.PARAM_N_BOARD + "=" + mBoardName +
 				"&" + KidsBbs.PARAM_N_TYPE + "=" + mBoardType +
 				_urlExtra;
 		mUri = Uri.parse(_uriBase + mTabname);
-		mWhere = _where;
+		mWhereBase = _whereBase;
 		mMode = _mode;
 	}
 
@@ -415,13 +438,32 @@ public abstract class KidsBbsAList extends ListActivity implements
 		}
 	}
 	
+	private boolean updateReadStatus(int _seq, boolean _read) {
+		ArticleInfo info;
+		for (int i = 0; i < mList.size(); ++i) {
+			info = mList.get(i);
+			if (info.getSeq() == _seq) {
+				if (info.getRead() == _read) {
+					return false;
+				}
+				info.setRead(_read);
+				mList.set(i, info);
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	private class NewArticleReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
 			String tabname = _intent.getStringExtra(
 					KidsBbs.PKG_BASE + KidsBbsProvider.KEYB_TABNAME);
-			if (mTabname != null && tabname != null && mTabname == tabname) {
-				refreshList();
+			int seq = _intent.getIntExtra(
+					KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_SEQ, -1);
+			if (mTabname != null && tabname != null &&
+					tabname.equals(mTabname) && seq != -1) {
+				//refreshList();
 			}
 		}
 	}
@@ -431,30 +473,18 @@ public abstract class KidsBbsAList extends ListActivity implements
 		public void onReceive(Context _context, Intent _intent) {
 			String tabname = _intent.getStringExtra(
 					KidsBbs.PKG_BASE + KidsBbsProvider.KEYB_TABNAME);
-			if (mTabname != null && tabname != null && mTabname == tabname) {
-				refreshList();
+			int seq = _intent.getIntExtra(
+					KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_SEQ, -1);
+			boolean read = _intent.getIntExtra(
+					KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_READ, 1) != 0;
+			if (mTabname != null && tabname != null &&
+					tabname.equals(mTabname) && seq != -1 &&
+					updateReadStatus(seq, read)) {
+				((AListAdapter)getListAdapter()).notifyDataSetChanged();
 			}
 		}
 	}
 	
 	private NewArticleReceiver mReceiverNew;
 	private ArticleUpdatedReceiver mReceiverUpdated;
-	
-	@Override
-	public void onResume() {
-		super.onResume();
-		mReceiverNew = new NewArticleReceiver();
-		IntentFilter filterNew = new IntentFilter(KidsBbs.NEW_ARTICLE);
-		registerReceiver(mReceiverNew, filterNew);
-		mReceiverUpdated = new ArticleUpdatedReceiver();
-		IntentFilter filterUpdated = new IntentFilter(KidsBbs.ARTICLE_UPDATED);
-		registerReceiver(mReceiverUpdated, filterUpdated);
-	}
-	
-	@Override
-	public void onPause() {
-		super.onPause();
-		unregisterReceiver(mReceiverUpdated);
-		unregisterReceiver(mReceiverNew);
-	}
 }

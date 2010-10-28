@@ -316,7 +316,7 @@ public class KidsBbsView extends Activity {
 					KidsBbs.PKG_BASE + KidsBbsProvider.KEYB_TABNAME);
 			String seq = _intent.getStringExtra(
 					KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_SEQ);
-			if (mTabname != null && tabname != null && mTabname == tabname &&
+			if (mTabname != null && tabname != null && tabname.equals(mTabname) &&
 					mBoardSeq != null && seq != null && mBoardSeq == seq) {
 				refreshView();
 			}

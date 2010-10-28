@@ -46,7 +46,7 @@ public class KidsBbsThread extends KidsBbsAList {
         setQueryBase(KidsBbs.URL_THREAD,
         		"&" + KidsBbs.PARAM_N_THREAD + "=" + mBoardThread,
         		KidsBbsProvider.CONTENT_URISTR_LIST,
-        		KidsBbsProvider.KEYA_THREAD + "=" + mBoardThread,
+        		KidsBbsProvider.KEYA_SEQ + "=?",
         		ParseMode.ALIST);
         
         registerForContextMenu(getListView());

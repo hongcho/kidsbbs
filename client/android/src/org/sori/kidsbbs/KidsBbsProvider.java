@@ -237,7 +237,7 @@ public class KidsBbsProvider extends ContentProvider {
 			KEYA_THREAD + " CHAR(32) NOT NULL";
 	public static final String KEYA_READ = "read";
 	private static final String KEYA_READ_DEF =
-			KEYA_READ + " BOOLEAN DEFAULT FALSE";
+			KEYA_READ + " TINYINT DEFAULT 0";
 	
 	public static final String KEYA_ALLREAD = "allread";
 	public static final String KEYA_ALLREAD_FIELD =
@@ -245,15 +245,6 @@ public class KidsBbsProvider extends ContentProvider {
 
 	public static final String KEYA_CNT = "cnt";
 	public static final String KEYA_CNT_FIELD = "COUNT(*) AS " + KEYA_CNT;
-	
-	public static final ContentValues V_READ_TRUE;
-	public static final ContentValues V_READ_FALSE;
-	static {
-		V_READ_TRUE = new ContentValues();
-		V_READ_TRUE.put(KidsBbsProvider.KEYA_READ, true);
-		V_READ_FALSE = new ContentValues();
-		V_READ_FALSE.put(KidsBbsProvider.KEYA_READ, false);
-	}
 	
 	public static final String ORDER_BY_ID = KEY_ID + " ASC";
 
