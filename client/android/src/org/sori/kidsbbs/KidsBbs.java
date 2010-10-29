@@ -61,7 +61,7 @@ public class KidsBbs extends Activity {
 	public static final String BCAST_BASE = PKG_BASE + "broadcast.";
 	public static final String PARAM_BASE = PKG_BASE + "param.";
 	
-	public static final String NEW_ARTICLE = BCAST_BASE + "NewArticle";
+	public static final String NEW_ARTICLES = BCAST_BASE + "NewArticles";
 	public static final String ARTICLE_UPDATED = BCAST_BASE + "ArticleUpdated";
 
 	private static final String URL_BASE = "http://sori.org/kids/kids.php?_o=1&";
@@ -257,10 +257,10 @@ public class KidsBbs extends Activity {
 		};
 		Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST +
 				_info.getTabname());
-		String[] whereArgs = new String[] { Integer.toString(_info.getSeq()) };
+		String[] args = new String[] { Integer.toString(_info.getSeq()) };
 		
 		boolean readOld = false;
-		Cursor c = _cr.query(uri, FIELDS, KidsBbsProvider.WHERE_SEQ, whereArgs,
+		Cursor c = _cr.query(uri, FIELDS, KidsBbsProvider.SELECTION_SEQ, args,
 				null);
 		if (c != null) {
 			if (c.getCount() > 0) {
@@ -276,8 +276,8 @@ public class KidsBbs extends Activity {
 		
 		ContentValues values = new ContentValues();
 		values.put(KidsBbsProvider.KEYA_READ, _info.getRead() ? 1 : 0);
-		int count = _cr.update(uri, values, KidsBbsProvider.WHERE_SEQ,
-				whereArgs);
+		int count = _cr.update(uri, values, KidsBbsProvider.SELECTION_SEQ,
+				args);
 		return (count > 0);
 	}
 	
@@ -299,13 +299,11 @@ public class KidsBbs extends Activity {
 		return read;
 	}
 	
-	public static void announceNewArticle(Context _context,
-			ArticleInfo _info) {
-		Intent intent = new Intent(KidsBbs.NEW_ARTICLE);
+	public static void announceNewArticles(Context _context,
+			String _tabname) {
+		Intent intent = new Intent(KidsBbs.NEW_ARTICLES);
 		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME,
-				_info.getTabname());
-		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_SEQ,
-				_info.getSeq());
+				_tabname);
 		_context.sendBroadcast(intent);
 	}
 	
