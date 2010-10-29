@@ -164,14 +164,9 @@ public class KidsBbsBlist extends ListActivity {
 				KidsBbsProvider.KEYB_TITLE,
 				KidsBbsProvider.KEYB_STATE,
 			};
-			final String where =
-					KidsBbsProvider.KEYB_STATE + "!=" +
-						KidsBbsProvider.STATE_UNDEF + " AND " +
-					KidsBbsProvider.KEYB_STATE + "!=" +
-						KidsBbsProvider.STATE_PAUSED;
 			ContentResolver cr = getContentResolver();
 			Cursor c = cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
-					where, null, null);
+					KidsBbsProvider.SELECTION_STATE_ACTIVE, null, null);
 			if (c != null) {
 				if (c.getCount() > 0) {
 					c.moveToFirst();

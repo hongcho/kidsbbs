@@ -135,8 +135,8 @@ public abstract class KidsBbsAList extends ListActivity implements
 		
 		mCR = getContentResolver();
 
-		mReceiverNew = new NewArticleReceiver();
-		IntentFilter filterNew = new IntentFilter(KidsBbs.NEW_ARTICLE);
+		mReceiverNew = new NewArticlesReceiver();
+		IntentFilter filterNew = new IntentFilter(KidsBbs.NEW_ARTICLES);
 		registerReceiver(mReceiverNew, filterNew);
 		mReceiverUpdated = new ArticleUpdatedReceiver();
 		IntentFilter filterUpdated = new IntentFilter(KidsBbs.ARTICLE_UPDATED);
@@ -442,16 +442,14 @@ public abstract class KidsBbsAList extends ListActivity implements
 		return false;
 	}
 	
-	private class NewArticleReceiver extends BroadcastReceiver {
+	private class NewArticlesReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
 			String tabname = _intent.getStringExtra(
 					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME);
-			int seq = _intent.getIntExtra(
-					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_SEQ, -1);
 			if (mTabname != null && tabname != null &&
-					tabname.equals(mTabname) && seq != -1) {
-				//refreshList();
+					tabname.equals(mTabname)) {
+				refreshList();
 			}
 		}
 	}
@@ -471,6 +469,6 @@ public abstract class KidsBbsAList extends ListActivity implements
 		}
 	}
 	
-	private NewArticleReceiver mReceiverNew;
+	private NewArticlesReceiver mReceiverNew;
 	private ArticleUpdatedReceiver mReceiverUpdated;
 }
