@@ -449,7 +449,7 @@ public abstract class KidsBbsAList extends ListActivity implements
 					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME);
 			if (mTabname != null && tabname != null &&
 					tabname.equals(mTabname)) {
-				refreshList();
+				//refreshList();
 			}
 		}
 	}
