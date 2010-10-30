@@ -189,6 +189,7 @@ public class KidsBbsService extends Service
 		default:
 			return 0;
 		}
+		Log.i(TAG, _tabname + ": updating...");
 		
 		int count = 0;
 		String[] parsed = BoardInfo.parseTabname(_tabname);
@@ -211,7 +212,10 @@ public class KidsBbsService extends Service
 			for (int i = 0; state != UPDATE_STATE.DONE && i < articles.size();
 					++i) {
 				ArticleInfo info = articles.get(i);
-				if (count >= MIN_ARTICLES && !isRecent(info.getDateString())) {
+				if (count >= MIN_ARTICLES && !isRecent(info.getKidsDateString())) {
+					Log.i(TAG, _tabname +
+							": done updating: reached old articles: " +
+							info.getSeq());
 					state = UPDATE_STATE.DONE;
 					break;
 				}
@@ -221,12 +225,7 @@ public class KidsBbsService extends Service
 				ArticleInfo old = null;
 				Cursor c = cr.query(uri, FIELDS, KidsBbsProvider.SELECTION_SEQ,
 						args, null);
-				if (c == null) {
-					// Unexpected...
-					Log.e(TAG, "query failed for " + _tabname + ":" +
-							info.getSeq());
-					state = UPDATE_STATE.DONE;
-				} else {
+				if (c != null) {
 					if (c.getCount() > 0) {
 						c.moveToFirst();
 						// Cache the old entry.
@@ -240,19 +239,21 @@ public class KidsBbsService extends Service
 								KidsBbsProvider.KEYA_TITLE));
 						boolean read = c.getInt(c.getColumnIndex(
 								KidsBbsProvider.KEYA_READ)) != 0;
-						if (seq == info.getSeq() && user != null &&
-								date != null && title != null) {
-							old = new ArticleInfo(_tabname, seq, user, null,
-									date, title, null, null, 1, read);
-						}
+						old= new ArticleInfo(_tabname, seq, user, null,
+								date, title, null, null, 1, read);
 					}
 					c.close();
+				} else {
+					// Unexpected...
+					Log.e(TAG, _tabname + ": query failed: " + info.getSeq());
+					state = UPDATE_STATE.DONE;
+					break;
 				}
 				
 				ContentValues values = new ContentValues();
 				values.put(KidsBbsProvider.KEYA_SEQ, info.getSeq());
 				values.put(KidsBbsProvider.KEYA_USER, info.getUser());
-				values.put(KidsBbsProvider.KEYA_DATE, info.getDateString());
+				values.put(KidsBbsProvider.KEYA_DATE, info.getKidsDateString());
 				values.put(KidsBbsProvider.KEYA_TITLE, info.getTitle());
 				values.put(KidsBbsProvider.KEYA_THREAD, info.getThread());
 
@@ -282,16 +283,31 @@ public class KidsBbsService extends Service
 					}
 				} else {
 					// Hmm... already there...
-					if (info.getUser() == old.getUser() &&
-							(info.getDateString() != ArticleInfo.DATE_INVALID &&
-									info.getDateString().equals(old.getDateString())) &&
+					if (info.getUser().equals(old.getUser()) &&
+							info.getDateString().equals(
+									old.getDateString()) &&
 							info.getTitle().equals(old.getTitle())) {
-						// And the same.  Stop...
+						result = false;
 						if (tabState != TABLE_STATE.CREATED) {
+							Log.i(TAG, _tabname +
+									": done updating: reached same article: " +
+									info.getSeq());
 							state = UPDATE_STATE.DONE;
+							break;
 						}
 					} else {
-						state = UPDATE_STATE.UPDATE;
+						if (state == UPDATE_STATE.INSERT) {
+							Log.i(TAG, _tabname +
+									": switching to update mode: " +
+									info.getSeq() + ": (" +
+									old.getUser() + "," +
+									old.getDateString() + "," +
+									old.getTitle() + ") -> (" +
+									info.getUser() + "," +
+									info.getDateString() + "," +
+									info.getTitle() + ")");
+							state = UPDATE_STATE.UPDATE;
+						}
 						try {
 							cr.update(uri, values,
 									KidsBbsProvider.SELECTION_SEQ, args);
@@ -312,7 +328,6 @@ public class KidsBbsService extends Service
 		if (tabState == TABLE_STATE.CREATED) {
 			setTableState(_tabname, TABLE_STATE.UPDATED);
 		}
-		Log.i(TAG, "Updated " + count + " for " + _tabname);
 		return count;
 	}
 
@@ -345,7 +360,7 @@ public class KidsBbsService extends Service
 		for (int i = 0; i < tabnames.size(); ++i) {
 			String tabname = tabnames.get(i);
 			int count = refreshTable(tabname); 
-			Log.i(TAG, "Updated " + count + " for " + tabname);
+			Log.i(TAG, tabname + ": updated " + count + " articles");
 			total_count += count;
 		}
 		return total_count;
@@ -413,8 +428,8 @@ public class KidsBbsService extends Service
 	}
 	
 	private static final boolean isRecent(String _dateString) {
-		boolean read = true;
-		Date local = ArticleInfo.toLocalDate(_dateString);
+		boolean result = true;
+		Date local = KidsBbs.KidsToLocalDate(_dateString);
 		if (local != null) {
 			Calendar calLocal = new GregorianCalendar();
 			Calendar calRecent = new GregorianCalendar();
@@ -422,10 +437,12 @@ public class KidsBbsService extends Service
 			calRecent.setTime(new Date());
 			// "Recent" one is marked unread.
 			calRecent.add(Calendar.DATE, -KidsBbs.MAX_DAYS);
-			if (calLocal.after(calRecent)) {
-				read = false;
+			if (calLocal.before(calRecent)) {
+				result = false;
 			}
+		} else {
+			Log.e(TAG, "isRecent: parsing failed: " + _dateString);
 		}
-		return read;
+		return result;
 	}
 }

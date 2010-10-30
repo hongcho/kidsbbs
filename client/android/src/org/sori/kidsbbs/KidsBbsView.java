@@ -62,8 +62,6 @@ public class KidsBbsView extends Activity {
 	static final private int MENU_REFRESH = Menu.FIRST;
 	static final private int MENU_PREFERENCES = Menu.FIRST + 1;
 
-	private static final int SHOW_PREFERENCES = 1;
-
 	private TextView mStatusView;
 	private TextView mTitleView;
 	private TextView mUserView;
@@ -145,8 +143,7 @@ public class KidsBbsView extends Activity {
 			refreshView();
 			return true;
 		case MENU_PREFERENCES:
-			Intent i = new Intent(this, Preferences.class);
-			startActivityForResult(i, SHOW_PREFERENCES);
+			startActivity(new Intent(this, Preferences.class));
 			return true;
 		}
 		return false;
@@ -273,20 +270,6 @@ public class KidsBbsView extends Activity {
 		}
 	}
 
-	private void updateFromPreferences() {
-	}
-
-	@Override
-	public void onActivityResult(int _reqCode, int _resCode, Intent _data) {
-		super.onActivityResult(_reqCode, _resCode, _data);
-		if (_reqCode == SHOW_PREFERENCES) {
-			if (_resCode == Activity.RESULT_OK) {
-				updateFromPreferences();
-				// refreshBoardList();
-			}
-		}
-	}
-
 	private class SavedStates {
 		ArticleInfo info;
 	}
@@ -301,7 +284,6 @@ public class KidsBbsView extends Activity {
 	private void initializeStates() {
 		SavedStates save = (SavedStates) getLastNonConfigurationInstance();
 		if (save == null) {
-			updateFromPreferences();
 			refreshView();
 		} else {
 			mInfo = save.info;
@@ -314,10 +296,10 @@ public class KidsBbsView extends Activity {
 		public void onReceive(Context _context, Intent _intent) {
 			String tabname = _intent.getStringExtra(
 					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME);
-			String seq = _intent.getStringExtra(
-					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_SEQ);
+			int seq = _intent.getIntExtra(
+					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_SEQ, -1);
 			if (mTabname != null && tabname != null && tabname.equals(mTabname) &&
-					mBoardSeq != null && seq != null && mBoardSeq == seq) {
+					mBoardSeq != null && mBoardSeq.equals(seq)) {
 				refreshView();
 			}
 		}
