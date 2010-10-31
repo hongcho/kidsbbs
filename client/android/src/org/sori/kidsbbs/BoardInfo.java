@@ -30,13 +30,14 @@ public class BoardInfo {
 	private String mTitle;
 	private int mType;
 	private String mBoard;
-	private int mState;
+	private int mUnreadCount;
 	
 	public String getTabname() { return mTabname; }
 	public String getTitle() { return mTitle; }
 	public int getType() { return mType; }
 	public String getBoard() { return mBoard; }
-	public int getState() { return mState; }
+	public int getUnreadCount() { return mUnreadCount; }
+	public void setUnreadCount(int _count) { mUnreadCount = _count; }
 	
 	public static final String buildTabname(String _board, int _type) {
 		return "b" + _type + "_" + _board;
@@ -48,10 +49,10 @@ public class BoardInfo {
 		return parsed;
 	}
 	
-	public BoardInfo(String _tabname, String _title, int _state) {
+	public BoardInfo(String _tabname, String _title) {
 		mTabname = _tabname;
 		mTitle = _title;
-		mState = _state;
+		mUnreadCount = 0;
 
 		String[] parsed = parseTabname(mTabname);
 		mType = Integer.parseInt(parsed[0]);

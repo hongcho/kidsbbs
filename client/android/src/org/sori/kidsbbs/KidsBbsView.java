@@ -115,7 +115,15 @@ public class KidsBbsView extends Activity {
 			}
 		});
 
+		registerReceivers();
+		
 		initializeStates();
+	}
+	
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		unregisterReceivers();
 	}
 
 	@Override
@@ -307,17 +315,13 @@ public class KidsBbsView extends Activity {
 	
 	private ArticleUpdatedReceiver mReceiver;
 	
-	@Override
-	public void onResume() {
-		super.onResume();
+	private void registerReceivers() {
 		IntentFilter filter = new IntentFilter(KidsBbs.ARTICLE_UPDATED);
 		mReceiver = new ArticleUpdatedReceiver();
 		registerReceiver(mReceiver, filter);
 	}
 	
-	@Override
-	public void onPause() {
-		super.onPause();
+	private void unregisterReceivers() {
 		unregisterReceiver(mReceiver);
 	}
 }

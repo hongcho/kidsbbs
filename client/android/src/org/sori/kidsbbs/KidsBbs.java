@@ -31,9 +31,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -68,6 +66,7 @@ public class KidsBbs extends Activity {
 	public static final String BCAST_BASE = PKG_BASE + "broadcast.";
 	public static final String PARAM_BASE = PKG_BASE + "param.";
 	
+	public static final String BOARD_UPDATED = BCAST_BASE + "BoardUpdated";
 	public static final String NEW_ARTICLES = BCAST_BASE + "NewArticles";
 	public static final String ARTICLE_UPDATED = BCAST_BASE + "ArticleUpdated";
 
@@ -234,7 +233,8 @@ public class KidsBbs extends Activity {
 			String user = n.getNodeValue();
 
 			String author = null;
-			if (_mode == ParseMode.VIEW) {
+			if (_mode == ParseMode.VIEW ||
+					_mode == ParseMode.LIST) {
 				nl = _item.getElementsByTagName("AUTHOR");
 				if (nl == null || nl.getLength() <= 0) {
 					throw new KidsParseException("ParseException: AUTHOR");
@@ -254,7 +254,7 @@ public class KidsBbs extends Activity {
 			}
 
 			return new ArticleInfo(_tabname, seq, user, author, date, title,
-					thread, desc, cnt, false);
+					thread, desc, false, cnt, false);
 		} catch (KidsParseException e) {
 			Log.w(TAG, e);
 			return null;
@@ -316,8 +316,45 @@ public class KidsBbs extends Activity {
 		}
 		return articles;
 	}
-	
-	public static boolean updateArticleRead(ContentResolver _cr,
+
+	public static final int getBoardTableSize(ContentResolver _cr,
+			String _tabname) {
+		final String[] FIELDS = {
+			KidsBbsProvider.KEYA_CNT_FIELD,
+		};
+		int cnt = 0;
+		Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
+		Cursor c = _cr.query(uri, FIELDS, null, null, null);
+		if (c != null) {
+			if (c.getCount() > 0) {
+				c.moveToFirst();
+				cnt = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_CNT));
+			}
+			c.close();
+		}
+		return cnt;
+	}
+
+	public static final int getBoardUnreadCount(ContentResolver _cr,
+			String _tabname) {
+		final String[] FIELDS = {
+			KidsBbsProvider.KEYA_CNT_FIELD,
+		};
+		int count = 0;
+		Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
+		Cursor c = _cr.query(uri, FIELDS, KidsBbsProvider.SELECTION_UNREAD,
+				null, null);
+		if (c != null) {
+			if (c.getCount() > 0) {
+				c.moveToFirst();
+				count = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_CNT));
+			}
+		}
+		c.close();
+		return count;
+	}
+
+	public static final boolean updateArticleRead(ContentResolver _cr,
 			ArticleInfo _info) {
 		final String[] FIELDS = {
 				KidsBbsProvider.KEYA_READ,
@@ -348,7 +385,7 @@ public class KidsBbs extends Activity {
 		return (count > 0);
 	}
 	
-	public static boolean getArticleRead(ContentResolver _cr, Uri _uri,
+	public static final boolean getArticleRead(ContentResolver _cr, Uri _uri,
 			String _where, String[] _whereArgs, ArticleInfo _info) {
 		final String[] FIELDS = {
 				KidsBbsProvider.KEYA_ALLREAD_FIELD,
@@ -365,8 +402,16 @@ public class KidsBbs extends Activity {
 		}
 		return read;
 	}
-	
-	public static void announceNewArticles(Context _context,
+
+	public static final void announceBoardUpdated(Context _context,
+			String _tabname) {
+		Intent intent = new Intent(KidsBbs.BOARD_UPDATED);
+		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME,
+				_tabname);
+		_context.sendBroadcast(intent);
+	}
+
+	public static final void announceNewArticles(Context _context,
 			String _tabname) {
 		Intent intent = new Intent(KidsBbs.NEW_ARTICLES);
 		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME,
@@ -381,9 +426,12 @@ public class KidsBbs extends Activity {
 				_info.getTabname());
 		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_SEQ,
 				_info.getSeq());
+		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_THREAD,
+				_info.getThread());
 		_context.sendBroadcast(intent);
 	}
 	
+	@SuppressWarnings("serial")
 	private static class KidsParseException extends Exception {
 		public KidsParseException(String _message) {
 			super(_message);

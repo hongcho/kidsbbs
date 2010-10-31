@@ -28,8 +28,11 @@ package org.sori.kidsbbs;
 import java.util.ArrayList;
 
 import android.app.ListActivity;
+import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -69,8 +72,15 @@ public class KidsBbsBlist extends ListActivity {
 				mList));
 
 		registerForContextMenu(getListView());
+		registerReceivers();
 
 		initializeStates();
+	}
+	
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		unregisterReceivers();
 	}
 
 	@Override
@@ -162,12 +172,12 @@ public class KidsBbsBlist extends ListActivity {
 			final String[] FIELDS = {
 				KidsBbsProvider.KEYB_TABNAME,
 				KidsBbsProvider.KEYB_TITLE,
-				KidsBbsProvider.KEYB_STATE,
 			};
 			ContentResolver cr = getContentResolver();
 			Cursor c = cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
 					KidsBbsProvider.SELECTION_STATE_ACTIVE, null, null);
 			if (c != null) {
+				BoardInfo info = null;
 				if (c.getCount() > 0) {
 					c.moveToFirst();
 					do {
@@ -175,13 +185,17 @@ public class KidsBbsBlist extends ListActivity {
 								KidsBbsProvider.KEYB_TABNAME));
 						String title = c.getString(c.getColumnIndex(
 								KidsBbsProvider.KEYB_TITLE));
-						int state = c.getInt(c.getColumnIndex(
-								KidsBbsProvider.KEYB_STATE));
-						mTList.add(new BoardInfo(tabname, title, state));
-						//publishProgress(mTList.size());
+						info = new BoardInfo(tabname, title);
 					} while (c.moveToNext());
 				}
 				c.close();
+				
+				if (info != null) {
+					info.setUnreadCount(KidsBbs.getBoardUnreadCount(cr,
+							info.getTabname()));
+					mTList.add(info);
+					//publishProgress(mTList.size());
+				}
 			}
 			return mTList.size();
 		}
@@ -261,5 +275,74 @@ public class KidsBbsBlist extends ListActivity {
 		} else {
 			updateView(save.list);
 		}
+	}
+	
+	private boolean updateUnreadCount(String _tabname) {
+		BoardInfo info;
+		for (int i = 0; i < mList.size(); ++i) {
+			info = mList.get(i);
+			if (_tabname.equals(info.getTabname())) {
+				info.setUnreadCount(KidsBbs.getBoardUnreadCount(
+						getContentResolver(), _tabname));
+				mList.set(i, info);
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private class BoardUpdatedReceiver extends BroadcastReceiver {
+		@Override
+		public void onReceive(Context _context, Intent _intent) {
+			String tabname = _intent.getStringExtra(
+					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME);
+			if (updateUnreadCount(tabname)) {
+				((BListAdapter)getListAdapter()).notifyDataSetChanged();
+			}
+		}
+	}
+	
+	private class ArticleUpdatedReceiver extends BroadcastReceiver {
+		@Override
+		public void onReceive(Context _context, Intent _intent) {
+			String tabname = _intent.getStringExtra(
+					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME);
+			if (updateUnreadCount(tabname)) {
+				((BListAdapter)getListAdapter()).notifyDataSetChanged();
+			}
+		}
+	}
+	
+	private class NewArticlesReceiver extends BroadcastReceiver {
+		@Override
+		public void onReceive(Context _context, Intent _intent) {
+			String tabname = _intent.getStringExtra(
+					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME);
+			if (updateUnreadCount(tabname)) {
+				((BListAdapter)getListAdapter()).notifyDataSetChanged();
+			}
+		}
+	}
+	
+	private BoardUpdatedReceiver mReceiverBoard;
+	private ArticleUpdatedReceiver mReceiverArticle;
+	private NewArticlesReceiver mReceiverNew;
+	
+	private void registerReceivers() {
+		mReceiverBoard = new BoardUpdatedReceiver();
+		IntentFilter filterBoard = new IntentFilter(KidsBbs.BOARD_UPDATED);
+		registerReceiver(mReceiverBoard, filterBoard);
+		mReceiverArticle = new ArticleUpdatedReceiver();
+		IntentFilter filterArticle = new IntentFilter(KidsBbs.ARTICLE_UPDATED);
+		registerReceiver(mReceiverArticle, filterArticle);
+		mReceiverNew = new NewArticlesReceiver();
+		IntentFilter filterNew = new IntentFilter(KidsBbs.NEW_ARTICLES);
+		registerReceiver(mReceiverNew, filterNew);
+	}
+	
+	private void unregisterReceivers() {
+		unregisterReceiver(mReceiverBoard);
+		unregisterReceiver(mReceiverArticle);
+		unregisterReceiver(mReceiverNew);
 	}
 }
