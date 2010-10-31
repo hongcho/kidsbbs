@@ -330,7 +330,7 @@ public class KidsBbsProvider extends ContentProvider {
 		@Override
 		public void onUpgrade(SQLiteDatabase _db, int _old, int _new) {
 			final String[] FIELDS = {
-				KEYB_TITLE,
+				KEYB_TABNAME,
 				KEYB_STATE,
 			};   
 			Log.w(TAG, "Upgrading database from version " + _old + " to " +
