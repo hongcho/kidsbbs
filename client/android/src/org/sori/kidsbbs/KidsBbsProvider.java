@@ -212,12 +212,9 @@ public class KidsBbsProvider extends ContentProvider {
 	private static final String KEYB_STATE_DEF =
 			KEYB_STATE + " TINYINT DEFAULT 0";
 
-	public static final int STATE_UNDEF = 0; // first update is not done yet
-	public static final int STATE_INITIALIZE = 1; // table is created, not updated
-	public static final int STATE_INITIALIZING = 2; // first updating is going on
-	public static final int STATE_DONE = 3; // update is done
-	public static final int STATE_UPDATING = 4; // incremental update is going on
-	public static final int STATE_PAUSED = 5; // no longer updating
+	public static final int STATE_PAUSED = 0; // no table or not updating
+	public static final int STATE_CREATED = 1; // table is created, not updated
+	public static final int STATE_UPDATED = 2; // update is done
 
 	// Article table
 	public static final String KEYA_SEQ = "seq";
@@ -237,7 +234,7 @@ public class KidsBbsProvider extends ContentProvider {
 			KEYA_THREAD + " CHAR(32) NOT NULL";
 	public static final String KEYA_READ = "read";
 	private static final String KEYA_READ_DEF =
-			KEYA_READ + " BOOLEAN DEFAULT FALSE";
+			KEYA_READ + " TINYINT DEFAULT 0";
 	
 	public static final String KEYA_ALLREAD = "allread";
 	public static final String KEYA_ALLREAD_FIELD =
@@ -246,16 +243,13 @@ public class KidsBbsProvider extends ContentProvider {
 	public static final String KEYA_CNT = "cnt";
 	public static final String KEYA_CNT_FIELD = "COUNT(*) AS " + KEYA_CNT;
 	
-	public static final ContentValues V_READ_TRUE;
-	public static final ContentValues V_READ_FALSE;
-	static {
-		V_READ_TRUE = new ContentValues();
-		V_READ_TRUE.put(KidsBbsProvider.KEYA_READ, true);
-		V_READ_FALSE = new ContentValues();
-		V_READ_FALSE.put(KidsBbsProvider.KEYA_READ, false);
-	}
+	public static final String SELECTION_TABNAME = KEYB_TABNAME + "=?";
+	public static final String SELECTION_STATE_ACTIVE =
+		KEYB_STATE + "!=" + STATE_PAUSED;
+	public static final String SELECTION_SEQ = KEYA_SEQ + "=?";
 	
 	public static final String ORDER_BY_ID = KEY_ID + " ASC";
+	public static final String ORDER_BY_SEQ = KEYA_SEQ + " DESC";
 
 	private static final String DB_NAME = "kidsbbs.db";
 	private static final int DB_VERSION = 1;
@@ -322,7 +316,7 @@ public class KidsBbsProvider extends ContentProvider {
 				}
 				addBoard(_db, new BoardInfo(tabnames[i], title,
 						mUpdateMap.get(tabnames[i]) ?
-								STATE_INITIALIZE : STATE_UNDEF));
+								STATE_CREATED : STATE_PAUSED));
 			}
 		}
 
@@ -339,19 +333,19 @@ public class KidsBbsProvider extends ContentProvider {
 			SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
 			qb.setTables(DB_TABLE);
 			Cursor c = qb.query(_db, FIELDS, null, null, null, null, null);
-			if (c != null && c.moveToFirst()) {
-				do {
-					String tabname = c.getString(c.getColumnIndex(KEYB_TABNAME));
-					int state = Integer.parseInt(c.getString(
-							c.getColumnIndex(KEYB_STATE)));
-					if (tabname != null) {
-						mUpdateMap.put(tabname,
-								state != STATE_UNDEF && state != STATE_PAUSED);
+			if (c != null) {
+				if (c.getCount() > 0) {
+					c.moveToFirst();
+					do {
+						String tabname = c.getString(c.getColumnIndex(KEYB_TABNAME));
+						int state = Integer.parseInt(c.getString(
+								c.getColumnIndex(KEYB_STATE)));
+						mUpdateMap.put(tabname, state != STATE_PAUSED);
 						dropArticleTable(_db, tabname);
-					}
-				} while (c.moveToNext());
+					} while (c.moveToNext());
+				}
+				c.close();
 			}
-			c.close();
 
 			dropMainTable(_db);
 			onCreate(_db);

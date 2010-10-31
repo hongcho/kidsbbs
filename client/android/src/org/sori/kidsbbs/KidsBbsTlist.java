@@ -27,8 +27,6 @@ package org.sori.kidsbbs;
 
 import org.sori.kidsbbs.KidsBbs.ParseMode;
 
-import android.app.Activity;
-import android.content.Intent;
 import android.os.Bundle;
 
 public class KidsBbsTlist extends KidsBbsAList {
@@ -38,11 +36,11 @@ public class KidsBbsTlist extends KidsBbsAList {
         
         updateTitle("");
         setQueryBase(KidsBbs.URL_TLIST, "",
-        		KidsBbsProvider.CONTENT_URISTR_TLIST, null,
+        		KidsBbsProvider.CONTENT_URISTR_TLIST,
+        		KidsBbsProvider.KEYA_THREAD + "=?",
         		ParseMode.TLIST);
         
         registerForContextMenu(getListView());
-        updateFromPreferences();
         
         initializeStates();
     }
@@ -71,23 +69,5 @@ public class KidsBbsTlist extends KidsBbsAList {
 			target = KidsBbsView.class;
 		}
 		showItemCommon(this, target, base, extra);
-    }
-    
-    protected void showPreference() {
-		Intent intent = new Intent(this, Preferences.class);
-		startActivityForResult(intent, SHOW_PREFERENCES);
-    }
-    
-    private void updateFromPreferences() {
-    }
-    
-    @Override
-    public void onActivityResult(int _reqCode, int _resCode, Intent _data) {
-    	super.onActivityResult(_reqCode, _resCode, _data);
-    	if (_reqCode == SHOW_PREFERENCES) {
-    		if (_resCode == Activity.RESULT_OK) {
-    			updateFromPreferences();
-    		}
-    	}
     }
 }

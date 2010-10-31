@@ -26,30 +26,7 @@
 	(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 	THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-	<PreferenceCategory
-		android:title="@string/settings_update"
-		>
-		<ListPreference
-			android:key="PREF_UPDATE_FREQ"
-			android:title="@string/update_freq_title"
-			android:summary="@string/update_freq_summary"
-			android:entries="@array/update_freq_options"
-			android:entryValues="@array/update_freq_values"
-			android:dialogTitle="@string/update_freq_title"
-			android:defaultValue="60"
-			/>
-	</PreferenceCategory>
-	<PreferenceCategory
-		android:title="@string/settings_general"
-		>
-		<PreferenceScreen
-			android:key="PREF_ABOUT_KIDSBBS"
-			android:title="@string/about_kidsbbs_title"
-			/>
-		<PreferenceScreen
-			android:key="PREF_ABOUT_APP"
-			android:title="@string/about_app_title"
-			/>
-	</PreferenceCategory>
-</PreferenceScreen>
+<resources>
+	<color name="list_item_background_unread">#404040</color>
+	<color name="list_item_background_read">#000000</color>
+</resources>

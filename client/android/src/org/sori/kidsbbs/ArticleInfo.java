@@ -25,28 +25,8 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.TimeZone;
-
-import org.sori.kidsbbs.KidsBbs.ParseMode;
 
 public class ArticleInfo {
-	public static final String DATE_INVALID = "0000-00-00 00:00:00";
-	private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
-	private static final String DATESHORT_INVALID = "0000-00-00";
-
-	private static final DateFormat mTimeFormat =
-		DateFormat.getTimeInstance(DateFormat.SHORT);
-	private static final DateFormat mDateFormat =
-		DateFormat.getDateInstance(DateFormat.SHORT);
-	private static final DateFormat mFullFormat =
-		DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
-
 	private String mTabname;
 	private int mSeq;
 	private String mAuthor;
@@ -57,6 +37,7 @@ public class ArticleInfo {
 	private int mCount;
 	private String mDateString;
 	private String mDateShortString;
+	private String mKidsDateString;
 	private boolean mRead;
 
 	public final String getTabname() { return mTabname; }
@@ -69,42 +50,9 @@ public class ArticleInfo {
 	public final int getCount() { return mCount; }
 	public final String getDateString() { return mDateString; }
 	public final String getDateShortString() { return mDateShortString;}
+	public final String getKidsDateString() { return mKidsDateString; }
 	public final boolean getRead() { return mRead; }
 	public final void setRead(boolean _read) { mRead = _read; }
-
-	public static final Date toLocalDate(String _dateString) {
-		if (_dateString == DATE_INVALID) {
-			return null;
-		} else {
-			// Prepare date/time in the local time zone.
-			DateFormat dfKorea = new SimpleDateFormat(DATE_FORMAT);
-			dfKorea.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
-			try {
-				Date date = dfKorea.parse(_dateString);
-				_dateString = mFullFormat.format(date);
-				return mFullFormat.parse(_dateString);
-			} catch (ParseException e) {
-				return null;
-			}
-		}
-	}
-	
-	public static final boolean isRecent(String _dateString) {
-		boolean read = true;
-		Date local = ArticleInfo.toLocalDate(_dateString);
-		if (local != null) {
-			Calendar calLocal = new GregorianCalendar();
-			Calendar calRecent = new GregorianCalendar();
-			calLocal.setTime(local);
-			calRecent.setTime(new Date());
-			// "Recent" one is marked unread.
-			calRecent.add(Calendar.DATE, -7);
-			if (calLocal.after(calRecent)) {
-				read = false;
-			}
-		}
-		return read;
-	}
 
 	public ArticleInfo(String _tabname, int _seq, String _user, String _author,
 			String _dateString, String _title, String _thread, String _body,
@@ -118,21 +66,9 @@ public class ArticleInfo {
 		mCount = _count;
 		mRead = _read;
 		
-		Date local = toLocalDate(_dateString);
-		if (local == null) {
-			mDateString = DATE_INVALID;
-			mDateShortString = DATESHORT_INVALID;
-		} else {
-			mDateString = mFullFormat.format(local);
-			Date now = new Date();
-			if (now.getYear() == local.getYear()
-					&& now.getMonth() == local.getMonth()
-					&& now.getDate() == local.getDate()) {
-				mDateShortString = mTimeFormat.format(local);
-			} else {
-				mDateShortString = mDateFormat.format(local);
-			}
-		}
+		mKidsDateString = _dateString;
+		mDateString = KidsBbs.KidsToLocalDateString(_dateString);
+		mDateShortString = KidsBbs.GetShortDateString(mDateString);
 
 		mBody = _body;
 	}
