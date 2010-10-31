@@ -48,23 +48,32 @@ public class BListAdapter extends ArrayAdapter<BoardInfo> {
 	
 	private class ViewHolder {
 		TextView title;
+		TextView count;
 	}
 	
 	@Override
 	public View getView(int _position, View _convertView, ViewGroup _parent) {
 		BoardInfo info = getItem(_position);
 		String title = info.getTitle();
+		int count = info.getUnreadCount();
 		
 		ViewHolder holder;
 		if (_convertView == null) {
 			_convertView = mInflater.inflate(mResource, _parent, false);
 			holder = new ViewHolder();
 			holder.title = (TextView)_convertView.findViewById(R.id.title);
+			holder.count = (TextView)_convertView.findViewById(R.id.count);
 			_convertView.setTag(holder);
 		} else {
 			holder = (ViewHolder)_convertView.getTag();
 		}
 		holder.title.setText(title);
+		if (count > 0) {
+			holder.count.setVisibility(View.VISIBLE);
+			holder.count.setText(Integer.toString(count));
+		} else {
+			holder.count.setVisibility(View.GONE);
+		}
 		return _convertView;
 	}
 }

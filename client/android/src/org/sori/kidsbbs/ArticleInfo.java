@@ -25,8 +25,22 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 
 public class ArticleInfo {
+	private static final Pattern[] PATTERNS = {
+		Pattern.compile("\n+"),
+		Pattern.compile("\\s+"),
+		Pattern.compile("^\\s+"),
+	};
+	private static final String[] REPLACEMENTS = {
+		" ",
+		" ",
+		"",
+	};
+	
 	private String mTabname;
 	private int mSeq;
 	private String mAuthor;
@@ -34,6 +48,7 @@ public class ArticleInfo {
 	private String mTitle;
 	private String mThread;
 	private String mBody;
+	private String mSummary;
 	private int mCount;
 	private String mDateString;
 	private String mDateShortString;
@@ -47,6 +62,7 @@ public class ArticleInfo {
 	public final String getTitle() { return mTitle; }
 	public final String getThread() { return mThread; }
 	public final String getBody() { return mBody; }
+	public final String getSummary() { return mSummary; }
 	public final int getCount() { return mCount; }
 	public final String getDateString() { return mDateString; }
 	public final String getDateShortString() { return mDateShortString;}
@@ -56,7 +72,7 @@ public class ArticleInfo {
 
 	public ArticleInfo(String _tabname, int _seq, String _user, String _author,
 			String _dateString, String _title, String _thread, String _body,
-			int _count, boolean _read) {
+			boolean _isSummary, int _count, boolean _read) {
 		mTabname = _tabname;
 		mSeq = _seq;
 		mUser = _user;
@@ -67,12 +83,19 @@ public class ArticleInfo {
 		mRead = _read;
 		
 		mKidsDateString = _dateString;
-		mDateString = KidsBbs.KidsToLocalDateString(_dateString);
+		mDateString = KidsBbs.KidsToLocalDateString(mKidsDateString);
 		mDateShortString = KidsBbs.GetShortDateString(mDateString);
 
 		mBody = _body;
+		mSummary = mBody;
+		if (!_isSummary) {
+			for (int i = 0; i < PATTERNS.length; ++i) {
+				Matcher m = PATTERNS[i].matcher(mSummary);
+				mSummary = m.replaceAll(REPLACEMENTS[i]);
+			}
+		}
 	}
-
+	
 	@Override
 	public String toString() {
 		return mTitle + " " + mAuthor + " " + mBody;
