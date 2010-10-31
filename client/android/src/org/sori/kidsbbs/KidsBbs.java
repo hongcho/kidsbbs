@@ -27,10 +27,14 @@ package org.sori.kidsbbs;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.TimeZone;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -49,14 +53,24 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import android.app.Activity;
+import android.content.ContentResolver;
+import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 
 public class KidsBbs extends Activity {
 	public static final String TAG = "KidsBbs";
 	public static final String PKG_BASE = "org.sori.kidsbbs.";
+	public static final String BCAST_BASE = PKG_BASE + "broadcast.";
+	public static final String PARAM_BASE = PKG_BASE + "param.";
 	
+	public static final String NEW_ARTICLES = BCAST_BASE + "NewArticles";
+	public static final String ARTICLE_UPDATED = BCAST_BASE + "ArticleUpdated";
+
 	private static final String URL_BASE = "http://sori.org/kids/kids.php?_o=1&";
 	public static final String URL_BLIST = URL_BASE; 
 	public static final String URL_LIST = URL_BASE + "m=list&";
@@ -81,6 +95,68 @@ public class KidsBbs extends Activity {
 	public static final String PARAM_N_COUNT = "n";
 	public static final String PARAM_N_TABNAME = "tn";
 	
+	private static final String DATE_INVALID = "0000-00-00 00:00:00";
+	private static final String DATESHORT_INVALID = "0000-00-00";
+	//private static final String DATE_FORMAT = "MMM dd, yyyy h:mm:ss aa";
+	private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
+
+	private static final DateFormat DF_TIME =
+		DateFormat.getTimeInstance(DateFormat.SHORT);
+	private static final DateFormat DF_DATE =
+		DateFormat.getDateInstance(DateFormat.SHORT);
+	private static final DateFormat DF_FULL =
+		DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
+	private static final DateFormat DF_KIDS;
+	static {
+		DF_KIDS = new SimpleDateFormat(DATE_FORMAT);
+		DF_KIDS.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
+	}
+
+	public static final int MAX_DAYS = 14;
+	
+	public static final Date KidsToLocalDate(String _dateString) {
+		try {
+			Date date = DF_FULL.parse(KidsToLocalDateString(_dateString));
+			return date;
+		} catch (ParseException e) {
+			return null;
+		}
+	}
+	
+	public static final String GetShortDateString(String _dateString) {
+		try {
+			Date local = DF_FULL.parse(_dateString);
+			Date now = new Date();
+			if (now.getYear() == local.getYear()
+					&& now.getMonth() == local.getMonth()
+					&& now.getDate() == local.getDate()) {
+				return DF_TIME.format(local);
+			} else {
+				return DF_DATE.format(local);
+			}
+		} catch (ParseException e) {
+			return DATESHORT_INVALID;
+		}
+	}
+	
+	public static final String KidsToLocalDateString(String _dateString) {
+		try {
+			Date date = DF_KIDS.parse(_dateString);
+			return DF_FULL.format(date);
+		} catch (ParseException e) {
+			return DATE_INVALID;
+		}
+	}
+	
+	public static final String LocalToKidsDateString(String _dateString) {
+		try {
+			Date date = DF_FULL.parse(_dateString);
+			return DF_KIDS.format(date);
+		} catch (ParseException e) {
+			return DATE_INVALID;
+		}
+	}
+
 	public static enum ParseMode {
 		VIEW,
 		ALIST,
@@ -97,11 +173,11 @@ public class KidsBbs extends Activity {
 			if (_mode != ParseMode.ALIST) {
 				nl = _item.getElementsByTagName("THREAD");
 				if (nl == null || nl.getLength() <= 0) {
-					throw new ParseException("ParseException: THREAD");
+					throw new KidsParseException("ParseException: THREAD");
 				}
 				n = ((Element)nl.item(0)).getFirstChild();
 				if (n == null) {
-					throw new ParseException("ParseException: THREAD");
+					throw new KidsParseException("ParseException: THREAD");
 				}
 				thread = n != null ? n.getNodeValue() : null;
 			}
@@ -111,49 +187,49 @@ public class KidsBbs extends Activity {
 					_mode == ParseMode.TLIST) {
 				nl = _item.getElementsByTagName("COUNT");
 				if (nl == null || nl.getLength() <= 0) {
-					throw new ParseException("ParseException: COUNT");
+					throw new KidsParseException("ParseException: COUNT");
 				}
 				n = ((Element)nl.item(0)).getFirstChild();
 				if (n == null) {
-					throw new ParseException("ParseException: COUNT");
+					throw new KidsParseException("ParseException: COUNT");
 				}
 				cnt = n != null ? Integer.parseInt(n.getNodeValue()) : 1;
 			}
 
 			nl = _item.getElementsByTagName("TITLE");
 			if (nl == null || nl.getLength() <= 0) {
-				throw new ParseException("ParseException: TITLE");
+				throw new KidsParseException("ParseException: TITLE");
 			}
 			n = ((Element)nl.item(0)).getFirstChild();
 			String title = n != null ? n.getNodeValue() : "";
 
 			nl = _item.getElementsByTagName("SEQ");
 			if (nl == null || nl.getLength() <= 0) {
-				throw new ParseException("ParseException: SEQ");
+				throw new KidsParseException("ParseException: SEQ");
 			}
 			n = ((Element)nl.item(0)).getFirstChild();
 			if (n == null) {
-				throw new ParseException("ParseException: SEQ");
+				throw new KidsParseException("ParseException: SEQ");
 			}
 			int seq = Integer.parseInt(n.getNodeValue());
 
 			nl = _item.getElementsByTagName("DATE");
 			if (nl == null || nl.getLength() <= 0) {
-				throw new ParseException("ParseException: DATE");
+				throw new KidsParseException("ParseException: DATE");
 			}
 			n = ((Element)nl.item(0)).getFirstChild();
 			if (n == null) {
-				throw new ParseException("ParseException: DATE");
+				throw new KidsParseException("ParseException: DATE");
 			}
 			String date = n.getNodeValue();
 
 			nl = _item.getElementsByTagName("USER");
 			if (nl == null || nl.getLength() <= 0) {
-				throw new ParseException("ParseException: USER");
+				throw new KidsParseException("ParseException: USER");
 			}
 			n = ((Element)nl.item(0)).getFirstChild();
 			if (n == null) {
-				throw new ParseException("ParseException: USER");
+				throw new KidsParseException("ParseException: USER");
 			}
 			String user = n.getNodeValue();
 
@@ -161,11 +237,11 @@ public class KidsBbs extends Activity {
 			if (_mode == ParseMode.VIEW) {
 				nl = _item.getElementsByTagName("AUTHOR");
 				if (nl == null || nl.getLength() <= 0) {
-					throw new ParseException("ParseException: AUTHOR");
+					throw new KidsParseException("ParseException: AUTHOR");
 				}
 				n = ((Element)nl.item(0)).getFirstChild();
 				if (n == null) {
-					throw new ParseException("ParseException: AUTHOR");
+					throw new KidsParseException("ParseException: AUTHOR");
 				}
 				author = n != null ? n.getNodeValue() : null;
 			}
@@ -179,7 +255,7 @@ public class KidsBbs extends Activity {
 
 			return new ArticleInfo(_tabname, seq, user, author, date, title,
 					thread, desc, cnt, false);
-		} catch (ParseException e) {
+		} catch (KidsParseException e) {
 			Log.w(TAG, e);
 			return null;
 		}
@@ -213,7 +289,7 @@ public class KidsBbs extends Activity {
 
 				nl = docEle.getElementsByTagName("ITEMS");
 				if (nl == null || nl.getLength() <= 0) {
-					throw new ParseException("ParseException: ITEMS");
+					throw new KidsParseException("ParseException: ITEMS");
 				}
 				Element items = (Element)nl.item(0);
 
@@ -235,14 +311,81 @@ public class KidsBbs extends Activity {
 			Log.w(TAG, e);
 		} catch (SAXException e) {
 			Log.w(TAG, e);
-		} catch (ParseException e) {
+		} catch (KidsParseException e) {
 			Log.w(TAG, e);
 		}
 		return articles;
 	}
 	
-	private static class ParseException extends Exception {
-		public ParseException(String _message) {
+	public static boolean updateArticleRead(ContentResolver _cr,
+			ArticleInfo _info) {
+		final String[] FIELDS = {
+				KidsBbsProvider.KEYA_READ,
+		};
+		Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST +
+				_info.getTabname());
+		String[] args = new String[] { Integer.toString(_info.getSeq()) };
+		
+		boolean readOld = false;
+		Cursor c = _cr.query(uri, FIELDS, KidsBbsProvider.SELECTION_SEQ, args,
+				null);
+		if (c != null) {
+			if (c.getCount() > 0) {
+				c.moveToFirst();
+				readOld = c.getInt(c.getColumnIndex(
+						KidsBbsProvider.KEYA_READ)) != 0;
+			}
+			c.close();
+		}
+		if (readOld == _info.getRead()) {
+			return false;
+		}
+		
+		ContentValues values = new ContentValues();
+		values.put(KidsBbsProvider.KEYA_READ, _info.getRead() ? 1 : 0);
+		int count = _cr.update(uri, values, KidsBbsProvider.SELECTION_SEQ,
+				args);
+		return (count > 0);
+	}
+	
+	public static boolean getArticleRead(ContentResolver _cr, Uri _uri,
+			String _where, String[] _whereArgs, ArticleInfo _info) {
+		final String[] FIELDS = {
+				KidsBbsProvider.KEYA_ALLREAD_FIELD,
+		};
+		boolean read = false;
+		Cursor c = _cr.query(_uri, FIELDS, _where, _whereArgs, null);
+		if (c != null) {
+			if (c.getCount() > 0) {
+				c.moveToFirst();
+				read = c.getInt(c.getColumnIndex(
+						KidsBbsProvider.KEYA_ALLREAD)) != 0;
+			}
+			c.close();
+		}
+		return read;
+	}
+	
+	public static void announceNewArticles(Context _context,
+			String _tabname) {
+		Intent intent = new Intent(KidsBbs.NEW_ARTICLES);
+		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME,
+				_tabname);
+		_context.sendBroadcast(intent);
+	}
+	
+	public static void announceArticleUpdated(Context _context,
+			ArticleInfo _info) {
+		Intent intent = new Intent(KidsBbs.ARTICLE_UPDATED);
+		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME,
+				_info.getTabname());
+		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_SEQ,
+				_info.getSeq());
+		_context.sendBroadcast(intent);
+	}
+	
+	private static class KidsParseException extends Exception {
+		public KidsParseException(String _message) {
 			super(_message);
 		}
 	}

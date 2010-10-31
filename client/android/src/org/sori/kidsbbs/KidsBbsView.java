@@ -41,12 +41,12 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.sori.kidsbbs.KidsBbs.ParseMode;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -61,8 +61,6 @@ import android.widget.TextView;
 public class KidsBbsView extends Activity {
 	static final private int MENU_REFRESH = Menu.FIRST;
 	static final private int MENU_PREFERENCES = Menu.FIRST + 1;
-
-	private static final int SHOW_PREFERENCES = 1;
 
 	private TextView mStatusView;
 	private TextView mTitleView;
@@ -79,9 +77,6 @@ public class KidsBbsView extends Activity {
 	private String mBoardType;
 	private String mBoardSeq;
 	private String mTabname;
-	
-	private Uri mUri;
-	private String mWhere;
 
 	private ArticleInfo mInfo = null;
 
@@ -100,9 +95,6 @@ public class KidsBbsView extends Activity {
 		mBoardType = parsed[0];
 		mBoardName = parsed[1];
 		setTitle(mBoardSeq + " in [" + mBoardTitle + "]");
-		
-		mUri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + mTabname);
-		mWhere = KidsBbsProvider.KEYA_SEQ + "=" + mBoardSeq;
 
 		mStatusView = (TextView)findViewById(R.id.status);
 		mStatusView.setVisibility(View.GONE);
@@ -151,8 +143,7 @@ public class KidsBbsView extends Activity {
 			refreshView();
 			return true;
 		case MENU_PREFERENCES:
-			Intent i = new Intent(this, Preferences.class);
-			startActivityForResult(i, SHOW_PREFERENCES);
+			startActivity(new Intent(this, Preferences.class));
 			return true;
 		}
 		return false;
@@ -163,8 +154,14 @@ public class KidsBbsView extends Activity {
 				!mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED);
 	}
 
-	private class UpdateTask extends AsyncTask<String, String, Integer> {
+	private class UpdateTask extends AsyncTask<String, Void, Integer> {
 		private ArticleInfo mTInfo;
+		private ContentResolver mCR;
+		
+		public UpdateTask(ContentResolver _cr) {
+			super();
+			mCR = _cr;
+		}
 
 		@Override
 		protected void onPreExecute() {
@@ -199,8 +196,8 @@ public class KidsBbsView extends Activity {
 						if (info == null) {
 							ret = ErrUtils.ERR_XMLPARSING;
 						}
+						info.setRead(true);
 						mTInfo = info;
-						// TODO: mark it as read.
 					}
 				}
 			} catch(IOException e) {
@@ -216,6 +213,9 @@ public class KidsBbsView extends Activity {
 		@Override
 		protected void onPostExecute(Integer _result) {
 			if (_result >= 0) {
+				if (KidsBbs.updateArticleRead(mCR, mTInfo)) {
+					KidsBbs.announceArticleUpdated(KidsBbsView.this, mTInfo);
+				}
 				mInfo = mTInfo;
 				updateView();
 			} else {
@@ -234,7 +234,7 @@ public class KidsBbsView extends Activity {
 
 	private void refreshView() {
 		if (!isUpdating()) {
-			mLastUpdate = new UpdateTask();
+			mLastUpdate = new UpdateTask(getContentResolver());
 			mLastUpdate.execute(KidsBbs.URL_VIEW +
 					KidsBbs.PARAM_N_BOARD + "=" + mBoardName +
 					"&" + KidsBbs.PARAM_N_TYPE + "=" + mBoardType +
@@ -270,20 +270,6 @@ public class KidsBbsView extends Activity {
 		}
 	}
 
-	private void updateFromPreferences() {
-	}
-
-	@Override
-	public void onActivityResult(int _reqCode, int _resCode, Intent _data) {
-		super.onActivityResult(_reqCode, _resCode, _data);
-		if (_reqCode == SHOW_PREFERENCES) {
-			if (_resCode == Activity.RESULT_OK) {
-				updateFromPreferences();
-				// refreshBoardList();
-			}
-		}
-	}
-
 	private class SavedStates {
 		ArticleInfo info;
 	}
@@ -298,7 +284,6 @@ public class KidsBbsView extends Activity {
 	private void initializeStates() {
 		SavedStates save = (SavedStates) getLastNonConfigurationInstance();
 		if (save == null) {
-			updateFromPreferences();
 			refreshView();
 		} else {
 			mInfo = save.info;
@@ -306,27 +291,27 @@ public class KidsBbsView extends Activity {
 		}
 	}
 	
-	public class ArticleReceiver extends BroadcastReceiver {
+	private class ArticleUpdatedReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
 			String tabname = _intent.getStringExtra(
-					KidsBbs.PKG_BASE + KidsBbsProvider.KEYB_TABNAME);
-			String seq = _intent.getStringExtra(
-					KidsBbs.PKG_BASE + KidsBbsProvider.KEYA_SEQ);
-			if (mTabname != null && tabname != null && mTabname == tabname &&
-					mBoardSeq != null && seq != null && mBoardSeq == seq) {
+					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME);
+			int seq = _intent.getIntExtra(
+					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_SEQ, -1);
+			if (mTabname != null && tabname != null && tabname.equals(mTabname) &&
+					mBoardSeq != null && mBoardSeq.equals(seq)) {
 				refreshView();
 			}
 		}
 	}
 	
-	private ArticleReceiver mReceiver;
+	private ArticleUpdatedReceiver mReceiver;
 	
 	@Override
 	public void onResume() {
 		super.onResume();
-		IntentFilter filter = new IntentFilter(KidsBbsService.NEW_ARTICLE);
-		mReceiver = new ArticleReceiver();
+		IntentFilter filter = new IntentFilter(KidsBbs.ARTICLE_UPDATED);
+		mReceiver = new ArticleUpdatedReceiver();
 		registerReceiver(mReceiver, filter);
 	}
 	
