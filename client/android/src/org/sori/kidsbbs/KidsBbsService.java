@@ -239,8 +239,8 @@ public class KidsBbsService extends Service
 								KidsBbsProvider.KEYA_TITLE));
 						boolean read = c.getInt(c.getColumnIndex(
 								KidsBbsProvider.KEYA_READ)) != 0;
-						old= new ArticleInfo(_tabname, seq, user, null,
-								date, title, null, null, 1, read);
+						old = new ArticleInfo(_tabname, seq, user, null,
+								date, title, null, null, false, 1, read);
 					}
 					c.close();
 				} else {
@@ -253,10 +253,11 @@ public class KidsBbsService extends Service
 				ContentValues values = new ContentValues();
 				values.put(KidsBbsProvider.KEYA_SEQ, info.getSeq());
 				values.put(KidsBbsProvider.KEYA_USER, info.getUser());
+				values.put(KidsBbsProvider.KEYA_AUTHOR, info.getAuthor());
 				values.put(KidsBbsProvider.KEYA_DATE, info.getKidsDateString());
 				values.put(KidsBbsProvider.KEYA_TITLE, info.getTitle());
 				values.put(KidsBbsProvider.KEYA_THREAD, info.getThread());
-
+				values.put(KidsBbsProvider.KEYA_BODY, info.getBody());
 				boolean read = info.getRead();
 				if (state == UPDATE_STATE.UPDATE) {
 					read = false;
@@ -318,6 +319,7 @@ public class KidsBbsService extends Service
 				}
 				if (result) {
 					++count;
+					KidsBbs.announceBoardUpdated(KidsBbsService.this, _tabname);
 				}
 			}
 			start += articles.size();
@@ -369,24 +371,6 @@ public class KidsBbsService extends Service
 	private void refreshArticles() {
 		refreshTables();
 	}
-
-	private int getBoardTableSize(String _tabname) {
-		final String[] FIELDS = {
-			KidsBbsProvider.KEYA_CNT_FIELD,
-		};
-		int cnt = 0;
-		ContentResolver cr = getContentResolver();
-		Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
-		Cursor c = cr.query(uri, FIELDS, null, null, null);
-		if (c != null) {
-			if (c.getCount() > 0) {
-				c.moveToFirst();
-				cnt = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_CNT));
-			}
-			c.close();
-		}
-		return cnt;
-	}
 	
 	private void trimBoardTable(String _tabname) {
 		final String[] FIELDS = {
@@ -396,14 +380,14 @@ public class KidsBbsService extends Service
 		final String WHERE = "DATE(" + KidsBbsProvider.KEYA_DATE +
 				")!='' AND JULIANDAY(" + KidsBbsProvider.KEYA_DATE +
 				")<=JULIANDAY('now'," + KST_DIFF + "," + MAX_TIME + ")";
+		ContentResolver cr = getContentResolver();
 		
 		// At least 15...
-		int limit = getBoardTableSize(_tabname) - MIN_ARTICLES;
+		int limit = KidsBbs.getBoardTableSize(cr, _tabname) - MIN_ARTICLES;
 		if (limit <= 0) {
 			return;
 		}
 		
-		ContentResolver cr = getContentResolver();
 		Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
 		
 		// Find the trim point.

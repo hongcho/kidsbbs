@@ -26,20 +26,39 @@
 	(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 	THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="fill_parent"
 	android:layout_height="?android:attr/listPreferredItemHeight"
 	android:gravity="center_vertical"
+	android:paddingTop="15dp"
 	android:paddingLeft="4dp"
 	android:paddingRight="8dp"
 	>
 	<TextView
-	   	android:id="@+id/title"
-		android:layout_width="fill_parent"
+		android:id="@+id/count"
+		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
+		android:paddingLeft="4dp"
+		android:layout_alignParentTop="true"
+		android:layout_alignParentRight="true"
+		android:layout_alignParentBottom="true"
+		android:layout_alignBaseline="@+id/title"
+		android:singleLine="true"
+		android:ellipsize="none"
+		android:textAppearance="?android:attr/textAppearanceMedium"
+		android:text="0/123"
+		/>
+	<TextView
+	   	android:id="@+id/title"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignParentTop="true"
+		android:layout_alignParentLeft="true"
+		android:layout_alignParentBottom="true"
+		android:layout_toLeftOf="@+id/count"
 		android:singleLine="true"
 		android:ellipsize="end"
 		android:textAppearance="?android:attr/textAppearanceLarge"
 		android:text="title"
 		/>
-</LinearLayout>
+</RelativeLayout>
