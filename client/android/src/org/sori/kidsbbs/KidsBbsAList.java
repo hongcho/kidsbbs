@@ -25,47 +25,31 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.sori.kidsbbs.KidsBbs.ParseMode;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 import android.app.ListActivity;
 import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Resources;
+import android.database.Cursor;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.ContextMenu;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AbsListView;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.CursorAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-public abstract class KidsBbsAList extends ListActivity implements
-		ListView.OnScrollListener {
+public abstract class KidsBbsAList extends ListActivity {
 	protected static final int MENU_REFRESH = Menu.FIRST;
 	protected static final int MENU_SHOW = Menu.FIRST + 1;
 	protected static final int MENU_PREFERENCES = Menu.FIRST + 2;
@@ -73,27 +57,23 @@ public abstract class KidsBbsAList extends ListActivity implements
 
 	private static final String KEY_SELECTED_ITEM = "KEY_SELECTED_ITEM";
 
-	private ArrayList<ArticleInfo> mList = new ArrayList<ArticleInfo>();
-	private int mItemTotal = 0;
-	
-	private ContentResolver mCR;
+	private ArticlesAdapter mAdapter;
+	private int mSavedItemPosition;
 
-	private String mUrlBaseString;
 	private Uri mUri;
-	private String mWhereBase;
+	private String mWhere;
 	private ParseMode mMode;
 
 	private String mBoardTitle;
-	private String mBoardName;
-	private String mBoardType;
 	private String mTabname;
+	
+	private String mUpdateText;
 
 	private TextView mStatusView;
 	
 	private ContextMenu mContextMenu;
-
-	private ErrUtils mErrUtils;
-	private UpdateTask mLastUpdate = null;
+	
+	private UpdateTask mLastUpdate;
 
 	// First call setQueryBase(), and all refreshListCommon().
 	abstract protected void refreshList();
@@ -108,8 +88,8 @@ public abstract class KidsBbsAList extends ListActivity implements
 		return mBoardTitle;
 	}
 
-	protected final ArticleInfo getItem(int _index) {
-		return (ArticleInfo)getListView().getItemAtPosition(_index);
+	protected final Cursor getItem(int _index) {
+		return (Cursor)getListView().getItemAtPosition(_index);
 	}
 
 	@Override
@@ -117,24 +97,19 @@ public abstract class KidsBbsAList extends ListActivity implements
 		super.onCreate(_state);
 		setContentView(R.layout.article_list);
 		
-		mErrUtils = new ErrUtils(this, R.array.err_strings);
-
 		Uri data = getIntent().getData();
 		mTabname = data.getQueryParameter(KidsBbs.PARAM_N_TABNAME);
 		mBoardTitle = data.getQueryParameter(KidsBbs.PARAM_N_TITLE);
-		String[] parsed = BoardInfo.parseTabname(mTabname);
-		mBoardType = parsed[0];
-		mBoardName = parsed[1];
+		
+		Resources resources = getResources();
+		mUpdateText = resources.getString(R.string.update_text);
 
 		mStatusView = (TextView)findViewById(R.id.status);
 		mStatusView.setVisibility(View.GONE);
 
-		setListAdapter(new AListAdapter(this, R.layout.article_info_item,
-				mList));
-		getListView().setOnScrollListener(this);
+		mAdapter = new ArticlesAdapter(this);
+		setListAdapter(mAdapter);
 		
-		mCR = getContentResolver();
-
 		registerReceivers();
 	}
 	
@@ -211,143 +186,60 @@ public abstract class KidsBbsAList extends ListActivity implements
 		}
 		return false;
 	}
-
-	private boolean isUpdating() {
-		return mLastUpdate != null &&
-			!mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED);
-	}
-
-	private class UpdateTask extends AsyncTask<String, Object, Integer> {
-		private ArrayList<ArticleInfo> mTList = new ArrayList<ArticleInfo>();
-		private int mStart = 0;
-		private boolean mIsAppend = false;
-		private int mTotalCount = 0;
-
+	
+	private class UpdateTask extends AsyncTask<Void, Void, Cursor> {
 		@Override
 		protected void onPreExecute() {
-			mStatusView.setText(getResources().getString(
-					R.string.update_text));
+			mStatusView.setText(mUpdateText);
 			mStatusView.setVisibility(View.VISIBLE);
 		}
 
 		@Override
-		protected Integer doInBackground(String... _args) {
-			int result = 0;
-			String _urlString = _args[0];
-			mStart = Integer.parseInt(_args[1]);
-			mIsAppend = mStart > 0;
-			if (mIsAppend) {
-				_urlString += "&" + KidsBbs.PARAM_N_START + "=" + mStart;
-			}
-			HttpClient client = new DefaultHttpClient();
-			HttpGet get = new HttpGet(_urlString);
-			try {
-				HttpResponse response = client.execute(get); // IOException
-				HttpEntity entity = response.getEntity();
-				if (entity == null) {
-					// Do something?
-				} else if (response.getStatusLine().getStatusCode() ==
-						HttpStatus.SC_OK) {
-					InputStream is = entity.getContent();
-					DocumentBuilder db = DocumentBuilderFactory.newInstance()
-							.newDocumentBuilder(); // ParserConfigurationException
-					
-					// Parse the board list.
-					Document dom = db.parse(is); // IOException, SAXException
-					Element doc = dom.getDocumentElement();
-					NodeList nl;
-					Node n;
-					
-					nl = doc.getElementsByTagName("ITEMS");
-					if (nl == null || nl.getLength() <= 0) {
-						return ErrUtils.ERR_XMLPARSING;
-					}
-					Element items = (Element)nl.item(0);
-					
-					nl = items.getElementsByTagName("TOTALCOUNT");
-					if (nl == null || nl.getLength() <= 0) {
-						return ErrUtils.ERR_XMLPARSING;
-					}
-					n = ((Element)nl.item(0)).getFirstChild();
-					mTotalCount = n != null ?
-							Integer.parseInt(n.getNodeValue()) : 0;
-							
-					// Get a board item
-					nl = items.getElementsByTagName("ITEM");
-					if (nl != null && nl.getLength() > 0) {
-						for (int i = 0; i < nl.getLength(); ++i) {
-							ArticleInfo info = KidsBbs.parseArticle(
-									mMode, mTabname, (Element)nl.item(i));
-							if (info == null) {
-								return ErrUtils.ERR_XMLPARSING;
-							}
-							info.setRead(getReadStatus(info));
-							mTList.add(info);
-							publishProgress(mStart + mTList.size());
-						}
-					}
-				}
-				result = mTList.size();
-			} catch(IOException e) {
-				result = ErrUtils.ERR_IO;
-			} catch(ParserConfigurationException e) {
-				result = ErrUtils.ERR_PARSER;
-			} catch(SAXException e) {
-				result = ErrUtils.ERR_SAX;
-			}
-			return result;
+		protected Cursor doInBackground(Void... _args) {
+			final String[] FIELDS = {
+				KidsBbsProvider.KEY_ID,
+				KidsBbsProvider.KEYA_SEQ,
+				KidsBbsProvider.KEYA_USER,
+				KidsBbsProvider.KEYA_DATE,
+				KidsBbsProvider.KEYA_TITLE,
+				KidsBbsProvider.KEYA_CNT_FIELD,
+				KidsBbsProvider.KEYA_BODY,
+				KidsBbsProvider.KEYA_ALLREAD_FIELD,
+				KidsBbsProvider.KEYA_THREAD,
+			};
+			Cursor c = KidsBbsAList.this.managedQuery(mUri, FIELDS,
+					mWhere, null, null);
+			return c;
 		}
-
+		
 		@Override
-		protected void onProgressUpdate(Object... _args) {
-			String text = getResources().getString(R.string.update_text);
-			text += " (" + _args[0] + ")";
-			mStatusView.setText(text);
-		}
-
-		@Override
-		protected void onPostExecute(Integer _result) {
-			if (_result >= 0) {
-				mItemTotal = mTotalCount;
-				updateView(mTList, mIsAppend);
-			} else {
-				mStatusView.setText(mErrUtils.getErrString(_result));
+		protected void onPostExecute(Cursor _c) {
+			mStatusView.setVisibility(View.GONE);
+			if (_c == null || _c.isClosed()) {
+				return;
 			}
+			KidsBbsAList.this.mAdapter.changeCursor(_c);
+			restoreListPosition();
 		}
 	}
-
-	private void updateView(ArrayList<ArticleInfo> _list, boolean _append) {
-		if (!_append) {
-			mList.clear();
-		}
-		mList.addAll(_list);
-		((AListAdapter)getListAdapter()).notifyDataSetChanged();
-
-		mStatusView.setVisibility(View.GONE);
-		updateTitle(" (" + mList.size() + "/" + mItemTotal + ")");
+	
+	private boolean isUpdating() {
+		return mLastUpdate != null &&
+			!mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED);
 	}
-
-	private void updateList(boolean _append) {
-		if (mUrlBaseString != null && mUri != null && !isUpdating()) {
-			mLastUpdate = new UpdateTask();
-			mLastUpdate.execute(mUrlBaseString,
-					Integer.toString(_append ? mList.size() : 0));
-		}
-	}
-
-	protected final void setQueryBase(String _urlBase, String _urlExtra,
-			String _uriBase, String _whereBase, ParseMode _mode) {
-		mUrlBaseString = _urlBase +
-				KidsBbs.PARAM_N_BOARD + "=" + mBoardName +
-				"&" + KidsBbs.PARAM_N_TYPE + "=" + mBoardType +
-				_urlExtra;
-		mUri = Uri.parse(_uriBase + mTabname);
-		mWhereBase = _whereBase;
-		mMode = _mode;
-	}
-
+	
 	protected final void refreshListCommon() {
-		updateList(false);
+		if (mUri != null && !isUpdating()) {
+			mLastUpdate = new UpdateTask();
+			mLastUpdate.execute();
+		}
+	}
+
+	protected final void setQueryBase(String _uriBase, String _where,
+			ParseMode _mode) {
+		mUri = Uri.parse(_uriBase + mTabname);
+		mWhere = _where;
+		mMode = _mode;
 	}
 
 	protected final void showItemCommon(Context _from, Class<?> _to,
@@ -370,42 +262,33 @@ public abstract class KidsBbsAList extends ListActivity implements
 	@Override
 	public void onSaveInstanceState(Bundle _state) {
 		super.onSaveInstanceState(_state);
-		_state.putInt(KEY_SELECTED_ITEM, getSelectedItemPosition());
+		saveListPosition();
+		_state.putInt(KEY_SELECTED_ITEM, mSavedItemPosition);
 	}
 
 	@Override
 	public void onRestoreInstanceState(Bundle _state) {
 		super.onRestoreInstanceState(_state);
-		int pos = -1;
-		if (_state != null) {
-			if (_state.containsKey(KEY_SELECTED_ITEM)) {
-				pos = _state.getInt(KEY_SELECTED_ITEM, -1);
-			}
-		}
-		setSelection(pos);
+		mSavedItemPosition = _state.getInt(KEY_SELECTED_ITEM, -1);
+		restoreListPosition();
 	}
-
-	public void onScroll(AbsListView _v, int _first, int _nVisible,
-			int _nTotal) {
-		if (_nTotal > 0 && _first + _nVisible >= _nTotal - 1 &&
-				_nTotal == mList.size() && mList.size() < mItemTotal) {
-			updateList(true);
-		}
+	
+	private void saveListPosition() {
+		mSavedItemPosition = getSelectedItemPosition();
 	}
-
-	public void onScrollStateChanged(AbsListView _v, int _state) {
+	
+	private void restoreListPosition() {
+		setSelection(mSavedItemPosition);
 	}
 
 	private class SavedStates {
-		ArrayList<ArticleInfo> list;
-		int total;
+		Cursor cursor;
 	}
 
 	// Saving state for rotation changes...
 	public Object onRetainNonConfigurationInstance() {
 		SavedStates save = new SavedStates();
-		save.list = mList;
-		save.total = mItemTotal;
+		save.cursor = mAdapter.getCursor();
 		return save;
 	}
 
@@ -414,36 +297,8 @@ public abstract class KidsBbsAList extends ListActivity implements
 		if (save == null) {
 			refreshList();
 		} else {
-			mItemTotal = save.total;
-			updateView(save.list, false);
+			mAdapter.changeCursor(save.cursor);
 		}
-	}
-	
-	private boolean getReadStatus(ArticleInfo _info) {
-		switch (mMode) {
-		case TLIST:
-			return KidsBbs.getArticleRead(mCR, mUri, mWhereBase,
-					new String[] { _info.getThread() }, _info);
-		default:
-			return KidsBbs.getArticleRead(mCR, mUri, mWhereBase,
-					new String[] { Integer.toString(_info.getSeq()) }, _info);
-		}
-	}
-	
-	private boolean updateReadStatus(int _seq, String _thread) {
-		ArticleInfo info;
-		for (int i = 0; i < mList.size(); ++i) {
-			info = mList.get(i);
-			boolean hit = mMode == ParseMode.TLIST ?
-					_thread.equals(info.getThread()) :
-					_seq == info.getSeq();
-			if (hit) {
-				info.setRead(getReadStatus(info));
-				mList.set(i, info);
-				return true;
-			}
-		}
-		return false;
 	}
 	
 	private class NewArticlesReceiver extends BroadcastReceiver {
@@ -469,8 +324,8 @@ public abstract class KidsBbsAList extends ListActivity implements
 					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_THREAD);
 			if (mTabname != null && tabname != null &&
 					tabname.equals(mTabname) && seq != -1 &&
-					updateReadStatus(seq, thread)) {
-				((AListAdapter)getListAdapter()).notifyDataSetChanged();
+					thread.length() > 0) {
+				mAdapter.notifyDataSetChanged();
 			}
 		}
 	}
@@ -490,5 +345,90 @@ public abstract class KidsBbsAList extends ListActivity implements
 	private void unregisterReceivers() {
 		unregisterReceiver(mReceiverNew);
 		unregisterReceiver(mReceiverUpdated);
+	}
+	
+	private class ArticlesAdapter extends CursorAdapter {
+		private Context mContext;
+		private LayoutInflater mInflater;
+		private Drawable mBgRead;
+		private Drawable mBgUnread;
+
+		public ArticlesAdapter(Context _context) {
+			super(_context, null, true);
+			mContext = _context;
+			mInflater = (LayoutInflater)mContext.getSystemService(
+					Context.LAYOUT_INFLATER_SERVICE);
+			
+			Resources resources = mContext.getResources();
+			mBgRead = resources.getDrawable(
+					R.drawable.list_item_background_read);
+			mBgUnread = resources.getDrawable(
+					R.drawable.list_item_background_unread);
+		}
+
+		private class ViewHolder {
+			View item;
+			TextView title;
+			TextView date;
+			TextView username;
+			TextView summary;
+		}
+
+		@Override
+		public void bindView(View _v, Context _context, Cursor _c) {
+			KidsBbsAItem itemView = (KidsBbsAItem)_v;
+			itemView.mId = _c.getLong(_c.getColumnIndex(
+					KidsBbsProvider.KEY_ID));
+			itemView.mSeq = _c.getInt(_c.getColumnIndex(
+					KidsBbsProvider.KEYA_SEQ));
+			itemView.mUser = _c.getString(_c.getColumnIndex(
+					KidsBbsProvider.KEYA_USER));
+			String date = _c.getString(_c.getColumnIndex(
+					KidsBbsProvider.KEYA_DATE));
+			itemView.mTitle = _c.getString(_c.getColumnIndex(
+					KidsBbsProvider.KEYA_TITLE));
+			itemView.mCount = _c.getInt(_c.getColumnIndex(
+					KidsBbsProvider.KEYA_CNT));
+			String body = _c.getString(_c.getColumnIndex(
+					KidsBbsProvider.KEYA_BODY));
+			itemView.mRead = _c.getInt(_c.getColumnIndex(
+					KidsBbsProvider.KEYA_ALLREAD)) != 0;
+			itemView.mThread = _c.getString(_c.getColumnIndex(
+					KidsBbsProvider.KEYA_THREAD));
+			
+			String user = itemView.mUser;
+			if (itemView.mCount > 1) {
+				int cnt = itemView.mCount - 1;
+				user += " (+" + cnt + ")";
+			}
+			date = KidsBbs.KidsToLocalDateString(date);
+			itemView.mDate = KidsBbs.GetShortDateString(date);
+			itemView.mSummary = KidsBbs.generateSummary(body);
+			
+			ViewHolder holder = (ViewHolder)itemView.getTag();
+			if (itemView.mRead) {
+				holder.item.setBackgroundDrawable(mBgRead);
+			} else {
+				holder.item.setBackgroundDrawable(mBgUnread);
+			}
+			holder.title.setText(itemView.mTitle);
+			holder.date.setText(itemView.mDate);
+			holder.username.setText(user);
+			holder.summary.setText(itemView.mSummary);
+		}
+
+		@Override
+		public View newView(Context _context, Cursor _c, ViewGroup _parent) {
+			View v = mInflater.inflate(R.layout.article_list_item, _parent,
+					false);
+			ViewHolder holder = new ViewHolder();
+			holder.item = v.findViewById(R.id.item);
+			holder.title = (TextView)v.findViewById(R.id.title);
+			holder.date = (TextView)v.findViewById(R.id.date);
+			holder.username = (TextView)v.findViewById(R.id.username);
+			holder.summary = (TextView)v.findViewById(R.id.summary);
+			v.setTag(holder);
+			return v;
+		}
 	}
 }

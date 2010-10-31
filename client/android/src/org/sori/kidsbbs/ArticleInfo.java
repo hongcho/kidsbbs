@@ -25,22 +25,9 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
 public class ArticleInfo {
-	private static final Pattern[] PATTERNS = {
-		Pattern.compile("\n+"),
-		Pattern.compile("\\s+"),
-		Pattern.compile("^\\s+"),
-	};
-	private static final String[] REPLACEMENTS = {
-		" ",
-		" ",
-		"",
-	};
-	
 	private String mTabname;
 	private int mSeq;
 	private String mAuthor;
@@ -87,13 +74,7 @@ public class ArticleInfo {
 		mDateShortString = KidsBbs.GetShortDateString(mDateString);
 
 		mBody = _body;
-		mSummary = mBody;
-		if (!_isSummary) {
-			for (int i = 0; i < PATTERNS.length; ++i) {
-				Matcher m = PATTERNS[i].matcher(mSummary);
-				mSummary = m.replaceAll(REPLACEMENTS[i]);
-			}
-		}
+		mSummary = KidsBbs.generateSummary(mBody);
 	}
 	
 	@Override

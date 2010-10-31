@@ -121,6 +121,7 @@ public class KidsBbsService extends Service
 		final String[] FIELDS = {
 				KidsBbsProvider.KEYB_STATE,
 		};
+		TABLE_STATE result = TABLE_STATE.PAUSED;
 		ContentResolver cr = getContentResolver();
 		Cursor c = cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
 				KidsBbsProvider.SELECTION_TABNAME, new String[] { _tabname },
@@ -132,16 +133,19 @@ public class KidsBbsService extends Service
 						KidsBbsProvider.KEYB_STATE));
 				switch (state) {
 				case KidsBbsProvider.STATE_CREATED:
-					return TABLE_STATE.CREATED;
+					result = TABLE_STATE.CREATED;
+					break;
 				case KidsBbsProvider.STATE_UPDATED:
-					return TABLE_STATE.UPDATED;
+					result = TABLE_STATE.UPDATED;
+					break;
 				default:
-					return TABLE_STATE.PAUSED;
+					result = TABLE_STATE.PAUSED;
+					break;
 				}
 			}
 			c.close();
 		}
-		return TABLE_STATE.PAUSED;
+		return result;
 	}
 
 	private boolean setTableState(String _tabname, TABLE_STATE _state) {
@@ -391,7 +395,7 @@ public class KidsBbsService extends Service
 		Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
 		
 		// Find the trim point.
-		int seq = 0;
+		int seq = -1;
 		Cursor c = cr.query(uri, FIELDS, WHERE, null,
 				KidsBbsProvider.ORDER_BY_SEQ);
 		if (c != null) {
@@ -403,7 +407,7 @@ public class KidsBbsService extends Service
 		}
 		
 		// Now delete old stuff...
-		if (seq > 0) {
+		if (seq >= 0) {
 			// A "hack" to add "LIMIT" to the SQL statement.
 			String where = KidsBbsProvider.KEYA_SEQ + "<=" + seq +
 					" LIMIT " + limit;

@@ -103,12 +103,14 @@ public class KidsBbsProvider extends ContentProvider {
 					"query: Unsupported URI: " + _uri);
 		}
 		SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
-		String orderby = KEYA_SEQ + " DESC";
+		String orderby = ORDER_BY_SEQ;
 		String groupby = null;
 		int type = sUriMatcher.match(_uri);
 		switch (type) {
 		case TYPE_LIST:
+			break;
 		case TYPE_TLIST:
+			groupby = KidsBbsProvider.KEYA_THREAD;
 			break;
 		case TYPE_BOARDS:
 			orderby = "LOWER(" + KEYB_TITLE + ")";
@@ -176,12 +178,16 @@ public class KidsBbsProvider extends ContentProvider {
 
 	private String getTableName(Uri _uri) {
 		int type = sUriMatcher.match(_uri);
+		List<String> segments = _uri.getPathSegments();
 		switch (type) {
 		case TYPE_LIST:
-		case TYPE_TLIST:
-			List<String> segments = _uri.getPathSegments();
 			if (segments.size() == 2) {
 				return segments.get(1);
+			}
+			break;
+		case TYPE_TLIST:
+			if (segments.size() == 2) {
+				return getViewname(segments.get(1));
 			}
 			break;
 		case TYPE_BOARDS:
