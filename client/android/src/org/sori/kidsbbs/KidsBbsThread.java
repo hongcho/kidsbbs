@@ -27,6 +27,7 @@ package org.sori.kidsbbs;
 
 import org.sori.kidsbbs.KidsBbs.ParseMode;
 
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -41,10 +42,8 @@ public class KidsBbsThread extends KidsBbsAList {
         mBoardThread = data.getQueryParameter(KidsBbs.PARAM_N_THREAD);
         
         updateTitle("");
-        setQueryBase(KidsBbs.URL_THREAD,
-        		"&" + KidsBbs.PARAM_N_THREAD + "=" + mBoardThread,
-        		KidsBbsProvider.CONTENT_URISTR_LIST,
-        		KidsBbsProvider.KEYA_SEQ + "=?",
+        setQueryBase(KidsBbsProvider.CONTENT_URISTR_LIST,
+        		KidsBbsProvider.KEYA_THREAD + "=" + mBoardThread,
         		ParseMode.ALIST);
         
         registerForContextMenu(getListView());
@@ -62,8 +61,9 @@ public class KidsBbsThread extends KidsBbsAList {
     }
     
     protected void showItem(int _index) {
-		ArticleInfo info = getItem(_index);
+    	Cursor c = getItem(_index);
+    	int seq = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
 		showItemCommon(this, KidsBbsView.class, KidsBbs.URI_INTENT_VIEW,
-				"&" + KidsBbs.PARAM_N_SEQ + "=" + info.getSeq());
+				"&" + KidsBbs.PARAM_N_SEQ + "=" + seq);
     }
 }

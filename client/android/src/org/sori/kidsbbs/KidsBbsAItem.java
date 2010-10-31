@@ -25,52 +25,31 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
-import org.sori.kidsbbs.KidsBbs.ParseMode;
+import android.content.Context;
+import android.util.AttributeSet;
+import android.widget.RelativeLayout;
 
-import android.database.Cursor;
-import android.os.Bundle;
+public class KidsBbsAItem extends RelativeLayout {
+	public long mId;
+	public int mSeq;
+	public String mUser;
+	public String mDate;
+	public String mTitle;
+	public int mCount;
+	public String mSummary;
+	public boolean mRead;
+	public String mThread;
 
-public class KidsBbsTlist extends KidsBbsAList {
-    @Override
-    public void onCreate(Bundle _state) {
-        super.onCreate(_state);
-        
-        updateTitle("");
-        setQueryBase(KidsBbsProvider.CONTENT_URISTR_TLIST, null,
-        		ParseMode.TLIST);
-        
-        registerForContextMenu(getListView());
-        
-        initializeStates();
-    }
-    
-    protected void refreshList() {
-    	refreshListCommon();
-    }
-    
-    protected void updateTitle(String _extra) {
-		setTitle("[" + getBoardTitle() + "] " +
-        		getResources().getString(R.string.title_tlist) + _extra);
-    }
-    
-    protected void showItem(int _index) {
-    	Cursor c = getItem(_index);
-    	int count = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_CNT));
-		String base;
-		String extra;
-		Class<?> target;
-		if (count > 1) {
-			String thread = c.getString(c.getColumnIndex(
-					KidsBbsProvider.KEYA_THREAD));
-			base = KidsBbs.URI_INTENT_THREAD;
-			extra = "&" + KidsBbs.PARAM_N_THREAD + "=" + thread;
-			target = KidsBbsThread.class;
-		} else {
-			int seq = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
-			base = KidsBbs.URI_INTENT_VIEW;
-			extra = "&" + KidsBbs.PARAM_N_SEQ + "=" + seq;
-			target = KidsBbsView.class;
-		}
-		showItemCommon(this, target, base, extra);
-    }
+	public KidsBbsAItem(Context _context) {
+		super(_context);
+	}
+
+	public KidsBbsAItem(Context _context, AttributeSet _attrs) {
+		super(_context, _attrs);
+	}
+
+	public KidsBbsAItem(Context _context, AttributeSet _attrs, int _defStyle) {
+		super(_context, _attrs, _defStyle);
+	}
+
 }

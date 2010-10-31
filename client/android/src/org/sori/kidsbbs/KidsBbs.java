@@ -33,6 +33,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.TimeZone;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -154,6 +156,24 @@ public class KidsBbs extends Activity {
 		} catch (ParseException e) {
 			return DATE_INVALID;
 		}
+	}
+
+	public static final String generateSummary(String _s) {
+		final Pattern[] PATTERNS = {
+			Pattern.compile("\n+"),
+			Pattern.compile("\\s+"),
+			Pattern.compile("^\\s+"),
+		};
+		final String[] REPLACEMENTS = {
+			" ",
+			" ",
+			"",
+		};
+		for (int i = 0; i < PATTERNS.length; ++i) {
+			Matcher m = PATTERNS[i].matcher(_s);
+			_s = m.replaceAll(REPLACEMENTS[i]);
+		}
+		return _s;
 	}
 
 	public static enum ParseMode {
@@ -349,8 +369,8 @@ public class KidsBbs extends Activity {
 				c.moveToFirst();
 				count = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_CNT));
 			}
+			c.close();
 		}
-		c.close();
 		return count;
 	}
 
