@@ -223,6 +223,9 @@ public class KidsBbsProvider extends ContentProvider {
 	public static final String KEYA_USER = "user";
 	private static final String KEYA_USER_DEF =
 			KEYA_USER + " CHAR(12) NOT NULL";
+	public static final String KEYA_AUTHOR = "author";
+	private static final String KEYA_AUTHOR_DEF =
+			KEYA_AUTHOR + " VARCHAR(40) NOT NULL";
 	public static final String KEYA_DATE = "date";
 	private static final String KEYA_DATE_DEF =
 			KEYA_DATE + " DATETIME NOT NULL";
@@ -232,6 +235,9 @@ public class KidsBbsProvider extends ContentProvider {
 	public static final String KEYA_THREAD = "thread";
 	private static final String KEYA_THREAD_DEF =
 			KEYA_THREAD + " CHAR(32) NOT NULL";
+	public static final String KEYA_BODY = "body";
+	private static final String KEYA_BODY_DEF =
+			KEYA_BODY + " TEXT";
 	public static final String KEYA_READ = "read";
 	private static final String KEYA_READ_DEF =
 			KEYA_READ + " TINYINT DEFAULT 0";
@@ -247,12 +253,13 @@ public class KidsBbsProvider extends ContentProvider {
 	public static final String SELECTION_STATE_ACTIVE =
 		KEYB_STATE + "!=" + STATE_PAUSED;
 	public static final String SELECTION_SEQ = KEYA_SEQ + "=?";
+	public static final String SELECTION_UNREAD = KEYA_READ + "=0";
 	
 	public static final String ORDER_BY_ID = KEY_ID + " ASC";
 	public static final String ORDER_BY_SEQ = KEYA_SEQ + " DESC";
 
 	private static final String DB_NAME = "kidsbbs.db";
-	private static final int DB_VERSION = 1;
+	private static final int DB_VERSION = 2;
 	private static final String DB_TABLE = "boards";
 
 	private SQLiteDatabase mDB;
@@ -314,9 +321,9 @@ public class KidsBbsProvider extends ContentProvider {
 				} else {
 					title += name;
 				}
-				addBoard(_db, new BoardInfo(tabnames[i], title,
+				addBoard(_db, new BoardInfo(tabnames[i], title),
 						mUpdateMap.get(tabnames[i]) ?
-								STATE_CREATED : STATE_PAUSED));
+								STATE_CREATED : STATE_PAUSED);
 			}
 		}
 
@@ -351,11 +358,12 @@ public class KidsBbsProvider extends ContentProvider {
 			onCreate(_db);
 		}
 		
-		private void addBoard(SQLiteDatabase _db, BoardInfo _info) {
+		private void addBoard(SQLiteDatabase _db, BoardInfo _info,
+				int _state) {
 			ContentValues values = new ContentValues();
 			values.put(KEYB_TABNAME, _info.getTabname());
 			values.put(KEYB_TITLE, _info.getTitle());
-			values.put(KEYB_STATE, _info.getState());
+			values.put(KEYB_STATE, _state);
 			if (_db.insert(DB_TABLE, null, values) < 0) {
 				throw new SQLException(
 						"addBoard: Failed to insert row into " + DB_TABLE);
@@ -380,17 +388,31 @@ public class KidsBbsProvider extends ContentProvider {
 					KEY_ID_DEF + "," +
 					KEYA_SEQ_DEF + "," +
 					KEYA_USER_DEF + "," +
+					KEYA_AUTHOR_DEF + "," +
 					KEYA_DATE_DEF + "," +
 					KEYA_TITLE_DEF + "," +
 					KEYA_THREAD_DEF + "," +
+					KEYA_BODY_DEF + "," +
 					KEYA_READ_DEF + ");");
-			_db.execSQL("CREATE VIEW " + getViewname(_tabname) + " AS " +
-					"SELECT * FROM " + _tabname +
-					" ORDER BY " + KEYA_SEQ + " DESC;");
+			//_db.execSQL("CREATE INDEX " + _tabname + "_I" + KEYA_SEQ +
+			//		" ON " + _tabname +
+			//		" (" + KEYA_SEQ + " DESC)");
+			//_db.execSQL("CREATE INDEX " + _tabname + "_I" + KEYA_USER +
+			//		" ON " + _tabname +
+			//		" (" + KEYA_USER + ")");
+			//_db.execSQL("CREATE INDEX " + _tabname + "_I" + KEYA_THREAD +
+			//		" ON " + _tabname +
+			//		" (" + KEYA_THREAD + ")");
+			_db.execSQL("CREATE VIEW " + getViewname(_tabname) +
+					" AS SELECT * FROM " + _tabname +
+					" ORDER BY " + ORDER_BY_SEQ + ";");
 		}
 		
 		private void dropArticleTable(SQLiteDatabase _db, String _tabname) {
 			_db.execSQL("DROP TABLE IF EXISTS " + _tabname);
+			//_db.execSQL("DROP INDEX IF EXISTS " + _tabname + "_I" + KEYA_SEQ);
+			//_db.execSQL("DROP INDEX IF EXISTS " + _tabname + "_I" + KEYA_USER);
+			//_db.execSQL("DROP INDEX IF EXISTS " + _tabname + "_I" + KEYA_THREAD);
 			_db.execSQL("DROP VIEW IF EXISTS " + getViewname(_tabname));
 		}
 	}

@@ -38,13 +38,19 @@ import android.widget.TextView;
 public class AListAdapter extends ArrayAdapter<ArticleInfo> {
 	private int mResource;
 	private LayoutInflater mInflater;
+	private Drawable mBgRead;
+	private Drawable mBgUnread;
 	
 	public AListAdapter(Context _context, int _resource,
 			List<ArticleInfo> _items) {
 		super(_context, _resource, _items);
 		mResource = _resource;
-		mInflater = (LayoutInflater)getContext().getSystemService(
+		mInflater = (LayoutInflater)_context.getSystemService(
 					Context.LAYOUT_INFLATER_SERVICE);
+		mBgRead = _context.getResources().getDrawable(
+				R.drawable.list_item_background_read);
+		mBgUnread = _context.getResources().getDrawable(
+				R.drawable.list_item_background_unread);
 	}
 	
 	private class ViewHolder {
@@ -58,11 +64,6 @@ public class AListAdapter extends ArrayAdapter<ArticleInfo> {
 	@Override
 	public View getView(int _position, View _convertView, ViewGroup _parent) {
 		ArticleInfo info = getItem(_position);
-		Drawable bg = info.getRead() ?
-				getContext().getResources().getDrawable(
-						R.drawable.list_item_background_read) :
-				getContext().getResources().getDrawable(
-						R.drawable.list_item_background_unread);
 		String title = info.getTitle();
 		String date = info.getDateShortString();
 		String user = info.getUser();
@@ -85,7 +86,11 @@ public class AListAdapter extends ArrayAdapter<ArticleInfo> {
 		} else {
 			holder = (ViewHolder)_convertView.getTag();
 		}
-		holder.item.setBackgroundDrawable(bg);
+		if (info.getRead()) {
+			holder.item.setBackgroundDrawable(mBgRead);
+		} else {
+			holder.item.setBackgroundDrawable(mBgUnread);
+		}
 		holder.title.setText(title);
 		holder.date.setText(date);
 		holder.username.setText(user);
