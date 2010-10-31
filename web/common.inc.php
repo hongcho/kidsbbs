@@ -219,7 +219,7 @@ function get_dbquery($m)
       "FROM $tn ORDER BY a0_seq DESC LIMIT 1";
     break;
   case 'list':
-    return "SELECT a0_seq,a1_username,a4_date,a5_title,a6_thread ".
+    return "SELECT a0_seq,a1_username,a2_author,a4_date,a5_title,a6_thread,a7_body ".
       "FROM $tn ORDER BY a0_seq DESC";
   case 'tlist':
     return "SELECT a0_seq,a1_username,a4_date,a5_title,a6_thread,COUNT(*) AS cnt,a7_body ".
@@ -356,9 +356,14 @@ function gen_list(&$qr)
   for ($i = $s; $i < $s + $n; ++$i) {
     $seq = mysql_result($qr, $i, 'a0_seq');
     $username = mysql_result($qr, $i, 'a1_username');
+    $author = mysql_result($qr, $i, 'a2_author');
     $date = mysql_result($qr, $i, 'a4_date');
     $title = mysql_result($qr, $i, 'a5_title');
     $thread = mysql_result($qr, $i, 'a6_thread');
+    $body = mysql_result($qr, $i, 'a7_body');
+
+    $body = remove_kids_html($body);
+    $body = trim_broken_korean($body, strlen($body));
 
     switch ($_o) {
     case 0:
@@ -376,7 +381,7 @@ function gen_list(&$qr)
       echo "</TABLE>\n";
       break;
     case 1:
-      gen_xml_item($thread, 1, $seq, $username, NULL, $date, $title, NULL);
+      gen_xml_item($thread, 1, $seq, $username, $author, $date, $title, $body);
       break;
     }
   }
