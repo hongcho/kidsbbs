@@ -176,45 +176,21 @@ public class KidsBbs extends Activity {
 		return _s;
 	}
 
-	public static enum ParseMode {
-		VIEW,
-		ALIST,
-		TLIST,
-		LIST,
-	};
-	
-	public static final ArticleInfo parseArticle(ParseMode _mode,
-			String _tabname, Element _item) {
+	public static final ArticleInfo parseArticle(String _tabname,
+			Element _item) {
 		NodeList nl;
 		Node n;
 		try {
-			String thread = null;
-			if (_mode != ParseMode.ALIST) {
-				nl = _item.getElementsByTagName("THREAD");
-				if (nl == null || nl.getLength() <= 0) {
-					throw new KidsParseException("ParseException: THREAD");
-				}
-				n = ((Element)nl.item(0)).getFirstChild();
-				if (n == null) {
-					throw new KidsParseException("ParseException: THREAD");
-				}
-				thread = n != null ? n.getNodeValue() : null;
+			nl = _item.getElementsByTagName("THREAD");
+			if (nl == null || nl.getLength() <= 0) {
+				throw new KidsParseException("ParseException: THREAD");
 			}
+			n = ((Element)nl.item(0)).getFirstChild();
+			if (n == null) {
+				throw new KidsParseException("ParseException: THREAD");
+			}
+			String thread = n != null ? n.getNodeValue() : null;
 			
-			int cnt = 1;
-			if (_mode == ParseMode.ALIST ||
-					_mode == ParseMode.TLIST) {
-				nl = _item.getElementsByTagName("COUNT");
-				if (nl == null || nl.getLength() <= 0) {
-					throw new KidsParseException("ParseException: COUNT");
-				}
-				n = ((Element)nl.item(0)).getFirstChild();
-				if (n == null) {
-					throw new KidsParseException("ParseException: COUNT");
-				}
-				cnt = n != null ? Integer.parseInt(n.getNodeValue()) : 1;
-			}
-
 			nl = _item.getElementsByTagName("TITLE");
 			if (nl == null || nl.getLength() <= 0) {
 				throw new KidsParseException("ParseException: TITLE");
@@ -252,19 +228,15 @@ public class KidsBbs extends Activity {
 			}
 			String user = n.getNodeValue();
 
-			String author = null;
-			if (_mode == ParseMode.VIEW ||
-					_mode == ParseMode.LIST) {
-				nl = _item.getElementsByTagName("AUTHOR");
-				if (nl == null || nl.getLength() <= 0) {
-					throw new KidsParseException("ParseException: AUTHOR");
-				}
-				n = ((Element)nl.item(0)).getFirstChild();
-				if (n == null) {
-					throw new KidsParseException("ParseException: AUTHOR");
-				}
-				author = n != null ? n.getNodeValue() : null;
+			nl = _item.getElementsByTagName("AUTHOR");
+			if (nl == null || nl.getLength() <= 0) {
+				throw new KidsParseException("ParseException: AUTHOR");
 			}
+			n = ((Element)nl.item(0)).getFirstChild();
+			if (n == null) {
+				throw new KidsParseException("ParseException: AUTHOR");
+			}
+			String author = n != null ? n.getNodeValue() : null;
 
 			String desc = "";
 			nl = _item.getElementsByTagName("DESCRIPTION");
@@ -274,7 +246,7 @@ public class KidsBbs extends Activity {
 			}
 
 			return new ArticleInfo(_tabname, seq, user, author, date, title,
-					thread, desc, false, cnt, false);
+					thread, desc, false, 1, false);
 		} catch (KidsParseException e) {
 			Log.w(TAG, e);
 			return null;
@@ -317,8 +289,8 @@ public class KidsBbs extends Activity {
 				nl = items.getElementsByTagName("ITEM");
 				if (nl != null && nl.getLength() > 0) {
 					for (int i = 0; i < nl.getLength(); ++i) {
-						ArticleInfo info = parseArticle(ParseMode.LIST,
-								tabname, (Element)nl.item(i));
+						ArticleInfo info = parseArticle(tabname,
+								(Element)nl.item(i));
 						if (info != null) {
 							articles.add(info);
 						}
@@ -357,17 +329,22 @@ public class KidsBbs extends Activity {
 
 	public static final int getBoardUnreadCount(ContentResolver _cr,
 			String _tabname) {
+		return getTableUnreadCount(_cr, KidsBbsProvider.CONTENT_URISTR_LIST,
+				_tabname, KidsBbsProvider.SELECTION_UNREAD);
+	}
+	
+	public static final int getTableUnreadCount(ContentResolver _cr,
+			String _uriBase, String _tabname, String _where) {
 		final String[] FIELDS = {
 			KidsBbsProvider.KEYA_CNT_FIELD,
 		};
 		int count = 0;
-		Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
-		Cursor c = _cr.query(uri, FIELDS, KidsBbsProvider.SELECTION_UNREAD,
-				null, null);
+		Uri uri = Uri.parse(_uriBase + _tabname);
+		Cursor c = _cr.query(uri, FIELDS, _where, null, null);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
-				count = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_CNT));
+				count = c.getInt(0);
 			}
 			c.close();
 		}
@@ -375,13 +352,13 @@ public class KidsBbs extends Activity {
 	}
 
 	public static final boolean updateArticleRead(ContentResolver _cr,
-			ArticleInfo _info) {
+			String _tabname, int _seq, boolean _read) {
 		final String[] FIELDS = {
 				KidsBbsProvider.KEYA_READ,
 		};
 		Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST +
-				_info.getTabname());
-		String[] args = new String[] { Integer.toString(_info.getSeq()) };
+				_tabname);
+		String[] args = new String[] { Integer.toString(_seq) };
 		
 		boolean readOld = false;
 		Cursor c = _cr.query(uri, FIELDS, KidsBbsProvider.SELECTION_SEQ, args,
@@ -394,19 +371,19 @@ public class KidsBbs extends Activity {
 			}
 			c.close();
 		}
-		if (readOld == _info.getRead()) {
+		if (readOld == _read) {
 			return false;
 		}
 		
 		ContentValues values = new ContentValues();
-		values.put(KidsBbsProvider.KEYA_READ, _info.getRead() ? 1 : 0);
+		values.put(KidsBbsProvider.KEYA_READ, _read ? 1 : 0);
 		int count = _cr.update(uri, values, KidsBbsProvider.SELECTION_SEQ,
 				args);
 		return (count > 0);
 	}
 	
 	public static final boolean getArticleRead(ContentResolver _cr, Uri _uri,
-			String _where, String[] _whereArgs, ArticleInfo _info) {
+			String _where, String[] _whereArgs) {
 		final String[] FIELDS = {
 				KidsBbsProvider.KEYA_ALLREAD_FIELD,
 		};
@@ -440,14 +417,16 @@ public class KidsBbs extends Activity {
 	}
 	
 	public static void announceArticleUpdated(Context _context,
-			ArticleInfo _info) {
+			String _tabname, int _seq, String _user, String _thread) {
 		Intent intent = new Intent(KidsBbs.ARTICLE_UPDATED);
 		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME,
-				_info.getTabname());
+				_tabname);
 		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_SEQ,
-				_info.getSeq());
+				_seq);
+		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_USER,
+				_user);
 		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_THREAD,
-				_info.getThread());
+				_thread);
 		_context.sendBroadcast(intent);
 	}
 	
@@ -464,7 +443,7 @@ public class KidsBbs extends Activity {
 
 		startService(new Intent(this, KidsBbsService.class));
 
-		startActivity(new Intent(this, KidsBbsBlist.class));
+		startActivity(new Intent(this, KidsBbsBList.class));
 		finish();
 	}
 }

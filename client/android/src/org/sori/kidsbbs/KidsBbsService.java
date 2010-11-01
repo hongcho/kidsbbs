@@ -176,7 +176,7 @@ public class KidsBbsService extends Service
 		UPDATE,
 	};
 
-	private int refreshTable(String _tabname) {
+	private synchronized int refreshTable(String _tabname) {
 		final String[] FIELDS = {
 			KidsBbsProvider.KEYA_SEQ,
 			KidsBbsProvider.KEYA_USER,
@@ -195,6 +195,7 @@ public class KidsBbsService extends Service
 		}
 		Log.i(TAG, _tabname + ": updating...");
 		
+		int error = 0;
 		int count = 0;
 		String[] parsed = BoardInfo.parseTabname(_tabname);
 		String board = parsed[1];
@@ -206,14 +207,17 @@ public class KidsBbsService extends Service
 
 		ContentResolver cr = getContentResolver();
 		UPDATE_STATE state = UPDATE_STATE.INSERT;
-		while (state != UPDATE_STATE.DONE) {
+		while (!state.equals(UPDATE_STATE.DONE)) {
 			ArrayList<ArticleInfo> articles =
 				KidsBbs.getArticles(KidsBbs.URL_LIST, board, type, start);
 			if (articles.isEmpty()) {
 				state = UPDATE_STATE.DONE;
+				if (start == 0) {
+					++error;
+				}
 				break;
 			}
-			for (int i = 0; state != UPDATE_STATE.DONE && i < articles.size();
+			for (int i = 0; !state.equals(UPDATE_STATE.DONE) && i < articles.size();
 					++i) {
 				ArticleInfo info = articles.get(i);
 				if (count >= MIN_ARTICLES && !isRecent(info.getKidsDateString())) {
@@ -251,6 +255,7 @@ public class KidsBbsService extends Service
 					// Unexpected...
 					Log.e(TAG, _tabname + ": query failed: " + info.getSeq());
 					state = UPDATE_STATE.DONE;
+					++error;
 					break;
 				}
 				
@@ -263,7 +268,7 @@ public class KidsBbsService extends Service
 				values.put(KidsBbsProvider.KEYA_THREAD, info.getThread());
 				values.put(KidsBbsProvider.KEYA_BODY, info.getBody());
 				boolean read = info.getRead();
-				if (state == UPDATE_STATE.UPDATE) {
+				if (state.equals(UPDATE_STATE.UPDATE)) {
 					read = false;
 				} else if (old != null && old.getRead()) {
 					read = true;
@@ -293,7 +298,7 @@ public class KidsBbsService extends Service
 									old.getDateString()) &&
 							info.getTitle().equals(old.getTitle())) {
 						result = false;
-						if (tabState != TABLE_STATE.CREATED) {
+						if (!tabState.equals(TABLE_STATE.CREATED)) {
 							Log.i(TAG, _tabname +
 									": done updating: reached same article: " +
 									info.getSeq());
@@ -301,7 +306,7 @@ public class KidsBbsService extends Service
 							break;
 						}
 					} else {
-						if (state == UPDATE_STATE.INSERT) {
+						if (state.equals(UPDATE_STATE.INSERT)) {
 							Log.i(TAG, _tabname +
 									": switching to update mode: " +
 									info.getSeq() + ": (" +
@@ -328,10 +333,13 @@ public class KidsBbsService extends Service
 			}
 			start += articles.size();
 		}
-		if (count > 0 && tabState == TABLE_STATE.UPDATED) {
+		if (count > 0 && tabState.equals(TABLE_STATE.UPDATED)) {
 			KidsBbs.announceNewArticles(KidsBbsService.this, _tabname);
 		}
-		if (tabState == TABLE_STATE.CREATED) {
+		if (error > 0) {
+			Log.e(TAG, _tabname + ": error after updating " +
+					count + " articles");
+		} else if (tabState.equals(TABLE_STATE.CREATED)) {
 			setTableState(_tabname, TABLE_STATE.UPDATED);
 		}
 		return count;
