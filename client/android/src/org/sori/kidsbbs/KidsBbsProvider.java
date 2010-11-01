@@ -260,6 +260,7 @@ public class KidsBbsProvider extends ContentProvider {
 		KEYB_STATE + "!=" + STATE_PAUSED;
 	public static final String SELECTION_SEQ = KEYA_SEQ + "=?";
 	public static final String SELECTION_UNREAD = KEYA_READ + "=0";
+	public static final String SELECTION_ALLUNREAD = KEYA_ALLREAD + "=0";
 	
 	public static final String ORDER_BY_ID = KEY_ID + " ASC";
 	public static final String ORDER_BY_SEQ = KEYA_SEQ + " DESC";

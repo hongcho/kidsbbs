@@ -25,14 +25,25 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
-import org.sori.kidsbbs.KidsBbs.ParseMode;
-
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 
 public class KidsBbsUser extends KidsBbsAList {
+	private static final String[] FIELDS = {
+		KidsBbsProvider.KEY_ID,
+		KidsBbsProvider.KEYA_SEQ,
+		KidsBbsProvider.KEYA_USER,
+		KidsBbsProvider.KEYA_DATE,
+		KidsBbsProvider.KEYA_TITLE,
+		KidsBbsProvider.KEYA_THREAD,
+		KidsBbsProvider.KEYA_BODY,
+		KidsBbsProvider.KEYA_READ,
+	};
+	
 	private String mBoardUser;
+	private String mTitle;
 	
     @Override
     public void onCreate(Bundle _state) {
@@ -41,10 +52,12 @@ public class KidsBbsUser extends KidsBbsAList {
         Uri data = getIntent().getData();
         mBoardUser = data.getQueryParameter(KidsBbs.PARAM_N_USER);
         
-        updateTitle("");
-        setQueryBase(KidsBbsProvider.CONTENT_URISTR_LIST,
-        		KidsBbsProvider.KEYA_USER + "=" + mBoardUser,
-        		ParseMode.ALIST);
+        Resources resources = getResources();
+        mTitle = resources.getString(R.string.title_user);
+        
+        updateTitle();
+        setQueryBase(KidsBbsProvider.CONTENT_URISTR_LIST, FIELDS,
+        		KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "'");
         
         registerForContextMenu(getListView());
         
@@ -55,11 +68,18 @@ public class KidsBbsUser extends KidsBbsAList {
     	refreshListCommon();
     }
     
-    protected void updateTitle(String _extra) {
-		setTitle(mBoardUser + " in [" + getBoardTitle() + "] " +
-				getResources().getString(R.string.title_user) + _extra);
+    protected void updateTitle() {
+    	int count = getUnreadCount(KidsBbsProvider.CONTENT_URISTR_LIST,
+    			KidsBbsProvider.SELECTION_UNREAD + " AND " +
+    			KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "'");
+		setTitle("[" + getBoardTitle() + "] " + mTitle + " (" + count + ")");
     }
     
+    protected boolean matchingBroadcast(int _seq, String _user,
+    		String _thread) {
+    	return _user.equals(mBoardUser);
+    }
+   
     protected void showItem(int _index) {
     	Cursor c = getItem(_index);
     	int seq = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));

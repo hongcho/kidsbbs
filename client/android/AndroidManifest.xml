@@ -20,7 +20,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".KidsBbsBlist"
+        <activity android:name=".KidsBbsBList"
             android:label="@string/title_blist"
             >
             <intent-filter>
@@ -28,7 +28,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".KidsBbsTlist"
+        <activity android:name=".KidsBbsTList"
             android:label="@string/title_tlist"
             >
             <intent-filter>

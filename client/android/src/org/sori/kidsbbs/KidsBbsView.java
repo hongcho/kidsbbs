@@ -25,31 +25,13 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
-import java.io.IOException;
-import java.io.InputStream;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.sori.kidsbbs.KidsBbs.ParseMode;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
-
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -68,34 +50,41 @@ public class KidsBbsView extends Activity {
 	private TextView mDateView;
 	private TextView mBodyView;
 
-	private UpdateTask mLastUpdate = null;
-
-	private ErrUtils mErrUtils;
+	private UpdateTask mLastUpdate;
 
 	private String mBoardTitle;
-	private String mBoardName;
-	private String mBoardType;
-	private String mBoardSeq;
 	private String mTabname;
-
-	private ArticleInfo mInfo = null;
-
+	
+	private ContentResolver mResolver;
+	
+	private Uri mUri;
+	private String mWhere;
+	
+	private int mSeq;
+	private String mUser;
+	private String mAuthor;
+	private String mDate;
+	private String mTitle;
+	private String mThread;
+	private String mBody;
+	
 	@Override
 	public void onCreate(Bundle _state) {
 		super.onCreate(_state);
 		setContentView(R.layout.board_view);
 
-		mErrUtils = new ErrUtils(this, R.array.err_strings);
-
 		Uri data = getIntent().getData();
 		mTabname = data.getQueryParameter(KidsBbs.PARAM_N_TABNAME);
 		mBoardTitle = data.getQueryParameter(KidsBbs.PARAM_N_TITLE);
-		mBoardSeq = data.getQueryParameter(KidsBbs.PARAM_N_SEQ);
-		String[] parsed = BoardInfo.parseTabname(mTabname);
-		mBoardType = parsed[0];
-		mBoardName = parsed[1];
-		setTitle(mBoardSeq + " in [" + mBoardTitle + "]");
-
+		mSeq = Integer.parseInt(data.getQueryParameter(
+				KidsBbs.PARAM_N_SEQ));
+		setTitle(mSeq + " in [" + mBoardTitle + "]");
+		
+		mResolver = getContentResolver();
+		
+		mUri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + mTabname);
+		mWhere = KidsBbsProvider.KEYA_SEQ + "=" + mSeq;
+		
 		mStatusView = (TextView)findViewById(R.id.status);
 		mStatusView.setVisibility(View.GONE);
 
@@ -162,100 +151,74 @@ public class KidsBbsView extends Activity {
 				!mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED);
 	}
 
-	private class UpdateTask extends AsyncTask<String, Void, Integer> {
-		private ArticleInfo mTInfo;
-		private ContentResolver mCR;
-		
-		public UpdateTask(ContentResolver _cr) {
-			super();
-			mCR = _cr;
+	private class UpdateTask extends AsyncTask<Void, Void, Cursor> {
+		@Override
+		protected Cursor doInBackground(Void... _args) {
+			final String[] FIELDS = {
+				KidsBbsProvider.KEY_ID,
+				KidsBbsProvider.KEYA_SEQ,
+				KidsBbsProvider.KEYA_USER,
+				KidsBbsProvider.KEYA_AUTHOR,
+				KidsBbsProvider.KEYA_DATE,
+				KidsBbsProvider.KEYA_TITLE,
+				KidsBbsProvider.KEYA_THREAD,
+				KidsBbsProvider.KEYA_BODY,
+			};
+			return KidsBbsView.this.managedQuery(mUri, FIELDS,
+					mWhere, null, null);
 		}
 
 		@Override
-		protected void onPreExecute() {
-			mStatusView.setVisibility(View.VISIBLE);
-		}
-
-		@Override
-		protected Integer doInBackground(String... _args) {
-			int ret = 0;
-			HttpClient client = new DefaultHttpClient();
-			HttpGet get = new HttpGet(_args[0]);
-			try {
-				HttpResponse response = client.execute(get); // IOException
-				HttpEntity entity = response.getEntity();
-				if (entity == null) {
-					// Do something?
-				} else if (response.getStatusLine().getStatusCode() ==
-						HttpStatus.SC_OK) {
-					InputStream is = entity.getContent();
-					DocumentBuilder db = DocumentBuilderFactory.newInstance()
-							.newDocumentBuilder(); // ParserConfigurationException
-					
-					// Parse the article.
-					Document dom = db.parse(is); // IOException, SAXException
-					Element doc = dom.getDocumentElement();
-					
-					// Get a article item.
-					NodeList nl = doc.getElementsByTagName("ITEM");
-					if (nl != null && nl.getLength() > 0) {
-						ArticleInfo info = KidsBbs.parseArticle(
-								ParseMode.VIEW, mTabname, (Element)nl.item(0));
-						if (info == null) {
-							ret = ErrUtils.ERR_XMLPARSING;
-						}
-						info.setRead(true);
-						mTInfo = info;
-					}
-				}
-			} catch(IOException e) {
-				ret = ErrUtils.ERR_IO;
-			} catch(ParserConfigurationException e) {
-				ret = ErrUtils.ERR_PARSER;
-			} catch(SAXException e) {
-				ret = ErrUtils.ERR_SAX;
+		protected void onPostExecute(Cursor _c) {
+			if (_c == null || _c.isClosed() || _c.getCount() <= 0) {
+				return;
 			}
-			return ret;
-		}
-
-		@Override
-		protected void onPostExecute(Integer _result) {
-			if (_result >= 0) {
-				if (KidsBbs.updateArticleRead(mCR, mTInfo)) {
-					KidsBbs.announceArticleUpdated(KidsBbsView.this, mTInfo);
-				}
-				mInfo = mTInfo;
-				updateView();
-			} else {
-				mStatusView.setText(mErrUtils.getErrString(_result));
+			
+			_c.moveToFirst();
+			mSeq = _c.getInt(_c.getColumnIndex(
+					KidsBbsProvider.KEYA_SEQ));
+			mUser = _c.getString(_c.getColumnIndex(
+					KidsBbsProvider.KEYA_USER));
+			mAuthor = _c.getString(_c.getColumnIndex(
+					KidsBbsProvider.KEYA_AUTHOR));
+			mDate = _c.getString(_c.getColumnIndex(
+					KidsBbsProvider.KEYA_DATE));
+			mDate = KidsBbs.KidsToLocalDateString(mDate);
+			mTitle = _c.getString(_c.getColumnIndex(
+					KidsBbsProvider.KEYA_TITLE));
+			mThread = _c.getString(_c.getColumnIndex(
+					KidsBbsProvider.KEYA_THREAD));
+			mBody = _c.getString(_c.getColumnIndex(
+					KidsBbsProvider.KEYA_BODY));
+			
+			if (KidsBbs.updateArticleRead(mResolver, mTabname, mSeq, true)) {
+				KidsBbs.announceArticleUpdated(KidsBbsView.this, mTabname,
+						mSeq, mUser, mThread);
 			}
+			updateView();
 		}
 	}
 
 	private void updateView() {
-		mStatusView.setVisibility(View.GONE);
-		mTitleView.setText(mInfo.getTitle());
-		mUserView.setText(mInfo.getAuthor());
-		mDateView.setText(mInfo.getDateString());
-		mBodyView.setText(mInfo.getBody());
+		mTitleView.setText(mTitle);
+		mUserView.setText(mAuthor);
+		mDateView.setText(mDate);
+		mBodyView.setText(mBody);
 	}
 
 	private void refreshView() {
 		if (!isUpdating()) {
-			mLastUpdate = new UpdateTask(getContentResolver());
-			mLastUpdate.execute(KidsBbs.URL_VIEW +
-					KidsBbs.PARAM_N_BOARD + "=" + mBoardName +
-					"&" + KidsBbs.PARAM_N_TYPE + "=" + mBoardType +
-					"&" + KidsBbs.PARAM_N_SEQ + "=" + mBoardSeq);
+			mLastUpdate = new UpdateTask();
+			mLastUpdate.execute();
 		}
 	}
 
 	private void startThreadView() {
-		if (mInfo != null) {
+		if (mThread != null) {
 			Uri data = Uri.parse(KidsBbs.URI_INTENT_THREAD +
 					KidsBbs.PARAM_N_TABNAME + "=" + mTabname +
 					"&" + KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle +
-					"&" + KidsBbs.PARAM_N_THREAD + "=" + mInfo.getThread());
+					"&" + KidsBbs.PARAM_N_THREAD + "=" + mThread);
 			Intent i = new Intent(this, KidsBbsThread.class);
 			i.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
 			i.setAction(Intent.ACTION_VIEW);
@@ -265,11 +228,11 @@ public class KidsBbsView extends Activity {
 	}
 
 	private void startUserView() {
-		if (mInfo != null) {
+		if (mUser != null) {
 			Uri data = Uri.parse(KidsBbs.URI_INTENT_USER +
 					KidsBbs.PARAM_N_TABNAME + "=" + mTabname +
 					"&" + KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle +
-					"&" + KidsBbs.PARAM_N_USER + "=" + mInfo.getUser());
+					"&" + KidsBbs.PARAM_N_USER + "=" + mUser);
 			Intent i = new Intent(this, KidsBbsUser.class);
 			i.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
 			i.setAction(Intent.ACTION_VIEW);
@@ -279,13 +242,25 @@ public class KidsBbsView extends Activity {
 	}
 
 	private class SavedStates {
-		ArticleInfo info;
+		int seq;
+		String user;
+		String author;
+		String date;
+		String title;
+		String thread;
+		String body;
 	}
 
 	// Saving state for rotation changes...
 	public Object onRetainNonConfigurationInstance() {
 		SavedStates save = new SavedStates();
-		save.info = mInfo;
+		save.seq = mSeq;
+		save.user = mUser;
+		save.author = mAuthor;
+		save.date = mDate;
+		save.title = mTitle;
+		save.thread = mThread;
+		save.body = mBody;
 		return save;
 	}
 
@@ -294,7 +269,13 @@ public class KidsBbsView extends Activity {
 		if (save == null) {
 			refreshView();
 		} else {
-			mInfo = save.info;
+			mSeq = save.seq;
+			mUser = save.user;
+			mAuthor = save.author;
+			mDate = save.date;
+			mTitle = save.title;
+			mThread = save.thread;
+			mBody = save.body;
 			updateView();
 		}
 	}
@@ -306,8 +287,8 @@ public class KidsBbsView extends Activity {
 					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME);
 			int seq = _intent.getIntExtra(
 					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_SEQ, -1);
-			if (mTabname != null && tabname != null && tabname.equals(mTabname) &&
-					mBoardSeq != null && mBoardSeq.equals(seq)) {
+			if (mTabname != null && tabname != null &&
+					tabname.equals(mTabname) && seq == mSeq) {
 				refreshView();
 			}
 		}

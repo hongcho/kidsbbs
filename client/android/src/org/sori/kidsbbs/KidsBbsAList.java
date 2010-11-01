@@ -25,10 +25,9 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
-import org.sori.kidsbbs.KidsBbs.ParseMode;
-
 import android.app.ListActivity;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -60,9 +59,10 @@ public abstract class KidsBbsAList extends ListActivity {
 	private ArticlesAdapter mAdapter;
 	private int mSavedItemPosition;
 
+	private ContentResolver mResolver;
 	private Uri mUri;
+	private String[] mFields;
 	private String mWhere;
-	private ParseMode mMode;
 
 	private String mBoardTitle;
 	private String mTabname;
@@ -79,13 +79,22 @@ public abstract class KidsBbsAList extends ListActivity {
 	abstract protected void refreshList();
 
 	// Update title...
-	abstract protected void updateTitle(String _extra);
+	abstract protected void updateTitle();
 
 	// Call showItemCommon() with custom parameters.
 	abstract protected void showItem(int _index);
+	
+	// A matching broadcast?
+	abstract protected boolean matchingBroadcast(int _seq, String _user,
+			String _thread);
 
 	protected final String getBoardTitle() {
 		return mBoardTitle;
+	}
+	
+	protected final int getUnreadCount(String _uriBase, String _where) {
+		return KidsBbs.getTableUnreadCount(mResolver, _uriBase, mTabname,
+				_where);
 	}
 
 	protected final Cursor getItem(int _index) {
@@ -100,6 +109,8 @@ public abstract class KidsBbsAList extends ListActivity {
 		Uri data = getIntent().getData();
 		mTabname = data.getQueryParameter(KidsBbs.PARAM_N_TABNAME);
 		mBoardTitle = data.getQueryParameter(KidsBbs.PARAM_N_TITLE);
+		
+		mResolver = getContentResolver();
 		
 		Resources resources = getResources();
 		mUpdateText = resources.getString(R.string.update_text);
@@ -196,20 +207,8 @@ public abstract class KidsBbsAList extends ListActivity {
 
 		@Override
 		protected Cursor doInBackground(Void... _args) {
-			final String[] FIELDS = {
-				KidsBbsProvider.KEY_ID,
-				KidsBbsProvider.KEYA_SEQ,
-				KidsBbsProvider.KEYA_USER,
-				KidsBbsProvider.KEYA_DATE,
-				KidsBbsProvider.KEYA_TITLE,
-				KidsBbsProvider.KEYA_CNT_FIELD,
-				KidsBbsProvider.KEYA_BODY,
-				KidsBbsProvider.KEYA_ALLREAD_FIELD,
-				KidsBbsProvider.KEYA_THREAD,
-			};
-			Cursor c = KidsBbsAList.this.managedQuery(mUri, FIELDS,
+			return KidsBbsAList.this.managedQuery(mUri, mFields,
 					mWhere, null, null);
-			return c;
 		}
 		
 		@Override
@@ -220,6 +219,7 @@ public abstract class KidsBbsAList extends ListActivity {
 			}
 			KidsBbsAList.this.mAdapter.changeCursor(_c);
 			restoreListPosition();
+			updateTitle();
 		}
 	}
 	
@@ -235,11 +235,11 @@ public abstract class KidsBbsAList extends ListActivity {
 		}
 	}
 
-	protected final void setQueryBase(String _uriBase, String _where,
-			ParseMode _mode) {
+	protected final void setQueryBase(String _uriBase, String[] _fields,
+			String _where) {
 		mUri = Uri.parse(_uriBase + mTabname);
+		mFields = _fields;
 		mWhere = _where;
-		mMode = _mode;
 	}
 
 	protected final void showItemCommon(Context _from, Class<?> _to,
@@ -281,24 +281,8 @@ public abstract class KidsBbsAList extends ListActivity {
 		setSelection(mSavedItemPosition);
 	}
 
-	private class SavedStates {
-		Cursor cursor;
-	}
-
-	// Saving state for rotation changes...
-	public Object onRetainNonConfigurationInstance() {
-		SavedStates save = new SavedStates();
-		save.cursor = mAdapter.getCursor();
-		return save;
-	}
-
 	protected final void initializeStates() {
-		SavedStates save = (SavedStates)getLastNonConfigurationInstance();
-		if (save == null) {
-			refreshList();
-		} else {
-			mAdapter.changeCursor(save.cursor);
-		}
+		refreshList();
 	}
 	
 	private class NewArticlesReceiver extends BroadcastReceiver {
@@ -320,12 +304,13 @@ public abstract class KidsBbsAList extends ListActivity {
 					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME);
 			int seq = _intent.getIntExtra(
 					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_SEQ, -1);
+			String user = _intent.getStringExtra(
+					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_USER);
 			String thread = _intent.getStringExtra(
 					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_THREAD);
 			if (mTabname != null && tabname != null &&
-					tabname.equals(mTabname) && seq != -1 &&
-					thread.length() > 0) {
-				mAdapter.notifyDataSetChanged();
+					matchingBroadcast(seq, user, thread)) {
+				updateTitle();
 			}
 		}
 	}
@@ -344,10 +329,19 @@ public abstract class KidsBbsAList extends ListActivity {
 	
 	private void unregisterReceivers() {
 		unregisterReceiver(mReceiverNew);
-		unregisterReceiver(mReceiverUpdated);
 	}
 	
 	private class ArticlesAdapter extends CursorAdapter {
+		public static final int COLUMN_ID = 0;
+		public static final int COLUMN_SEQ = 1;
+		public static final int COLUMN_USER = 2;
+		public static final int COLUMN_DATE = 3;
+		public static final int COLUMN_TITLE = 4;
+		public static final int COLUMN_THREAD = 5;
+		public static final int COLUMN_BODY = 6;
+		public static final int COLUMN_READ = 7;
+		public static final int COLUMN_COUNT = 8;
+		
 		private Context mContext;
 		private LayoutInflater mInflater;
 		private Drawable mBgRead;
@@ -377,24 +371,19 @@ public abstract class KidsBbsAList extends ListActivity {
 		@Override
 		public void bindView(View _v, Context _context, Cursor _c) {
 			KidsBbsAItem itemView = (KidsBbsAItem)_v;
-			itemView.mId = _c.getLong(_c.getColumnIndex(
-					KidsBbsProvider.KEY_ID));
-			itemView.mSeq = _c.getInt(_c.getColumnIndex(
-					KidsBbsProvider.KEYA_SEQ));
-			itemView.mUser = _c.getString(_c.getColumnIndex(
-					KidsBbsProvider.KEYA_USER));
-			String date = _c.getString(_c.getColumnIndex(
-					KidsBbsProvider.KEYA_DATE));
-			itemView.mTitle = _c.getString(_c.getColumnIndex(
-					KidsBbsProvider.KEYA_TITLE));
-			itemView.mCount = _c.getInt(_c.getColumnIndex(
-					KidsBbsProvider.KEYA_CNT));
-			String body = _c.getString(_c.getColumnIndex(
-					KidsBbsProvider.KEYA_BODY));
-			itemView.mRead = _c.getInt(_c.getColumnIndex(
-					KidsBbsProvider.KEYA_ALLREAD)) != 0;
-			itemView.mThread = _c.getString(_c.getColumnIndex(
-					KidsBbsProvider.KEYA_THREAD));
+			itemView.mId = _c.getLong(COLUMN_ID);
+			itemView.mSeq = _c.getInt(COLUMN_SEQ);
+			itemView.mUser = _c.getString(COLUMN_USER);
+			String date = _c.getString(COLUMN_DATE);
+			itemView.mTitle = _c.getString(COLUMN_TITLE);
+			itemView.mThread = _c.getString(COLUMN_THREAD);
+			String body = _c.getString(COLUMN_BODY);
+			itemView.mRead = _c.getInt(COLUMN_READ) != 0;
+			if (mFields.length - 1 >= COLUMN_COUNT) {
+				itemView.mCount = _c.getInt(COLUMN_COUNT);
+			} else {
+				itemView.mCount = 1;
+			}
 			
 			String user = itemView.mUser;
 			if (itemView.mCount > 1) {

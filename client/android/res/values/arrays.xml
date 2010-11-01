@@ -223,13 +223,4 @@
 		<item>b1_Memo</item>
 		<item>b1_SF</item>
     </string-array>
-    
-    <string-array name="err_strings">
-    	<item>URL에 문제가 있습니다.</item>
-    	<item>IO에 문제가 있습니다.</item>
-    	<item>ParserConfiguration에 문제가 있습니다.</item>
-    	<item>SAX에 문제가 있습니다.</item>
-    	<item>XML형식에 문제가 있습니다.</item>
-    	<item>내용이 없습니다.</item>
-    </string-array>
 </resources>
