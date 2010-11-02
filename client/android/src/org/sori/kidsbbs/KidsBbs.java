@@ -31,7 +31,9 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -113,7 +115,11 @@ public class KidsBbs extends Activity {
 		DF_KIDS.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
 	}
 
-	public static final int MAX_DAYS = 14;
+	private static final int MAX_DAYS = 14;
+	public static final int MIN_ARTICLES = 15;
+	public static final int MAX_ARTICLES = 1500;
+	public static final String KST_DIFF = "'-9 hours'";
+	public static final String MAX_TIME = "'-" + MAX_DAYS + " days'";
 	
 	public static final Date KidsToLocalDate(String _dateString) {
 		try {
@@ -169,6 +175,9 @@ public class KidsBbs extends Activity {
 			" ",
 			"",
 		};
+		if (_s == null) {
+			return null;
+		}
 		for (int i = 0; i < PATTERNS.length; ++i) {
 			Matcher m = PATTERNS[i].matcher(_s);
 			_s = m.replaceAll(REPLACEMENTS[i]);
@@ -246,7 +255,7 @@ public class KidsBbs extends Activity {
 			}
 
 			return new ArticleInfo(_tabname, seq, user, author, date, title,
-					thread, desc, false, 1, false);
+					thread, desc, 1, false);
 		} catch (KidsParseException e) {
 			Log.w(TAG, e);
 			return null;
@@ -258,9 +267,9 @@ public class KidsBbs extends Activity {
 		ArrayList<ArticleInfo> articles = new ArrayList<ArticleInfo>();
 		String tabname = BoardInfo.buildTabname(_board, _type);
 		String urlString = _base +
-				KidsBbs.PARAM_N_BOARD + "=" + _board +
-				"&" + KidsBbs.PARAM_N_TYPE + "=" + _type +
-				"&" + KidsBbs.PARAM_N_START + "=" + _start;
+			KidsBbs.PARAM_N_BOARD + "=" + _board +
+			"&" + KidsBbs.PARAM_N_TYPE + "=" + _type +
+			"&" + KidsBbs.PARAM_N_START + "=" + _start;
 		HttpClient client = new DefaultHttpClient();
 		HttpGet get = new HttpGet(urlString);
 		try {
@@ -385,7 +394,7 @@ public class KidsBbs extends Activity {
 	public static final boolean getArticleRead(ContentResolver _cr, Uri _uri,
 			String _where, String[] _whereArgs) {
 		final String[] FIELDS = {
-				KidsBbsProvider.KEYA_ALLREAD_FIELD,
+			KidsBbsProvider.KEYA_ALLREAD_FIELD,
 		};
 		boolean read = false;
 		Cursor c = _cr.query(_uri, FIELDS, _where, _whereArgs, null);
@@ -398,6 +407,25 @@ public class KidsBbs extends Activity {
 			c.close();
 		}
 		return read;
+	}
+	
+	public static final boolean isRecent(String _dateString) {
+		boolean result = true;
+		Date local = KidsBbs.KidsToLocalDate(_dateString);
+		if (local != null) {
+			Calendar calLocal = new GregorianCalendar();
+			Calendar calRecent = new GregorianCalendar();
+			calLocal.setTime(local);
+			calRecent.setTime(new Date());
+			// "Recent" one is marked unread.
+			calRecent.add(Calendar.DATE, -MAX_DAYS);
+			if (calLocal.before(calRecent)) {
+				result = false;
+			}
+		} else {
+			Log.e(TAG, "isRecent: parsing failed: " + _dateString);
+		}
+		return result;
 	}
 
 	public static final void announceBoardUpdated(Context _context,

@@ -47,12 +47,12 @@ public class KidsBbsProvider extends ContentProvider {
 	private static final String TAG = "KidsBbsProvider";
 	private static final String PROVIDER = "org.sori.provider.kidsbbs";
 	private static final String CONTENT_URI_BASE =
-			"content://" + PROVIDER + "/";
+		"content://" + PROVIDER + "/";
 
-	public static final Uri CONTENT_URI_BOARDS = Uri.parse(
-			CONTENT_URI_BASE + "boards");
+	public static final Uri CONTENT_URI_BOARDS =
+		Uri.parse(CONTENT_URI_BASE + "boards");
 	public static final String CONTENT_URISTR_LIST =
-			CONTENT_URI_BASE + "list/";
+		CONTENT_URI_BASE + "list/";
 	public static final String CONTENT_URISTR_TLIST =
 		CONTENT_URI_BASE + "tlist/";
 	
@@ -70,7 +70,7 @@ public class KidsBbsProvider extends ContentProvider {
 	
 	private static final String TYPESTR_BASE = "vnd.sori.cursor.";
 	private static final String TYPESTR_DIR_BASE =
-			TYPESTR_BASE + "dir/vnd.sori.";
+		TYPESTR_BASE + "dir/vnd.sori.";
 
 	@Override
 	public boolean onCreate() {
@@ -103,7 +103,7 @@ public class KidsBbsProvider extends ContentProvider {
 					"query: Unsupported URI: " + _uri);
 		}
 		SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
-		String orderby = ORDER_BY_SEQ;
+		String orderby = ORDER_BY_SEQ_DESC;
 		String groupby = null;
 		int type = sUriMatcher.match(_uri);
 		switch (type) {
@@ -210,13 +210,13 @@ public class KidsBbsProvider extends ContentProvider {
 	// Board table
 	public static final String KEYB_TABNAME = "tabname";
 	private static final String KEYB_TABNAME_DEF =
-			KEYB_TABNAME + " CHAR(36) NOT NULL UNIQUE";
+		KEYB_TABNAME + " CHAR(36) NOT NULL UNIQUE";
 	public static final String KEYB_TITLE = "title";
 	private static final String KEYB_TITLE_DEF =
-			KEYB_TITLE + " VARCHAR(40) NOT NULL";
+		KEYB_TITLE + " VARCHAR(40) NOT NULL";
 	public static final String KEYB_STATE = "state";
 	private static final String KEYB_STATE_DEF =
-			KEYB_STATE + " TINYINT DEFAULT 0";
+		KEYB_STATE + " TINYINT DEFAULT 0";
 
 	public static final int STATE_PAUSED = 0; // no table or not updating
 	public static final int STATE_CREATED = 1; // table is created, not updated
@@ -225,45 +225,54 @@ public class KidsBbsProvider extends ContentProvider {
 	// Article table
 	public static final String KEYA_SEQ = "seq";
 	private static final String KEYA_SEQ_DEF =
-			KEYA_SEQ + " INTEGER NOT NULL UNIQUE";
+		KEYA_SEQ + " INTEGER NOT NULL UNIQUE";
 	public static final String KEYA_USER = "user";
 	private static final String KEYA_USER_DEF =
-			KEYA_USER + " CHAR(12) NOT NULL";
+		KEYA_USER + " CHAR(12) NOT NULL";
 	public static final String KEYA_AUTHOR = "author";
 	private static final String KEYA_AUTHOR_DEF =
-			KEYA_AUTHOR + " VARCHAR(40) NOT NULL";
+		KEYA_AUTHOR + " VARCHAR(40) NOT NULL";
 	public static final String KEYA_DATE = "date";
 	private static final String KEYA_DATE_DEF =
-			KEYA_DATE + " DATETIME NOT NULL";
+		KEYA_DATE + " DATETIME NOT NULL";
 	public static final String KEYA_TITLE = "title";
 	private static final String KEYA_TITLE_DEF =
-			KEYA_TITLE + " VARCHAR(40) NOT NULL";
+		KEYA_TITLE + " VARCHAR(40) NOT NULL";
 	public static final String KEYA_THREAD = "thread";
 	private static final String KEYA_THREAD_DEF =
-			KEYA_THREAD + " CHAR(32) NOT NULL";
+		KEYA_THREAD + " CHAR(32) NOT NULL";
 	public static final String KEYA_BODY = "body";
 	private static final String KEYA_BODY_DEF =
-			KEYA_BODY + " TEXT";
+		KEYA_BODY + " TEXT";
 	public static final String KEYA_READ = "read";
 	private static final String KEYA_READ_DEF =
-			KEYA_READ + " TINYINT DEFAULT 0";
+		KEYA_READ + " TINYINT DEFAULT 0";
 	
 	public static final String KEYA_ALLREAD = "allread";
 	public static final String KEYA_ALLREAD_FIELD =
-			"MIN(" + KEYA_READ + ") AS " + KEYA_ALLREAD;
+		"MIN(" + KEYA_READ + ") AS " + KEYA_ALLREAD;
 
 	public static final String KEYA_CNT = "cnt";
-	public static final String KEYA_CNT_FIELD = "COUNT(*) AS " + KEYA_CNT;
+	public static final String KEYA_CNT_FIELD =
+		"COUNT(*) AS " + KEYA_CNT;
 	
-	public static final String SELECTION_TABNAME = KEYB_TABNAME + "=?";
+	public static final String SELECTION_TABNAME =
+		KEYB_TABNAME + "=?";
 	public static final String SELECTION_STATE_ACTIVE =
 		KEYB_STATE + "!=" + STATE_PAUSED;
-	public static final String SELECTION_SEQ = KEYA_SEQ + "=?";
-	public static final String SELECTION_UNREAD = KEYA_READ + "=0";
-	public static final String SELECTION_ALLUNREAD = KEYA_ALLREAD + "=0";
+	public static final String SELECTION_SEQ =
+		KEYA_SEQ + "=?";
+	public static final String SELECTION_UNREAD =
+		KEYA_READ + "=0";
+	public static final String SELECTION_ALLUNREAD =
+		KEYA_ALLREAD + "=0";
 	
-	public static final String ORDER_BY_ID = KEY_ID + " ASC";
-	public static final String ORDER_BY_SEQ = KEYA_SEQ + " DESC";
+	public static final String ORDER_BY_ID =
+		KEY_ID + " ASC";
+	public static final String ORDER_BY_SEQ_DESC =
+		KEYA_SEQ + " DESC";
+	public static final String ORDER_BY_SEQ_ASC =
+		KEYA_SEQ + " ASC";
 
 	private static final String DB_NAME = "kidsbbs.db";
 	private static final int DB_VERSION = 2;
@@ -274,7 +283,7 @@ public class KidsBbsProvider extends ContentProvider {
 	private static class DBHelper extends SQLiteOpenHelper {
 		private Context mContext;
 		private HashMap<String, Boolean> mUpdateMap =
-				new HashMap<String, Boolean>();
+			new HashMap<String, Boolean>();
 		
 		public DBHelper(Context _context, String _name, CursorFactory _factory,
 				int _version) {
@@ -330,7 +339,7 @@ public class KidsBbsProvider extends ContentProvider {
 				}
 				addBoard(_db, new BoardInfo(tabnames[i], title),
 						mUpdateMap.get(tabnames[i]) ?
-								STATE_CREATED : STATE_PAUSED);
+							STATE_CREATED : STATE_PAUSED);
 			}
 		}
 
@@ -401,25 +410,17 @@ public class KidsBbsProvider extends ContentProvider {
 					KEYA_THREAD_DEF + "," +
 					KEYA_BODY_DEF + "," +
 					KEYA_READ_DEF + ");");
-			//_db.execSQL("CREATE INDEX " + _tabname + "_I" + KEYA_SEQ +
-			//		" ON " + _tabname +
-			//		" (" + KEYA_SEQ + " DESC)");
-			//_db.execSQL("CREATE INDEX " + _tabname + "_I" + KEYA_USER +
-			//		" ON " + _tabname +
-			//		" (" + KEYA_USER + ")");
-			//_db.execSQL("CREATE INDEX " + _tabname + "_I" + KEYA_THREAD +
-			//		" ON " + _tabname +
-			//		" (" + KEYA_THREAD + ")");
+			_db.execSQL("CREATE INDEX " + _tabname + "_I" + KEYA_SEQ +
+					" ON " + _tabname +
+					" (" + KEYA_SEQ + " DESC)");
 			_db.execSQL("CREATE VIEW " + getViewname(_tabname) +
 					" AS SELECT * FROM " + _tabname +
-					" ORDER BY " + ORDER_BY_SEQ + ";");
+					" ORDER BY " + ORDER_BY_SEQ_DESC + ";");
 		}
 		
 		private void dropArticleTable(SQLiteDatabase _db, String _tabname) {
 			_db.execSQL("DROP TABLE IF EXISTS " + _tabname);
-			//_db.execSQL("DROP INDEX IF EXISTS " + _tabname + "_I" + KEYA_SEQ);
-			//_db.execSQL("DROP INDEX IF EXISTS " + _tabname + "_I" + KEYA_USER);
-			//_db.execSQL("DROP INDEX IF EXISTS " + _tabname + "_I" + KEYA_THREAD);
+			_db.execSQL("DROP INDEX IF EXISTS " + _tabname + "_I" + KEYA_SEQ);
 			_db.execSQL("DROP VIEW IF EXISTS " + getViewname(_tabname));
 		}
 	}

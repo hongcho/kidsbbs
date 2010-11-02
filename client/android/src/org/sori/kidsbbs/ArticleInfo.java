@@ -25,8 +25,6 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
-
-
 public class ArticleInfo {
 	private String mTabname;
 	private int mSeq;
@@ -35,11 +33,8 @@ public class ArticleInfo {
 	private String mTitle;
 	private String mThread;
 	private String mBody;
-	private String mSummary;
 	private int mCount;
 	private String mDateString;
-	private String mDateShortString;
-	private String mKidsDateString;
 	private boolean mRead;
 
 	public final String getTabname() { return mTabname; }
@@ -49,17 +44,14 @@ public class ArticleInfo {
 	public final String getTitle() { return mTitle; }
 	public final String getThread() { return mThread; }
 	public final String getBody() { return mBody; }
-	public final String getSummary() { return mSummary; }
 	public final int getCount() { return mCount; }
 	public final String getDateString() { return mDateString; }
-	public final String getDateShortString() { return mDateShortString;}
-	public final String getKidsDateString() { return mKidsDateString; }
 	public final boolean getRead() { return mRead; }
 	public final void setRead(boolean _read) { mRead = _read; }
 
 	public ArticleInfo(String _tabname, int _seq, String _user, String _author,
 			String _dateString, String _title, String _thread, String _body,
-			boolean _isSummary, int _count, boolean _read) {
+			int _count, boolean _read) {
 		mTabname = _tabname;
 		mSeq = _seq;
 		mUser = _user;
@@ -68,13 +60,8 @@ public class ArticleInfo {
 		mThread = _thread;
 		mCount = _count;
 		mRead = _read;
-		
-		mKidsDateString = _dateString;
-		mDateString = KidsBbs.KidsToLocalDateString(mKidsDateString);
-		mDateShortString = KidsBbs.GetShortDateString(mDateString);
-
+		mDateString = _dateString;
 		mBody = _body;
-		mSummary = KidsBbs.generateSummary(mBody);
 	}
 	
 	@Override

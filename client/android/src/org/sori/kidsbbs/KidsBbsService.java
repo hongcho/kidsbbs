@@ -26,9 +26,6 @@
 package org.sori.kidsbbs;
 
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -46,12 +43,8 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 public class KidsBbsService extends Service
-		implements OnSharedPreferenceChangeListener {
+				implements OnSharedPreferenceChangeListener {
 	private static final String TAG = "KidsBbsService"; 
-
-	private static final int MIN_ARTICLES = 15;
-	private static final String KST_DIFF = "'-9 hours'";
-	private static final String MAX_TIME = "'-" + KidsBbs.MAX_DAYS + " days'";
 	
 	private int mUpdateFreq;
 	private Timer mUpdateTimer;
@@ -60,8 +53,8 @@ public class KidsBbsService extends Service
 	@Override
 	public void onStart(Intent _intent, int _startId) {
     	SharedPreferences prefs =
-    			PreferenceManager.getDefaultSharedPreferences(
-    					getApplicationContext());
+    		PreferenceManager.getDefaultSharedPreferences(
+    				getApplicationContext());
     	mUpdateFreq = Integer.parseInt(prefs.getString(
     			Preferences.PREF_UPDATE_FREQ,
     			Preferences.DEFAULT_UPDATE_FREQ));
@@ -75,7 +68,7 @@ public class KidsBbsService extends Service
 					Preferences.DEFAULT_UPDATE_FREQ));
 			if (updateFreqNew != mUpdateFreq) {
 				int delay = mUpdateFreq < updateFreqNew ?
-						mUpdateFreq : updateFreqNew;
+					mUpdateFreq : updateFreqNew;
 				mUpdateFreq = updateFreqNew;
 				setupTimer(delay, mUpdateFreq);
 			}
@@ -110,18 +103,11 @@ public class KidsBbsService extends Service
 		return null;
 	}
 
-	// Matching KidsBbsProvider STATE_*.
-	private enum TABLE_STATE {
-		PAUSED, // no table or not updating
-		CREATED, // table is created, not updated
-		UPDATED , // update is done
-	};
-
-	private TABLE_STATE getTableState(String _tabname) {
+	private int getTableState(String _tabname) {
 		final String[] FIELDS = {
-				KidsBbsProvider.KEYB_STATE,
+			KidsBbsProvider.KEYB_STATE,
 		};
-		TABLE_STATE result = TABLE_STATE.PAUSED;
+		int result = KidsBbsProvider.STATE_PAUSED;
 		ContentResolver cr = getContentResolver();
 		Cursor c = cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
 				KidsBbsProvider.SELECTION_TABNAME, new String[] { _tabname },
@@ -129,52 +115,23 @@ public class KidsBbsService extends Service
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
-				int state = c.getInt(c.getColumnIndex(
+				result = c.getInt(c.getColumnIndex(
 						KidsBbsProvider.KEYB_STATE));
-				switch (state) {
-				case KidsBbsProvider.STATE_CREATED:
-					result = TABLE_STATE.CREATED;
-					break;
-				case KidsBbsProvider.STATE_UPDATED:
-					result = TABLE_STATE.UPDATED;
-					break;
-				default:
-					result = TABLE_STATE.PAUSED;
-					break;
-				}
 			}
 			c.close();
 		}
 		return result;
 	}
 
-	private boolean setTableState(String _tabname, TABLE_STATE _state) {
-		int state;
-		switch (_state) {
-		case CREATED:
-			state = KidsBbsProvider.STATE_CREATED;
-			break;
-		case UPDATED:
-			state = KidsBbsProvider.STATE_UPDATED;
-			break;
-		default:
-			state = KidsBbsProvider.STATE_PAUSED;
-			break;
-		}
-		
+	private boolean setTableState(String _tabname, int _state) {
 		ContentResolver cr = getContentResolver();
 		ContentValues values = new ContentValues();
-		values.put(KidsBbsProvider.KEYB_STATE, state);
+		values.put(KidsBbsProvider.KEYB_STATE, _state);
 		int count = cr.update(KidsBbsProvider.CONTENT_URI_BOARDS, values,
 				KidsBbsProvider.SELECTION_TABNAME, new String[] { _tabname });
 		return count > 0;
 	}
 
-	private enum UPDATE_STATE {
-		DONE,
-		INSERT,
-		UPDATE,
-	};
 
 	private synchronized int refreshTable(String _tabname) {
 		final String[] FIELDS = {
@@ -184,11 +141,14 @@ public class KidsBbsService extends Service
 			KidsBbsProvider.KEYA_TITLE,
 			KidsBbsProvider.KEYA_READ,
 		};
+		final int STATE_DONE = 0;
+		final int STATE_INSERT = 1;
+		final int STATE_UPDATE = 2;
 		
-		TABLE_STATE tabState = getTableState(_tabname);
+		int tabState = getTableState(_tabname);
 		switch (tabState) {
-		case CREATED:
-		case UPDATED:
+		case KidsBbsProvider.STATE_CREATED:
+		case KidsBbsProvider.STATE_UPDATED:
 			break;
 		default:
 			return 0;
@@ -202,37 +162,51 @@ public class KidsBbsService extends Service
 		int type = Integer.parseInt(parsed[0]);
 		int start = 0;
 		Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
-		
-		trimBoardTable(_tabname);
-
 		ContentResolver cr = getContentResolver();
-		UPDATE_STATE state = UPDATE_STATE.INSERT;
-		while (!state.equals(UPDATE_STATE.DONE)) {
+		
+		int tabSize = KidsBbs.getBoardTableSize(cr, _tabname);
+		int maxArticles = KidsBbs.MAX_ARTICLES - tabSize;
+		if (tabSize > 0) {
+			maxArticles += KidsBbs.MIN_ARTICLES;
+		}
+		if (maxArticles <= 0) {
+			maxArticles = KidsBbs.MIN_ARTICLES;
+		}
+		
+		int state = STATE_INSERT;
+		while (state != STATE_DONE) {
 			ArrayList<ArticleInfo> articles =
 				KidsBbs.getArticles(KidsBbs.URL_LIST, board, type, start);
 			if (articles.isEmpty()) {
-				state = UPDATE_STATE.DONE;
+				state = STATE_DONE;
 				if (start == 0) {
 					++error;
 				}
 				break;
 			}
-			for (int i = 0; !state.equals(UPDATE_STATE.DONE) && i < articles.size();
-					++i) {
+			for (int i = 0; state != STATE_DONE && i < articles.size(); ++i) {
 				ArticleInfo info = articles.get(i);
-				if (count >= MIN_ARTICLES && !isRecent(info.getKidsDateString())) {
+				if (count >= KidsBbs.MIN_ARTICLES &&
+						!KidsBbs.isRecent(info.getDateString())) {
 					Log.i(TAG, _tabname +
 							": done updating: reached old articles: " +
 							info.getSeq());
-					state = UPDATE_STATE.DONE;
+					state = STATE_DONE;
+					break;
+				}
+				if (count >= maxArticles) {
+					Log.i(TAG, _tabname +
+							": done updating: too many articles: " +
+							info.getSeq());
+					state = STATE_DONE;
 					break;
 				}
 				String[] args = new String[] {
 						Integer.toString(info.getSeq())
 				};
 				ArticleInfo old = null;
-				Cursor c = cr.query(uri, FIELDS, KidsBbsProvider.SELECTION_SEQ,
-						args, null);
+				Cursor c = cr.query(uri, FIELDS,
+						KidsBbsProvider.SELECTION_SEQ, args, null);
 				if (c != null) {
 					if (c.getCount() > 0) {
 						c.moveToFirst();
@@ -248,13 +222,13 @@ public class KidsBbsService extends Service
 						boolean read = c.getInt(c.getColumnIndex(
 								KidsBbsProvider.KEYA_READ)) != 0;
 						old = new ArticleInfo(_tabname, seq, user, null,
-								date, title, null, null, false, 1, read);
+								date, title, null, null, 1, read);
 					}
 					c.close();
 				} else {
 					// Unexpected...
 					Log.e(TAG, _tabname + ": query failed: " + info.getSeq());
-					state = UPDATE_STATE.DONE;
+					state = STATE_DONE;
 					++error;
 					break;
 				}
@@ -263,12 +237,13 @@ public class KidsBbsService extends Service
 				values.put(KidsBbsProvider.KEYA_SEQ, info.getSeq());
 				values.put(KidsBbsProvider.KEYA_USER, info.getUser());
 				values.put(KidsBbsProvider.KEYA_AUTHOR, info.getAuthor());
-				values.put(KidsBbsProvider.KEYA_DATE, info.getKidsDateString());
+				values.put(KidsBbsProvider.KEYA_DATE,
+						info.getDateString());
 				values.put(KidsBbsProvider.KEYA_TITLE, info.getTitle());
 				values.put(KidsBbsProvider.KEYA_THREAD, info.getThread());
 				values.put(KidsBbsProvider.KEYA_BODY, info.getBody());
 				boolean read = info.getRead();
-				if (state.equals(UPDATE_STATE.UPDATE)) {
+				if (state == STATE_UPDATE) {
 					read = false;
 				} else if (old != null && old.getRead()) {
 					read = true;
@@ -280,10 +255,10 @@ public class KidsBbsService extends Service
 					// Not there...
 					try {
 						switch (state) {
-						case INSERT:
+						case STATE_INSERT:
 							cr.insert(uri, values);
 							break;
-						case UPDATE:
+						case STATE_UPDATE:
 							cr.update(uri, values,
 									KidsBbsProvider.SELECTION_SEQ, args);
 							break;
@@ -298,15 +273,16 @@ public class KidsBbsService extends Service
 									old.getDateString()) &&
 							info.getTitle().equals(old.getTitle())) {
 						result = false;
-						if (!tabState.equals(TABLE_STATE.CREATED)) {
+						if (tabState != KidsBbsProvider.STATE_CREATED) {
 							Log.i(TAG, _tabname +
 									": done updating: reached same article: " +
 									info.getSeq());
-							state = UPDATE_STATE.DONE;
+							state = STATE_DONE;
 							break;
 						}
+						state = STATE_UPDATE;
 					} else {
-						if (state.equals(UPDATE_STATE.INSERT)) {
+						if (state == STATE_INSERT) {
 							Log.i(TAG, _tabname +
 									": switching to update mode: " +
 									info.getSeq() + ": (" +
@@ -316,7 +292,7 @@ public class KidsBbsService extends Service
 									info.getUser() + "," +
 									info.getDateString() + "," +
 									info.getTitle() + ")");
-							state = UPDATE_STATE.UPDATE;
+							state = STATE_UPDATE;
 						}
 						try {
 							cr.update(uri, values,
@@ -328,19 +304,21 @@ public class KidsBbsService extends Service
 				}
 				if (result) {
 					++count;
-					KidsBbs.announceBoardUpdated(KidsBbsService.this, _tabname);
+					KidsBbs.announceBoardUpdated(KidsBbsService.this,
+							_tabname);
 				}
 			}
 			start += articles.size();
 		}
-		if (count > 0 && tabState.equals(TABLE_STATE.UPDATED)) {
+		trimBoardTable(_tabname);
+		if (count > 0 && tabState == KidsBbsProvider.STATE_UPDATED) {
 			KidsBbs.announceNewArticles(KidsBbsService.this, _tabname);
 		}
 		if (error > 0) {
 			Log.e(TAG, _tabname + ": error after updating " +
 					count + " articles");
-		} else if (tabState.equals(TABLE_STATE.CREATED)) {
-			setTableState(_tabname, TABLE_STATE.UPDATED);
+		} else if (tabState == KidsBbsProvider.STATE_CREATED) {
+			setTableState(_tabname, KidsBbsProvider.STATE_UPDATED);
 		}
 		return count;
 	}
@@ -350,7 +328,7 @@ public class KidsBbsService extends Service
 			KidsBbsProvider.KEYB_TABNAME
 		};
 		final String WHERE = KidsBbsProvider.KEYB_STATE + "!=" +
-					KidsBbsProvider.STATE_PAUSED;
+			KidsBbsProvider.STATE_PAUSED;
 
 		int total_count = 0;
 		ArrayList<String> tabnames = new ArrayList<String>(); 
@@ -384,61 +362,74 @@ public class KidsBbsService extends Service
 		refreshTables();
 	}
 	
+	private int deleteArticles(ContentResolver _cr, Uri _uri, Cursor _c,
+			int _max) {
+		int count = 0;
+		_c.moveToFirst();
+		do {
+			int seq = _c.getInt(0);
+			if (seq > 0) {
+				count += _cr.delete(_uri, KidsBbsProvider.SELECTION_SEQ,
+						new String[] {Integer.toString(seq)});
+			}
+		} while (--_max > 0 && _c.moveToNext());
+		return count;
+	}
+	
 	private void trimBoardTable(String _tabname) {
 		final String[] FIELDS = {
-				KidsBbsProvider.KEYA_SEQ,
-				KidsBbsProvider.KEYA_CNT_FIELD,
-			};
+			KidsBbsProvider.KEYA_SEQ,
+		};
 		final String WHERE = "DATE(" + KidsBbsProvider.KEYA_DATE +
-				")!='' AND JULIANDAY(" + KidsBbsProvider.KEYA_DATE +
-				")<=JULIANDAY('now'," + KST_DIFF + "," + MAX_TIME + ")";
+			")!='' AND JULIANDAY(" + KidsBbsProvider.KEYA_DATE +
+			")<=JULIANDAY('now'," + KidsBbs.KST_DIFF + "," +
+			KidsBbs.MAX_TIME + ")";
 		ContentResolver cr = getContentResolver();
 		
 		// At least 15...
-		int limit = KidsBbs.getBoardTableSize(cr, _tabname) - MIN_ARTICLES;
-		if (limit <= 0) {
+		int size = KidsBbs.getBoardTableSize(cr, _tabname);
+		if (size <= KidsBbs.MIN_ARTICLES) {
 			return;
 		}
 		
 		Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
 		
 		// Find the trim point.
-		int seq = -1;
+		int seq = 0;
 		Cursor c = cr.query(uri, FIELDS, WHERE, null,
-				KidsBbsProvider.ORDER_BY_SEQ);
+				KidsBbsProvider.ORDER_BY_SEQ_DESC);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
-				seq = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
+				seq = c.getInt(0);
 			}
 			c.close();
 		}
 		
 		// Now delete old stuff...
-		if (seq >= 0) {
-			// A "hack" to add "LIMIT" to the SQL statement.
-			String where = KidsBbsProvider.KEYA_SEQ + "<=" + seq +
-					" LIMIT " + limit;
-			cr.delete(uri, where, null);
-		}
-	}
-	
-	private static final boolean isRecent(String _dateString) {
-		boolean result = true;
-		Date local = KidsBbs.KidsToLocalDate(_dateString);
-		if (local != null) {
-			Calendar calLocal = new GregorianCalendar();
-			Calendar calRecent = new GregorianCalendar();
-			calLocal.setTime(local);
-			calRecent.setTime(new Date());
-			// "Recent" one is marked unread.
-			calRecent.add(Calendar.DATE, -KidsBbs.MAX_DAYS);
-			if (calLocal.before(calRecent)) {
-				result = false;
+		int count = 0;
+		if (seq > 0) {
+			c = cr.query(uri, FIELDS, KidsBbsProvider.KEYA_SEQ + "<=" + seq,
+					null, KidsBbsProvider.ORDER_BY_SEQ_ASC);
+			if (c != null) {
+				count += deleteArticles(cr, uri, c,
+						size - KidsBbs.MIN_ARTICLES); 
+				c.close();
 			}
-		} else {
-			Log.e(TAG, "isRecent: parsing failed: " + _dateString);
 		}
-		return result;
+
+		// Reduce the size to a manageable size.
+		size = KidsBbs.getBoardTableSize(cr, _tabname);
+		if (size > KidsBbs.MAX_ARTICLES) {
+			c = cr.query(uri, FIELDS, null, null,
+					KidsBbsProvider.ORDER_BY_SEQ_ASC);
+			if (c != null) {
+				count += deleteArticles(cr, uri, c,
+						size - KidsBbs.MAX_ARTICLES);
+				c.close();
+			}
+		}
+		
+		Log.i(TAG, _tabname + ": trimed " + count + " articles");
 	}
 }
