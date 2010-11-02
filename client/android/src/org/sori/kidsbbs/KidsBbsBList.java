@@ -25,8 +25,10 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
+import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -54,8 +56,11 @@ public class KidsBbsBList extends ListActivity {
 
 	private static final String KEY_SELECTED_ITEM = "KEY_SELECTED_ITEM";
 
+	private ContentResolver mResolver;
+
 	private BoardsAdapter mAdapter;
 	private int mSavedItemPosition;
+
 	private String mTitleBase;
 	private String mUpdateText;
 	private String mUpdateErrorText;
@@ -76,6 +81,8 @@ public class KidsBbsBList extends ListActivity {
 		Resources resources = getResources();
 		mUpdateText = resources.getString(R.string.update_text);
 		mUpdateErrorText = resources.getString(R.string.update_error_text);
+		
+		mResolver = getContentResolver();
 
 		mAdapter = new BoardsAdapter(this);
 		setListAdapter(mAdapter);
@@ -137,6 +144,17 @@ public class KidsBbsBList extends ListActivity {
 		super.onOptionsItemSelected(item);
 		switch (item.getItemId()) {
 		case MENU_SELECT:
+			final String[] FIELDS0 = {
+				KidsBbsProvider.KEY_ID,
+				KidsBbsProvider.KEYB_STATE,
+				KidsBbsProvider.KEYB_TITLE,
+			};
+			Cursor c = mResolver.query(KidsBbsProvider.CONTENT_URI_BOARDS,
+					FIELDS0, null, null, null);
+			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			builder.setMultiChoiceItems(c, KidsBbsProvider.KEYB_STATE,
+					KidsBbsProvider.KEYB_TITLE, null);
+			builder.create().show();
 			return true;
 		case MENU_REFRESH:
 			refreshList();
