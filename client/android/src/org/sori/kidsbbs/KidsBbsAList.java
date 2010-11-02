@@ -245,9 +245,9 @@ public abstract class KidsBbsAList extends ListActivity {
 	protected final void showItemCommon(Context _from, Class<?> _to,
 			String _base, String _extra) {
 		String uriString = _base +
-				KidsBbs.PARAM_N_TABNAME + "=" + mTabname +
-				"&" + KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle +
-				_extra;
+			KidsBbs.PARAM_N_TABNAME + "=" + mTabname +
+			"&" + KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle +
+			_extra;
 		Intent intent = new Intent(_from, _to);
 		intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		intent.setAction(Intent.ACTION_VIEW);

@@ -148,7 +148,7 @@ public class KidsBbsView extends Activity {
 
 	private boolean isUpdating() {
 		return mLastUpdate != null &&
-				!mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED);
+			!mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED);
 	}
 
 	private class UpdateTask extends AsyncTask<Void, Void, Cursor> {

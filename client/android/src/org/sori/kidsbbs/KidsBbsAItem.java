@@ -51,5 +51,4 @@ public class KidsBbsAItem extends RelativeLayout {
 	public KidsBbsAItem(Context _context, AttributeSet _attrs, int _defStyle) {
 		super(_context, _attrs, _defStyle);
 	}
-
 }

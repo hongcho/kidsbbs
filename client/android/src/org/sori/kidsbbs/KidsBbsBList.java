@@ -118,9 +118,8 @@ public class KidsBbsBList extends ListActivity {
 	public void onCreateContextMenu(ContextMenu _menu, View _v,
 			ContextMenu.ContextMenuInfo _menuInfo) {
 		super.onCreateOptionsMenu(_menu);
-		_menu
-				.setHeaderTitle(getResources().getString(
-						R.string.blist_cm_header));
+		_menu.setHeaderTitle(getResources().getString(
+				R.string.blist_cm_header));
 		_menu.add(0, MENU_SHOW, Menu.NONE, R.string.read_text);
 	}
 
@@ -153,8 +152,8 @@ public class KidsBbsBList extends ListActivity {
 	}
 
 	private boolean isUpdating() {
-		return mLastUpdate != null
-				&& !mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED);
+		return mLastUpdate != null &&
+			!mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED);
 	}
 
 	private class UpdateTask extends AsyncTask<Void, Integer, Integer> {
