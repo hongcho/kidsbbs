@@ -30,18 +30,6 @@ import android.database.Cursor;
 import android.os.Bundle;
 
 public class KidsBbsTList extends KidsBbsAList {
-	private static final String[] FIELDS = {
-		KidsBbsProvider.KEY_ID,
-		KidsBbsProvider.KEYA_SEQ,
-		KidsBbsProvider.KEYA_USER,
-		KidsBbsProvider.KEYA_DATE,
-		KidsBbsProvider.KEYA_TITLE,
-		KidsBbsProvider.KEYA_THREAD,
-		KidsBbsProvider.KEYA_BODY,
-		KidsBbsProvider.KEYA_ALLREAD_FIELD,
-		KidsBbsProvider.KEYA_CNT_FIELD,
-	};
-	
 	private String mTitle;
 	
     @Override
@@ -52,7 +40,7 @@ public class KidsBbsTList extends KidsBbsAList {
         mTitle = resources.getString(R.string.title_tlist);
         
         updateTitle();
-        setQueryBase(KidsBbsProvider.CONTENT_URISTR_TLIST, FIELDS, null);
+        setQueryBase(KidsBbsProvider.CONTENT_URISTR_TLIST, FIELDS_TLIST, null);
         
         registerForContextMenu(getListView());
         

@@ -57,7 +57,7 @@ public class KidsBbsService extends Service
     				getApplicationContext());
     	mUpdateFreq = Integer.parseInt(prefs.getString(
     			Preferences.PREF_UPDATE_FREQ,
-    			Preferences.DEFAULT_UPDATE_FREQ));
+    			Preferences.getDefaultUpdateFreq(this)));
     	setupTimer(0, mUpdateFreq);
 	}
 	
@@ -65,7 +65,7 @@ public class KidsBbsService extends Service
 			String _key) {
 		if (_key.equals(Preferences.PREF_UPDATE_FREQ)) {
 			int updateFreqNew = Integer.parseInt(_prefs.getString(_key,
-					Preferences.DEFAULT_UPDATE_FREQ));
+					Preferences.getDefaultUpdateFreq(this)));
 			if (updateFreqNew != mUpdateFreq) {
 				int delay = mUpdateFreq < updateFreqNew ?
 					mUpdateFreq : updateFreqNew;
@@ -132,7 +132,6 @@ public class KidsBbsService extends Service
 		return count > 0;
 	}
 
-
 	private synchronized int refreshTable(String _tabname) {
 		final String[] FIELDS = {
 			KidsBbsProvider.KEYA_SEQ,
@@ -153,7 +152,7 @@ public class KidsBbsService extends Service
 		default:
 			return 0;
 		}
-		Log.i(TAG, _tabname + ": updating...");
+		Log.i(TAG, _tabname + ": (" + tabState + ") updating...");
 		
 		int error = 0;
 		int count = 0;
@@ -175,13 +174,18 @@ public class KidsBbsService extends Service
 		
 		int state = STATE_INSERT;
 		while (state != STATE_DONE) {
-			ArrayList<ArticleInfo> articles =
-				KidsBbs.getArticles(KidsBbs.URL_LIST, board, type, start);
+			ArrayList<ArticleInfo> articles;
+			try {
+				articles =
+					KidsBbs.getArticles(KidsBbs.URL_LIST, board, type, start);
+			} catch (Exception e) {
+				Log.e(TAG, _tabname + ": article retrieval failed", e);
+				state = STATE_DONE;
+				++error;
+				break;
+			}
 			if (articles.isEmpty()) {
 				state = STATE_DONE;
-				if (start == 0) {
-					++error;
-				}
 				break;
 			}
 			for (int i = 0; state != STATE_DONE && i < articles.size(); ++i) {
@@ -280,7 +284,6 @@ public class KidsBbsService extends Service
 							state = STATE_DONE;
 							break;
 						}
-						state = STATE_UPDATE;
 					} else {
 						if (state == STATE_INSERT) {
 							Log.i(TAG, _tabname +
@@ -310,17 +313,20 @@ public class KidsBbsService extends Service
 			}
 			start += articles.size();
 		}
-		trimBoardTable(_tabname);
+		int trimmed = trimBoardTable(_tabname);
+		Log.i(TAG, _tabname + ": trimed " + trimmed + " articles");
 		if (count > 0 && tabState == KidsBbsProvider.STATE_UPDATED) {
 			KidsBbs.announceNewArticles(KidsBbsService.this, _tabname);
 		}
 		if (error > 0) {
 			Log.e(TAG, _tabname + ": error after updating " +
 					count + " articles");
+			KidsBbs.announceUpdateError(KidsBbsService.this);
 		} else if (tabState == KidsBbsProvider.STATE_CREATED) {
+			Log.i(TAG, _tabname + ": switching to updated state");
 			setTableState(_tabname, KidsBbsProvider.STATE_UPDATED);
 		}
-		return count;
+		return count - trimmed;
 	}
 
 	private int refreshTables() {
@@ -376,7 +382,7 @@ public class KidsBbsService extends Service
 		return count;
 	}
 	
-	private void trimBoardTable(String _tabname) {
+	private int trimBoardTable(String _tabname) {
 		final String[] FIELDS = {
 			KidsBbsProvider.KEYA_SEQ,
 		};
@@ -389,7 +395,7 @@ public class KidsBbsService extends Service
 		// At least 15...
 		int size = KidsBbs.getBoardTableSize(cr, _tabname);
 		if (size <= KidsBbs.MIN_ARTICLES) {
-			return;
+			return 0;
 		}
 		
 		Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
@@ -430,6 +436,6 @@ public class KidsBbsService extends Service
 			}
 		}
 		
-		Log.i(TAG, _tabname + ": trimed " + count + " articles");
+		return count;
 	}
 }

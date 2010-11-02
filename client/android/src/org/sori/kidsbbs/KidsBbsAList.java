@@ -331,6 +331,27 @@ public abstract class KidsBbsAList extends ListActivity {
 		unregisterReceiver(mReceiverNew);
 	}
 	
+	protected static final String[] FIELDS_TLIST = {
+		KidsBbsProvider.KEY_ID,
+		KidsBbsProvider.KEYA_SEQ,
+		KidsBbsProvider.KEYA_USER,
+		KidsBbsProvider.KEYA_DATE,
+		KidsBbsProvider.KEYA_TITLE,
+		KidsBbsProvider.KEYA_THREAD,
+		KidsBbsProvider.KEYA_BODY,
+		KidsBbsProvider.KEYA_ALLREAD_FIELD,
+		KidsBbsProvider.KEYA_CNT_FIELD,
+	};
+	protected static final String[] FIELDS_LIST = {
+		KidsBbsProvider.KEY_ID,
+		KidsBbsProvider.KEYA_SEQ,
+		KidsBbsProvider.KEYA_USER,
+		KidsBbsProvider.KEYA_DATE,
+		KidsBbsProvider.KEYA_TITLE,
+		KidsBbsProvider.KEYA_THREAD,
+		KidsBbsProvider.KEYA_BODY,
+		KidsBbsProvider.KEYA_READ,
+	};
 	private class ArticlesAdapter extends CursorAdapter {
 		public static final int COLUMN_ID = 0;
 		public static final int COLUMN_SEQ = 1;

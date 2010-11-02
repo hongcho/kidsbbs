@@ -25,23 +25,24 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
-import java.util.ArrayList;
-
 import android.app.ListActivity;
 import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.ContextMenu;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.CursorAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -53,12 +54,16 @@ public class KidsBbsBList extends ListActivity {
 
 	private static final String KEY_SELECTED_ITEM = "KEY_SELECTED_ITEM";
 
-	private ArrayList<BoardInfo> mList = new ArrayList<BoardInfo>();
+	private BoardsAdapter mAdapter;
+	private int mSavedItemPosition;
 	private String mTitleBase;
+	private String mUpdateText;
+	private String mUpdateErrorText;
 
 	private TextView mStatusView;
 
 	private UpdateTask mLastUpdate = null;
+	private boolean mError = false;
 
 	@Override
 	public void onCreate(Bundle _state) {
@@ -67,9 +72,13 @@ public class KidsBbsBList extends ListActivity {
 
 		mTitleBase = getResources().getString(R.string.title_blist);
 		mStatusView = (TextView)findViewById(R.id.status);
+		
+		Resources resources = getResources();
+		mUpdateText = resources.getString(R.string.update_text);
+		mUpdateErrorText = resources.getString(R.string.update_error_text);
 
-		setListAdapter(new BListAdapter(this, R.layout.board_info_item,
-				mList));
+		mAdapter = new BoardsAdapter(this);
+		setListAdapter(mAdapter);
 
 		registerForContextMenu(getListView());
 		registerReceivers();
@@ -156,81 +165,50 @@ public class KidsBbsBList extends ListActivity {
 			!mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED);
 	}
 
-	private class UpdateTask extends AsyncTask<Void, Integer, Integer> {
-		private ArrayList<BoardInfo> mTList = new ArrayList<BoardInfo>();
-		private String mProgressBase;
-
+	private class UpdateTask extends AsyncTask<Void, Void, Cursor> {
 		@Override
 		protected void onPreExecute() {
-			mProgressBase = getResources().getString(R.string.update_text);
+			mStatusView.setText(mUpdateText);
 			mStatusView.setVisibility(View.VISIBLE);
 		}
 
 		@Override
-		protected Integer doInBackground(Void... _args) {
-			final String[] FIELDS = {
-				KidsBbsProvider.KEYB_TABNAME,
-				KidsBbsProvider.KEYB_TITLE,
-			};
-			ContentResolver cr = getContentResolver();
-			Cursor c = cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
+		protected Cursor doInBackground(Void... _args) {
+			return KidsBbsBList.this.managedQuery(
+					KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
 					KidsBbsProvider.SELECTION_STATE_ACTIVE, null, null);
-			if (c != null) {
-				BoardInfo info = null;
-				if (c.getCount() > 0) {
-					c.moveToFirst();
-					do {
-						String tabname = c.getString(c.getColumnIndex(
-								KidsBbsProvider.KEYB_TABNAME));
-						String title = c.getString(c.getColumnIndex(
-								KidsBbsProvider.KEYB_TITLE));
-						info = new BoardInfo(tabname, title);
-					} while (c.moveToNext());
-				}
-				c.close();
-				
-				if (info != null) {
-					info.setUnreadCount(KidsBbs.getBoardUnreadCount(cr,
-							info.getTabname()));
-					mTList.add(info);
-					//publishProgress(mTList.size());
-				}
+		}
+
+		@Override
+		protected void onPostExecute(Cursor _c) {
+			mStatusView.setVisibility(View.GONE);
+			if (_c == null || _c.isClosed()) {
+				return;
 			}
-			return mTList.size();
-		}
-
-		@Override
-		protected void onProgressUpdate(Integer... _args) {
-			mStatusView.setText(mProgressBase + " (" + _args[0] + ")");
-		}
-
-		@Override
-		protected void onPostExecute(Integer _count) {
-			updateView(mTList);
+			KidsBbsBList.this.mAdapter.changeCursor(_c);
+			restoreListPosition();
+			updateTitle();
 		}
 	}
 
-	private void updateView(ArrayList<BoardInfo> _list) {
-		mList.clear();
-		mList.addAll(_list);
-		((BListAdapter)getListAdapter()).notifyDataSetChanged();
-
-		mStatusView.setVisibility(View.GONE);
-		setTitle(mTitleBase + " (" + mList.size() + ")");
+	private void updateTitle() {
+		setTitle(mTitleBase + " (" + mAdapter.getCount() + ")");
 	}
 
 	private void refreshList() {
-		if (!isUpdating()) {
+		if (!mError && !isUpdating()) {
 			mLastUpdate = new UpdateTask();
-			mLastUpdate.execute((Void[]) null);
+			mLastUpdate.execute();
 		}
 	}
 
 	private void showItem(int _index) {
-		BoardInfo info = (BoardInfo)getListView().getItemAtPosition(_index);
+		Cursor c = (Cursor)mAdapter.getItem(_index);
+		String tabname = c.getString(BoardsAdapter.COLUMN_TABNAME);
+		String title = c.getString(BoardsAdapter.COLUMN_TITLE);
 		Uri data = Uri.parse(KidsBbs.URI_INTENT_TLIST +
-				KidsBbs.PARAM_N_TABNAME + "=" + info.getTabname() +
-				"&" + KidsBbs.PARAM_N_TITLE + "=" + info.getTitle());
+				KidsBbs.PARAM_N_TABNAME + "=" + tabname +
+				"&" + KidsBbs.PARAM_N_TITLE + "=" + title);
 		Intent i = new Intent(this, KidsBbsTList.class);
 		i.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		i.setAction(Intent.ACTION_VIEW);
@@ -241,53 +219,55 @@ public class KidsBbsBList extends ListActivity {
 	@Override
 	public void onSaveInstanceState(Bundle _state) {
 		super.onSaveInstanceState(_state);
-		_state.putInt(KEY_SELECTED_ITEM, getSelectedItemPosition());
+		saveListPosition();
+		_state.putInt(KEY_SELECTED_ITEM, mSavedItemPosition);
 	}
 
 	@Override
 	public void onRestoreInstanceState(Bundle _state) {
 		super.onRestoreInstanceState(_state);
-		int pos = -1;
-		if (_state != null) {
-			if (_state.containsKey(KEY_SELECTED_ITEM)) {
-				pos = _state.getInt(KEY_SELECTED_ITEM, -1);
-			}
-		}
-		setSelection(pos);
+		mSavedItemPosition = _state.getInt(KEY_SELECTED_ITEM, -1);
+		restoreListPosition();
 	}
-
-	private class SavedStates {
-		ArrayList<BoardInfo> list;
+	
+	private void saveListPosition() {
+		mSavedItemPosition = getSelectedItemPosition();
 	}
-
-	// Saving state for rotation changes...
-	public Object onRetainNonConfigurationInstance() {
-		SavedStates save = new SavedStates();
-		save.list = mList;
-		return save;
+	
+	private void restoreListPosition() {
+		setSelection(mSavedItemPosition);
 	}
 
 	private void initializeStates() {
-		SavedStates save = (SavedStates)getLastNonConfigurationInstance();
-		if (save == null) {
-			refreshList();
-		} else {
-			updateView(save.list);
-		}
+		refreshList();
 	}
 	
 	private boolean updateUnreadCount(String _tabname) {
-		BoardInfo info;
-		for (int i = 0; i < mList.size(); ++i) {
-			info = mList.get(i);
-			if (_tabname.equals(info.getTabname())) {
-				info.setUnreadCount(KidsBbs.getBoardUnreadCount(
-						getContentResolver(), _tabname));
-				mList.set(i, info);
+		for (int i = 0; i < mAdapter.getCount(); ++i) {
+			Cursor c = (Cursor)mAdapter.getItem(i);
+			String tabname = c.getString(BoardsAdapter.COLUMN_TABNAME);
+			if (_tabname.equals(tabname)) {
 				return true;
 			}
 		}
 		return false;
+	}
+	
+	private void setError() {
+		mError = true;
+		mStatusView.setVisibility(View.VISIBLE);
+	}
+	private void clearError() {
+		mError = false;
+		mStatusView.setVisibility(View.GONE);
+	}
+	
+	private class UpdateErrorReceiver extends BroadcastReceiver {
+		@Override
+		public void onReceive(Context _context, Intent _intent) {
+			mStatusView.setText(mUpdateErrorText);
+			setError();
+		}
 	}
 	
 	private class BoardUpdatedReceiver extends BroadcastReceiver {
@@ -295,8 +275,9 @@ public class KidsBbsBList extends ListActivity {
 		public void onReceive(Context _context, Intent _intent) {
 			String tabname = _intent.getStringExtra(
 					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME);
+			clearError();
 			if (updateUnreadCount(tabname)) {
-				((BListAdapter)getListAdapter()).notifyDataSetChanged();
+				mAdapter.notifyDataSetChanged();
 			}
 		}
 	}
@@ -307,7 +288,7 @@ public class KidsBbsBList extends ListActivity {
 			String tabname = _intent.getStringExtra(
 					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME);
 			if (updateUnreadCount(tabname)) {
-				((BListAdapter)getListAdapter()).notifyDataSetChanged();
+				mAdapter.notifyDataSetChanged();
 			}
 		}
 	}
@@ -317,17 +298,22 @@ public class KidsBbsBList extends ListActivity {
 		public void onReceive(Context _context, Intent _intent) {
 			String tabname = _intent.getStringExtra(
 					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME);
+			clearError();
 			if (updateUnreadCount(tabname)) {
-				((BListAdapter)getListAdapter()).notifyDataSetChanged();
+				mAdapter.notifyDataSetChanged();
 			}
 		}
 	}
 	
+	private UpdateErrorReceiver mReceiverError;
 	private BoardUpdatedReceiver mReceiverBoard;
 	private ArticleUpdatedReceiver mReceiverArticle;
 	private NewArticlesReceiver mReceiverNew;
 	
 	private void registerReceivers() {
+		mReceiverError = new UpdateErrorReceiver();
+		IntentFilter filterError = new IntentFilter(KidsBbs.UPDATE_ERROR);
+		registerReceiver(mReceiverError, filterError);
 		mReceiverBoard = new BoardUpdatedReceiver();
 		IntentFilter filterBoard = new IntentFilter(KidsBbs.BOARD_UPDATED);
 		registerReceiver(mReceiverBoard, filterBoard);
@@ -340,8 +326,60 @@ public class KidsBbsBList extends ListActivity {
 	}
 	
 	private void unregisterReceivers() {
+		unregisterReceiver(mReceiverError);
 		unregisterReceiver(mReceiverBoard);
 		unregisterReceiver(mReceiverArticle);
 		unregisterReceiver(mReceiverNew);
+	}
+	
+	private static final String[] FIELDS = {
+		KidsBbsProvider.KEY_ID,
+		KidsBbsProvider.KEYB_TABNAME,
+		KidsBbsProvider.KEYB_TITLE,
+	};
+	private class BoardsAdapter extends CursorAdapter {
+		public static final int COLUMN_ID = 0;
+		public static final int COLUMN_TABNAME = 1;
+		public static final int COLUMN_TITLE = 2;
+		
+		private Context mContext;
+		private LayoutInflater mInflater;
+
+		public BoardsAdapter(Context _context) {
+			super(_context, null, true);
+			mContext = _context;
+			mInflater = (LayoutInflater)mContext.getSystemService(
+					Context.LAYOUT_INFLATER_SERVICE);
+		}
+
+		private class ViewHolder {
+			TextView title;
+			TextView count;
+		}
+
+		@Override
+		public void bindView(View _v, Context _context, Cursor _c) {
+			KidsBbsBItem itemView = (KidsBbsBItem)_v;
+			itemView.mId = _c.getLong(COLUMN_ID);
+			itemView.mTabname = _c.getString(COLUMN_TABNAME);
+			itemView.mTitle = _c.getString(COLUMN_TITLE);
+			itemView.mCount = KidsBbs.getBoardUnreadCount(
+					getContentResolver(), itemView.mTabname);
+			
+			ViewHolder holder = (ViewHolder)itemView.getTag();
+			holder.title.setText(itemView.mTitle);
+			holder.count.setText(Integer.toString(itemView.mCount));
+		}
+
+		@Override
+		public View newView(Context _context, Cursor _c, ViewGroup _parent) {
+			View v = mInflater.inflate(R.layout.board_list_item, _parent,
+					false);
+			ViewHolder holder = new ViewHolder();
+			holder.title = (TextView)v.findViewById(R.id.title);
+			holder.count = (TextView)v.findViewById(R.id.count);
+			v.setTag(holder);
+			return v;
+		}
 	}
 }

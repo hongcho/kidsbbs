@@ -37,7 +37,7 @@
 			android:entries="@array/update_freq_options"
 			android:entryValues="@array/update_freq_values"
 			android:dialogTitle="@string/update_freq_title"
-			android:defaultValue="60"
+			android:defaultValue="@string/default_update_freq"
 			/>
 	</PreferenceCategory>
 	<PreferenceCategory
