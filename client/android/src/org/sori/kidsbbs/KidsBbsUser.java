@@ -31,17 +31,6 @@ import android.net.Uri;
 import android.os.Bundle;
 
 public class KidsBbsUser extends KidsBbsAList {
-	private static final String[] FIELDS = {
-		KidsBbsProvider.KEY_ID,
-		KidsBbsProvider.KEYA_SEQ,
-		KidsBbsProvider.KEYA_USER,
-		KidsBbsProvider.KEYA_DATE,
-		KidsBbsProvider.KEYA_TITLE,
-		KidsBbsProvider.KEYA_THREAD,
-		KidsBbsProvider.KEYA_BODY,
-		KidsBbsProvider.KEYA_READ,
-	};
-	
 	private String mBoardUser;
 	private String mTitle;
 	
@@ -56,7 +45,7 @@ public class KidsBbsUser extends KidsBbsAList {
         mTitle = resources.getString(R.string.title_user);
         
         updateTitle();
-        setQueryBase(KidsBbsProvider.CONTENT_URISTR_LIST, FIELDS,
+        setQueryBase(KidsBbsProvider.CONTENT_URISTR_LIST, FIELDS_LIST,
         		KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "'");
         
         registerForContextMenu(getListView());

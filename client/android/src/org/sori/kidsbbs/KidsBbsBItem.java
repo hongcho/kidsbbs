@@ -25,55 +25,25 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
-import java.util.List;
-
 import android.content.Context;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.TextView;
+import android.util.AttributeSet;
+import android.widget.RelativeLayout;
 
-public class BListAdapter extends ArrayAdapter<BoardInfo> {
-	private int mResource;
-	private LayoutInflater mInflater;
-	
-	public BListAdapter(Context _context, int _resource,
-			List<BoardInfo> _items) {
-		super(_context, _resource, _items);
-		mResource = _resource;
-		mInflater =
-			(LayoutInflater)getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+public class KidsBbsBItem extends RelativeLayout {
+	public long mId;
+	public String mTabname;
+	public String mTitle;
+	public int mCount;
+
+	public KidsBbsBItem(Context _context) {
+		super(_context);
 	}
-	
-	private class ViewHolder {
-		TextView title;
-		TextView count;
+
+	public KidsBbsBItem(Context _context, AttributeSet _attrs) {
+		super(_context, _attrs);
 	}
-	
-	@Override
-	public View getView(int _position, View _convertView, ViewGroup _parent) {
-		BoardInfo info = getItem(_position);
-		String title = info.getTitle();
-		int count = info.getUnreadCount();
-		
-		ViewHolder holder;
-		if (_convertView == null) {
-			_convertView = mInflater.inflate(mResource, _parent, false);
-			holder = new ViewHolder();
-			holder.title = (TextView)_convertView.findViewById(R.id.title);
-			holder.count = (TextView)_convertView.findViewById(R.id.count);
-			_convertView.setTag(holder);
-		} else {
-			holder = (ViewHolder)_convertView.getTag();
-		}
-		holder.title.setText(title);
-		if (count > 0) {
-			holder.count.setVisibility(View.VISIBLE);
-			holder.count.setText(Integer.toString(count));
-		} else {
-			holder.count.setVisibility(View.GONE);
-		}
-		return _convertView;
+
+	public KidsBbsBItem(Context _context, AttributeSet _attrs, int _defStyle) {
+		super(_context, _attrs, _defStyle);
 	}
 }

@@ -27,6 +27,7 @@ package org.sori.kidsbbs;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.Context;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
@@ -39,8 +40,6 @@ public class Preferences extends PreferenceActivity {
 	public static final String PREF_ABOUT_KIDSBBS = "PREF_ABOUT_KIDSBBS";
 	public static final String PREF_ABOUT_APP = "PREF_ABOUT_APP";
 	
-	public static final String DEFAULT_UPDATE_FREQ = "15";
-	
 	private static final int ABOUT_APP_ID = 0;
 	private static final int ABOUT_KIDSBBS_ID = 1;
 	
@@ -49,6 +48,15 @@ public class Preferences extends PreferenceActivity {
 
 	private String mAboutKidsbbsString;
 	private String mAboutAppString;
+	
+	private static String DEFAULT_UPDATE_FREQ = null;
+	public static final String getDefaultUpdateFreq(Context _context) {
+		if (DEFAULT_UPDATE_FREQ == null) {
+			DEFAULT_UPDATE_FREQ = _context.getResources().getString(
+					R.string.default_update_freq);
+		}
+		return DEFAULT_UPDATE_FREQ;
+	}
 	
 	@Override
 	public void onCreate(Bundle _state) {

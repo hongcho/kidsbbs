@@ -25,7 +25,6 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -40,7 +39,6 @@ import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -48,11 +46,11 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.HttpConnectionParams;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 import android.app.Activity;
 import android.content.ContentResolver;
@@ -73,6 +71,7 @@ public class KidsBbs extends Activity {
 	public static final String BOARD_UPDATED = BCAST_BASE + "BoardUpdated";
 	public static final String NEW_ARTICLES = BCAST_BASE + "NewArticles";
 	public static final String ARTICLE_UPDATED = BCAST_BASE + "ArticleUpdated";
+	public static final String UPDATE_ERROR = BCAST_BASE + "UpdateError";
 
 	private static final String URL_BASE = "http://sori.org/kids/kids.php?_o=1&";
 	public static final String URL_BLIST = URL_BASE; 
@@ -117,7 +116,7 @@ public class KidsBbs extends Activity {
 
 	private static final int MAX_DAYS = 14;
 	public static final int MIN_ARTICLES = 15;
-	public static final int MAX_ARTICLES = 1500;
+	public static final int MAX_ARTICLES = 1000;
 	public static final String KST_DIFF = "'-9 hours'";
 	public static final String MAX_TIME = "'-" + MAX_DAYS + " days'";
 	
@@ -263,7 +262,7 @@ public class KidsBbs extends Activity {
 	}
 	
 	public static final ArrayList<ArticleInfo> getArticles(String _base,
-			String _board, int _type, int _start) {
+			String _board, int _type, int _start) throws Exception {
 		ArrayList<ArticleInfo> articles = new ArrayList<ArticleInfo>();
 		String tabname = BoardInfo.buildTabname(_board, _type);
 		String urlString = _base +
@@ -271,49 +270,41 @@ public class KidsBbs extends Activity {
 			"&" + KidsBbs.PARAM_N_TYPE + "=" + _type +
 			"&" + KidsBbs.PARAM_N_START + "=" + _start;
 		HttpClient client = new DefaultHttpClient();
+		client.getParams().setParameter(
+				HttpConnectionParams.CONNECTION_TIMEOUT, 30*1000);
 		HttpGet get = new HttpGet(urlString);
-		try {
-			HttpResponse response = client.execute(get); // IOException
-			HttpEntity entity = response.getEntity();
-			if (entity == null) {
-				// ???
-			} else if (response.getStatusLine().getStatusCode() ==
-					HttpStatus.SC_OK) {
-				InputStream is = entity.getContent(); // IOException
-				DocumentBuilder db =
-					DocumentBuilderFactory.newInstance().newDocumentBuilder(); // ParserConfigurationException
+		HttpResponse response = client.execute(get);
+		HttpEntity entity = response.getEntity();
+		if (entity == null) {
+			// ???
+		} else if (response.getStatusLine().getStatusCode() ==
+				HttpStatus.SC_OK) {
+			InputStream is = entity.getContent();
+			DocumentBuilder db =
+				DocumentBuilderFactory.newInstance().newDocumentBuilder();
 
-				// Parse the board list.
-				Document dom = db.parse(is); // IOException, SAXException
-				Element docEle = dom.getDocumentElement();
-				NodeList nl;
+			// Parse the article list.
+			Document dom = db.parse(is);
+			Element docEle = dom.getDocumentElement();
+			NodeList nl;
 
-				nl = docEle.getElementsByTagName("ITEMS");
-				if (nl == null || nl.getLength() <= 0) {
-					throw new KidsParseException("ParseException: ITEMS");
-				}
-				Element items = (Element)nl.item(0);
+			nl = docEle.getElementsByTagName("ITEMS");
+			if (nl == null || nl.getLength() <= 0) {
+				throw new KidsParseException("ParseException: ITEMS");
+			}
+			Element items = (Element)nl.item(0);
 
-				// Get a board item
-				nl = items.getElementsByTagName("ITEM");
-				if (nl != null && nl.getLength() > 0) {
-					for (int i = 0; i < nl.getLength(); ++i) {
-						ArticleInfo info = parseArticle(tabname,
-								(Element)nl.item(i));
-						if (info != null) {
-							articles.add(info);
-						}
+			// Get a board item
+			nl = items.getElementsByTagName("ITEM");
+			if (nl != null && nl.getLength() > 0) {
+				for (int i = 0; i < nl.getLength(); ++i) {
+					ArticleInfo info = parseArticle(tabname,
+							(Element)nl.item(i));
+					if (info != null) {
+						articles.add(info);
 					}
 				}
 			}
-		} catch (IOException e) {
-			Log.w(TAG, e);
-		} catch (ParserConfigurationException e) {
-			Log.w(TAG, e);
-		} catch (SAXException e) {
-			Log.w(TAG, e);
-		} catch (KidsParseException e) {
-			Log.w(TAG, e);
 		}
 		return articles;
 	}
@@ -426,6 +417,11 @@ public class KidsBbs extends Activity {
 			Log.e(TAG, "isRecent: parsing failed: " + _dateString);
 		}
 		return result;
+	}
+
+	public static final void announceUpdateError(Context _context) {
+		Intent intent = new Intent(KidsBbs.UPDATE_ERROR);
+		_context.sendBroadcast(intent);
 	}
 
 	public static final void announceBoardUpdated(Context _context,
