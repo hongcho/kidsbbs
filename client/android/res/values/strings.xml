@@ -36,6 +36,7 @@
     <string name="title_pref">키즈 비비에스 옵션</string>
 
     <string name="read_text">보기</string>
+    <string name="mark_read_text">읽음표시</string>
     <string name="blist_cm_header">보드목록 메뉴</string>
     <string name="alist_cm_header">글목록 메뉴</string>
     <string name="tlist_cm_header">쓰레드목록 메뉴</string>
@@ -44,6 +45,7 @@
     
     <string name="menu_select">보드선택</string>
     <string name="menu_refresh">업데이트</string>
+    <string name="menu_mark_all_read">모두읽음 표시</string>
     <string name="menu_preferences">설정</string>
 
 	<string name="settings_update">업데이트 옵션</string>

@@ -56,7 +56,8 @@ public abstract class KidsBbsAList extends ListActivity
 	protected static final int MENU_REFRESH = Menu.FIRST;
 	protected static final int MENU_SHOW = Menu.FIRST + 1;
 	protected static final int MENU_PREFERENCES = Menu.FIRST + 2;
-	protected static final int MENU_LAST = MENU_PREFERENCES;
+	protected static final int MENU_MARK_ALL_READ = Menu.FIRST + 3;
+	protected static final int MENU_MARK_READ = Menu.FIRST + 4;
 
 	private static final String KEY_SELECTED_ITEM = "KEY_SELECTED_ITEM";
 
@@ -170,10 +171,16 @@ public abstract class KidsBbsAList extends ListActivity
 				"android:drawable/ic_menu_refresh", null, null));
 		itemUpdate.setShortcut('0', 'r');
 
+		MenuItem itemMarkAllRead = _menu.add(0, MENU_MARK_ALL_READ, Menu.NONE,
+				R.string.menu_mark_all_read);
+		itemMarkAllRead.setIcon(getResources().getIdentifier(
+				"android:drawable/ic_menu_mark", null, null));
+		itemMarkAllRead.setShortcut('1', 'm');
+
 		MenuItem itemPreferences = _menu.add(0, MENU_PREFERENCES, Menu.NONE,
 				R.string.menu_preferences);
 		itemPreferences.setIcon(android.R.drawable.ic_menu_preferences);
-		itemPreferences.setShortcut('1', 'p');
+		itemPreferences.setShortcut('2', 'p');
 
 		return true;
 	}
@@ -184,6 +191,9 @@ public abstract class KidsBbsAList extends ListActivity
 		switch (item.getItemId()) {
 		case MENU_REFRESH:
 			refreshList();
+			return true;
+		case MENU_MARK_ALL_READ:
+			markAllRead();
 			return true;
 		case MENU_PREFERENCES:
 			showPreference();
@@ -207,6 +217,7 @@ public abstract class KidsBbsAList extends ListActivity
 		setContextMenuTitle(getResources().getString(
 				R.string.alist_cm_header));
 		mContextMenu.add(0, MENU_SHOW, Menu.NONE, R.string.read_text);
+		mContextMenu.add(1, MENU_MARK_READ, Menu.NONE, R.string.mark_read_text);
 	}
 
 	@Override
@@ -217,8 +228,20 @@ public abstract class KidsBbsAList extends ListActivity
 			showItem(((AdapterView.AdapterContextMenuInfo)
 					_item.getMenuInfo()).position);
 			return true;
+		case MENU_MARK_READ:
+			markRead(((AdapterView.AdapterContextMenuInfo)
+					_item.getMenuInfo()).position);
+			return true;
 		}
 		return false;
+	}
+	
+	private void markRead(int _index) {
+		
+	}
+	
+	private void markAllRead() {
+		
 	}
 	
 	private class UpdateTask extends AsyncTask<Void, Void, Cursor> {
