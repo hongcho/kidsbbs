@@ -25,6 +25,9 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
+import android.app.AlertDialog;
+import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -81,5 +84,44 @@ public class KidsBbsTList extends KidsBbsAList {
 			target = KidsBbsView.class;
 		}
 		showItemCommon(this, target, base, extra);
+    }
+    
+    protected void markRead(int _index) {
+    	Cursor c = getItem(_index);
+    	int count = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_CNT));
+    	int nChanged;
+    	if (count > 1) {
+    		String thread = c.getString(c.getColumnIndex(
+    				KidsBbsProvider.KEYA_THREAD));
+    		String where = KidsBbsProvider.KEYA_THREAD + "='" + thread +
+    			"' AND " + KidsBbsProvider.SELECTION_UNREAD;
+    		ContentValues values = new ContentValues();
+    		values.put(KidsBbsProvider.KEYA_READ, 1);
+    		nChanged = mResolver.update(getUriList(), values, where, null);
+    	} else {
+    		nChanged = markReadOne(c);
+    	}
+    	if (nChanged > 0) {
+    		refreshList();
+    	}
+    }
+    
+    protected void markAllRead() {
+    	AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    	builder.setTitle(R.string.confirm_text);
+    	builder.setMessage(R.string.mark_all_read_message);
+    	builder.setPositiveButton(android.R.string.ok,
+    			new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface _dialog, int _which) {
+	    		ContentValues values = new ContentValues();
+	    		values.put(KidsBbsProvider.KEYA_READ, 1);
+	    		int nChanged = mResolver.update(getUriList(), values,
+	    				KidsBbsProvider.SELECTION_UNREAD, null);
+	    		if (nChanged > 0) {
+	    			refreshList();
+	    		}
+			}
+		});
+    	builder.setNegativeButton(android.R.string.cancel, null);
     }
 }

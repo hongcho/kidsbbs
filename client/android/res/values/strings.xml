@@ -64,6 +64,8 @@
     <string name="update_error_text">서버에서 글을 불러오는데 문제가 있습니다</string>
     
     <string name="board_selection_title">보드를 골라주세요.</string>
+    <string name="confirm_text">확실한가요?</string>
+    <string name="mark_all_read_message">전부 읽은 것으로 표시합니다.</string>
     
     <string name="about_kidsbbs_text">
     	<![CDATA[<UL>
