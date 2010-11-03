@@ -49,6 +49,11 @@
 	<string name="settings_update">업데이트 옵션</string>
     <string name="update_freq_title">업데이트 주기</string>
     <string name="update_freq_summary">백그라운드 서비스의 업데이트 주기를 정하세요.</string>
+    
+	<string name="settings_viewing">보기 옵션</string>
+	<string name="hide_read_title">읽은 글 숨기기</string>
+	<string name="hide_read_summary">읽은 글을 목록에서 제외시킵니다.</string>
+	
 	<string name="settings_general">일반 옵션</string>
     <string name="about_kidsbbs_title">키즈 비비에스란?</string>
     <string name="about_app_title">이 앱에 대하여</string>

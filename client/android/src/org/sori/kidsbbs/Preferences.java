@@ -37,6 +37,7 @@ import android.webkit.WebView;
 
 public class Preferences extends PreferenceActivity {
 	public static final String PREF_UPDATE_FREQ = "PREF_UPDATE_FREQ";
+	public static final String PREF_HIDE_READ = "PREF_HIDE_READ";
 	public static final String PREF_ABOUT_KIDSBBS = "PREF_ABOUT_KIDSBBS";
 	public static final String PREF_ABOUT_APP = "PREF_ABOUT_APP";
 	

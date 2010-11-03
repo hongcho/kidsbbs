@@ -31,12 +31,15 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -48,7 +51,8 @@ import android.widget.CursorAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-public abstract class KidsBbsAList extends ListActivity {
+public abstract class KidsBbsAList extends ListActivity
+				implements OnSharedPreferenceChangeListener {
 	protected static final int MENU_REFRESH = Menu.FIRST;
 	protected static final int MENU_SHOW = Menu.FIRST + 1;
 	protected static final int MENU_PREFERENCES = Menu.FIRST + 2;
@@ -74,6 +78,8 @@ public abstract class KidsBbsAList extends ListActivity {
 	private ContextMenu mContextMenu;
 	
 	private UpdateTask mLastUpdate;
+
+	private boolean mHideRead;
 
 	// First call setQueryBase(), and all refreshListCommon().
 	abstract protected void refreshList();
@@ -122,6 +128,23 @@ public abstract class KidsBbsAList extends ListActivity {
 		setListAdapter(mAdapter);
 		
 		registerReceivers();
+
+		SharedPreferences prefs =
+			PreferenceManager.getDefaultSharedPreferences(
+					getApplicationContext());
+		mHideRead = prefs.getBoolean(Preferences.PREF_HIDE_READ, false);
+		prefs.registerOnSharedPreferenceChangeListener(this);
+	}
+	
+	public void onSharedPreferenceChanged(SharedPreferences _prefs,
+			String _key) {
+		if (_key.equals(Preferences.PREF_HIDE_READ)) {
+			boolean hideRead = _prefs.getBoolean(_key, false);
+			if (hideRead != mHideRead) {
+				mHideRead = hideRead;
+				refreshList();
+			}
+		}
 	}
 	
 	@Override
@@ -207,8 +230,17 @@ public abstract class KidsBbsAList extends ListActivity {
 
 		@Override
 		protected Cursor doInBackground(Void... _args) {
+			String where = mWhere;
+			if (mHideRead) {
+				if (where != null) {
+					where += " AND ";
+				} else {
+					where = "";
+				}
+				where += KidsBbsProvider.KEYA_READ + "=0";
+			}
 			return KidsBbsAList.this.managedQuery(mUri, mFields,
-					mWhere, null, null);
+					where, null, null);
 		}
 		
 		@Override
