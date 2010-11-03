@@ -237,11 +237,9 @@ public class KidsBbsBList extends ListActivity {
 			KidsBbsProvider.KEYB_TITLE,
 			KidsBbsProvider.KEYB_STATE,
 		};
-		final String ORDERBY = KidsBbsProvider.KEYB_STATE + " DESC,LOWER(" +
-			KidsBbsProvider.KEYB_TITLE + ") ASC";
 		String[] titles = null;
 		Cursor c = mResolver.query(KidsBbsProvider.CONTENT_URI_BOARDS,
-				FIELDS, null, null, ORDERBY);
+				FIELDS, null, null, KidsBbsProvider.ORDER_BY_STATE_DESC);
 		if (c != null) {
 			int size = c.getCount();
 			if (size > 0) {
