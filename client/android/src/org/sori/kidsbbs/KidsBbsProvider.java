@@ -415,7 +415,7 @@ public class KidsBbsProvider extends ContentProvider {
 					" (" + KEYA_SEQ + " DESC)");
 			_db.execSQL("CREATE VIEW " + getViewname(_tabname) +
 					" AS SELECT * FROM " + _tabname +
-					" ORDER BY " + ORDER_BY_SEQ_DESC + ";");
+					" ORDER BY " + ORDER_BY_SEQ_ASC + ";");
 		}
 		
 		private void dropArticleTable(SQLiteDatabase _db, String _tabname) {
