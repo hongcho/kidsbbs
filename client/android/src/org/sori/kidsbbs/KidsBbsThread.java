@@ -25,6 +25,7 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
+import android.content.ContentValues;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
@@ -74,5 +75,13 @@ public class KidsBbsThread extends KidsBbsAList {
     	int seq = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
 		showItemCommon(this, KidsBbsView.class, KidsBbs.URI_INTENT_VIEW,
 				"&" + KidsBbs.PARAM_N_SEQ + "=" + seq);
+    }
+    
+    protected void markRead(int _index) {
+    	markReadOne(getItem(_index));
+    }
+    
+    protected void markAllRead() {
+    	
     }
 }

@@ -146,7 +146,7 @@ public class KidsBbsService extends Service
 		
 		int tabState = getTableState(_tabname);
 		switch (tabState) {
-		case KidsBbsProvider.STATE_CREATED:
+		case KidsBbsProvider.STATE_INIT:
 		case KidsBbsProvider.STATE_UPDATED:
 			break;
 		default:
@@ -164,7 +164,7 @@ public class KidsBbsService extends Service
 		ContentResolver cr = getContentResolver();
 		
 		int maxArticles = KidsBbs.MAX_ARTICLES;
-		if (tabState != KidsBbsProvider.STATE_CREATED) {
+		if (tabState != KidsBbsProvider.STATE_INIT) {
 			int tabSize = KidsBbs.getBoardTableSize(cr, _tabname);
 			maxArticles -= tabSize;
 			if (maxArticles <= 0) {
@@ -277,7 +277,7 @@ public class KidsBbsService extends Service
 									old.getDateString()) &&
 							info.getTitle().equals(old.getTitle())) {
 						result = false;
-						if (tabState != KidsBbsProvider.STATE_CREATED) {
+						if (tabState != KidsBbsProvider.STATE_INIT) {
 							Log.i(TAG, _tabname +
 									": done updating: reached same article: " +
 									info.getSeq());
@@ -313,6 +313,8 @@ public class KidsBbsService extends Service
 			}
 			start += articles.size();
 		}
+		int trimmed = trimBoardTable(_tabname);
+		Log.i(TAG, _tabname + ": trimed " + trimmed + " articles");
 		if (count > 0 && tabState == KidsBbsProvider.STATE_UPDATED) {
 			KidsBbs.announceNewArticles(KidsBbsService.this, _tabname);
 		}
@@ -320,7 +322,8 @@ public class KidsBbsService extends Service
 			Log.e(TAG, _tabname + ": error after updating " +
 					count + " articles");
 			KidsBbs.announceUpdateError(KidsBbsService.this);
-		} else if (tabState == KidsBbsProvider.STATE_CREATED) {
+			setTableState(_tabname, KidsBbsProvider.STATE_INIT);
+		} else if (tabState == KidsBbsProvider.STATE_INIT) {
 			Log.i(TAG, _tabname + ": switching to updated state");
 			setTableState(_tabname, KidsBbsProvider.STATE_UPDATED);
 		}
@@ -333,6 +336,8 @@ public class KidsBbsService extends Service
 		};
 		final String WHERE = KidsBbsProvider.KEYB_STATE + "!=" +
 			KidsBbsProvider.STATE_PAUSED;
+		final String ORDERBY = KidsBbsProvider.ORDER_BY_STATE_ASC + "," +
+			KidsBbsProvider.ORDER_BY_ID;
 
 		int total_count = 0;
 		ArrayList<String> tabnames = new ArrayList<String>(); 
@@ -340,7 +345,7 @@ public class KidsBbsService extends Service
 
 		// Get all the boards...
 		Cursor c = cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
-				WHERE, null, KidsBbsProvider.ORDER_BY_STATE_ASC);
+				WHERE, null, ORDERBY);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -359,9 +364,6 @@ public class KidsBbsService extends Service
 				int count = refreshTable(tabname);
 				Log.i(TAG, tabname + ": updated " + count + " articles");
 				total_count += count;
-				
-				int trimmed = trimBoardTable(tabname);
-				Log.i(TAG, tabname + ": trimed " + trimmed + " articles");
 			} catch (Exception e) {
 				Log.i(TAG, tabname + ": exception while updating", e);
 			}
@@ -375,10 +377,11 @@ public class KidsBbsService extends Service
 	
 	private int deleteArticles(ContentResolver _cr, Uri _uri, Cursor _c,
 			int _max) {
+		int col_index = _c.getColumnIndex(KidsBbsProvider.KEYA_SEQ);
 		int count = 0;
 		_c.moveToFirst();
 		do {
-			int seq = _c.getInt(0);
+			int seq = _c.getInt(col_index);
 			if (seq > 0) {
 				count += _cr.delete(_uri, KidsBbsProvider.SELECTION_SEQ,
 						new String[] {Integer.toString(seq)});

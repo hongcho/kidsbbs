@@ -59,15 +59,17 @@ public abstract class KidsBbsAList extends ListActivity
 	protected static final int MENU_MARK_ALL_READ = Menu.FIRST + 3;
 	protected static final int MENU_MARK_READ = Menu.FIRST + 4;
 
+	protected ContentResolver mResolver;
+	
 	private static final String KEY_SELECTED_ITEM = "KEY_SELECTED_ITEM";
 
 	private ArticlesAdapter mAdapter;
 	private int mSavedItemPosition;
 
-	private ContentResolver mResolver;
 	private Uri mUri;
 	private String[] mFields;
 	private String mWhere;
+	private Uri mUriList;
 
 	private String mBoardTitle;
 	private String mTabname;
@@ -91,12 +93,19 @@ public abstract class KidsBbsAList extends ListActivity
 	// Call showItemCommon() with custom parameters.
 	abstract protected void showItem(int _index);
 	
+	// Marking articles read.
+	abstract protected void markRead(int _index);
+	abstract protected void markAllRead();
+	
 	// A matching broadcast?
 	abstract protected boolean matchingBroadcast(int _seq, String _user,
 			String _thread);
 
 	protected final String getBoardTitle() {
 		return mBoardTitle;
+	}
+	protected final Uri getUriList() {
+		return mUriList;
 	}
 	
 	protected final int getUnreadCount(String _uriBase, String _where) {
@@ -116,6 +125,8 @@ public abstract class KidsBbsAList extends ListActivity
 		Uri data = getIntent().getData();
 		mTabname = data.getQueryParameter(KidsBbs.PARAM_N_TABNAME);
 		mBoardTitle = data.getQueryParameter(KidsBbs.PARAM_N_TITLE);
+		
+		mUriList = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + mTabname);
 		
 		mResolver = getContentResolver();
 		
@@ -236,14 +247,6 @@ public abstract class KidsBbsAList extends ListActivity
 		return false;
 	}
 	
-	private void markRead(int _index) {
-		
-	}
-	
-	private void markAllRead() {
-		
-	}
-	
 	private class UpdateTask extends AsyncTask<Void, Void, Cursor> {
 		@Override
 		protected void onPreExecute() {
@@ -260,7 +263,7 @@ public abstract class KidsBbsAList extends ListActivity
 				} else {
 					where = "";
 				}
-				where += KidsBbsProvider.KEYA_READ + "=0";
+				where += mFields[ArticlesAdapter.COLUMN_READ] + "=0";
 			}
 			return KidsBbsAList.this.managedQuery(mUri, mFields,
 					where, null, null);
@@ -308,6 +311,23 @@ public abstract class KidsBbsAList extends ListActivity
 		intent.setAction(Intent.ACTION_VIEW);
 		intent.setData(Uri.parse(uriString));
 		startActivity(intent);
+	}
+	
+	protected int markReadOne(Cursor _c) {
+		boolean read = _c.getInt(ArticlesAdapter.COLUMN_READ) != 0;
+		if (!read) {
+	    	int seq = _c.getInt(_c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
+	    	String user = _c.getString(_c.getColumnIndex(
+	    			KidsBbsProvider.KEYA_USER));
+	    	String thread = _c.getString(_c.getColumnIndex(
+	    			KidsBbsProvider.KEYA_THREAD));
+	    	if (KidsBbs.updateArticleRead(mResolver, mTabname, seq, true)) {
+				KidsBbs.announceArticleUpdated(KidsBbsAList.this, mTabname,
+						seq, user, thread);
+				return 1;
+			}
+		}
+		return 0;
 	}
     
     protected void showPreference() {

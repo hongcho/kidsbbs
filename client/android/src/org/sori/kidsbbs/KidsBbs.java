@@ -116,7 +116,7 @@ public class KidsBbs extends Activity {
 
 	private static final int MAX_DAYS = 14;
 	public static final int MIN_ARTICLES = 15;
-	public static final int MAX_ARTICLES = 1500;
+	public static final int MAX_ARTICLES = 1000;
 	public static final String KST_DIFF = "'-9 hours'";
 	public static final String MAX_TIME = "'-" + MAX_DAYS + " days'";
 	

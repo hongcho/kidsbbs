@@ -113,7 +113,7 @@ public class KidsBbsProvider extends ContentProvider {
 			groupby = KidsBbsProvider.KEYA_THREAD;
 			break;
 		case TYPE_BOARDS:
-			orderby = "LOWER(" + KEYB_TITLE + ")";
+			orderby = ORDER_BY_TITLE;
 			break;
 		default:
 			throw new IllegalArgumentException(
@@ -219,7 +219,7 @@ public class KidsBbsProvider extends ContentProvider {
 		KEYB_STATE + " TINYINT DEFAULT 0";
 
 	public static final int STATE_PAUSED = 0; // no table or not updating
-	public static final int STATE_CREATED = 1; // table is created, not updated
+	public static final int STATE_INIT = 1; // table is created, not updated
 	public static final int STATE_UPDATED = 2; // update is done
 
 	// Article table
@@ -274,11 +274,11 @@ public class KidsBbsProvider extends ContentProvider {
 	public static final String ORDER_BY_SEQ_ASC =
 		KEYA_SEQ + " ASC";
 	public static final String ORDER_BY_STATE_ASC =
-		KidsBbsProvider.KEYB_STATE + " ASC,LOWER(" +
-		KidsBbsProvider.KEYB_TITLE + ") ASC";
+		KEYB_STATE + " ASC";
 	public static final String ORDER_BY_STATE_DESC =
-		KidsBbsProvider.KEYB_STATE + " DESC,LOWER(" +
-		KidsBbsProvider.KEYB_TITLE + ") ASC";
+		KEYB_STATE + " DESC";
+	public static final String ORDER_BY_TITLE =
+		"LOWER(" + KEYB_TITLE + ")";
 
 	private static final String DB_NAME = "kidsbbs.db";
 	private static final int DB_VERSION = 2;
@@ -345,7 +345,7 @@ public class KidsBbsProvider extends ContentProvider {
 				}
 				addBoard(_db, new BoardInfo(tabnames[i], title),
 						mUpdateMap.get(tabnames[i]) ?
-							STATE_CREATED : STATE_PAUSED);
+							STATE_INIT : STATE_PAUSED);
 			}
 		}
 

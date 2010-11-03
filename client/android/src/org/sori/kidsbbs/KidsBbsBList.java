@@ -237,9 +237,11 @@ public class KidsBbsBList extends ListActivity {
 			KidsBbsProvider.KEYB_TITLE,
 			KidsBbsProvider.KEYB_STATE,
 		};
+		final String ORDERBY = KidsBbsProvider.ORDER_BY_STATE_DESC + "," +
+			KidsBbsProvider.ORDER_BY_ID;
 		String[] titles = null;
 		Cursor c = mResolver.query(KidsBbsProvider.CONTENT_URI_BOARDS,
-				FIELDS, null, null, KidsBbsProvider.ORDER_BY_STATE_DESC);
+				FIELDS, null, null, ORDERBY);
 		if (c != null) {
 			int size = c.getCount();
 			if (size > 0) {
@@ -284,7 +286,7 @@ public class KidsBbsBList extends ListActivity {
 						++nUpdated;
 						ContentValues values = new ContentValues();
 						values.put(KidsBbsProvider.KEYB_STATE,
-								mSelectedNew[i] ? KidsBbsProvider.STATE_CREATED :
+								mSelectedNew[i] ? KidsBbsProvider.STATE_INIT :
 									KidsBbsProvider.STATE_PAUSED);
 						mResolver.update(KidsBbsProvider.CONTENT_URI_BOARDS,
 								values, KidsBbsProvider.SELECTION_TABNAME,
