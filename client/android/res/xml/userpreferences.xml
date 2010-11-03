@@ -41,6 +41,16 @@
 			/>
 	</PreferenceCategory>
 	<PreferenceCategory
+		android:title="@string/settings_viewing"
+		>
+		<CheckBoxPreference
+			android:key="PREF_HIDE_READ"
+			android:title="@string/hide_read_title"
+			android:summary="@string/hide_read_summary"
+			android:defaultValue="false"
+			/>
+	</PreferenceCategory>
+	<PreferenceCategory
 		android:title="@string/settings_general"
 		>
 		<PreferenceScreen

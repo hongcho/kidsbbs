@@ -78,11 +78,7 @@
     </string-array>
     
     <string-array name="default_board_tables">
-        <item>b0_anonymous</item>
-        <item>b0_AnonymousSerious</item>
-        <item>b0_garbages</item>
         <item>b0_ToSysop</item>
-        <item>b0_notice</item>
     </string-array>
     
     <string-array name="board_table_names">
