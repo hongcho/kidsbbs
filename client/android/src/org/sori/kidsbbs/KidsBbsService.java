@@ -340,7 +340,7 @@ public class KidsBbsService extends Service
 
 		// Get all the boards...
 		Cursor c = cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
-				WHERE, null, KidsBbsProvider.ORDER_BY_ID);
+				WHERE, null, KidsBbsProvider.ORDER_BY_STATE_ASC);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -355,12 +355,16 @@ public class KidsBbsService extends Service
 		// Update each board in the list.
 		for (int i = 0; i < tabnames.size(); ++i) {
 			String tabname = tabnames.get(i);
-			int count = refreshTable(tabname); 
-			Log.i(TAG, tabname + ": updated " + count + " articles");
-			total_count += count;
-			
-			int trimmed = trimBoardTable(tabname);
-			Log.i(TAG, tabname + ": trimed " + trimmed + " articles");
+			try {
+				int count = refreshTable(tabname);
+				Log.i(TAG, tabname + ": updated " + count + " articles");
+				total_count += count;
+				
+				int trimmed = trimBoardTable(tabname);
+				Log.i(TAG, tabname + ": trimed " + trimmed + " articles");
+			} catch (Exception e) {
+				Log.i(TAG, tabname + ": exception while updating", e);
+			}
 		}
 		return total_count;
 	}

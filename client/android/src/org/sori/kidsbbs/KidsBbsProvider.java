@@ -273,6 +273,12 @@ public class KidsBbsProvider extends ContentProvider {
 		KEYA_SEQ + " DESC";
 	public static final String ORDER_BY_SEQ_ASC =
 		KEYA_SEQ + " ASC";
+	public static final String ORDER_BY_STATE_ASC =
+		KidsBbsProvider.KEYB_STATE + " ASC,LOWER(" +
+		KidsBbsProvider.KEYB_TITLE + ") ASC";
+	public static final String ORDER_BY_STATE_DESC =
+		KidsBbsProvider.KEYB_STATE + " DESC,LOWER(" +
+		KidsBbsProvider.KEYB_TITLE + ") ASC";
 
 	private static final String DB_NAME = "kidsbbs.db";
 	private static final int DB_VERSION = 2;
