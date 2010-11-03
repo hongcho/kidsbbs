@@ -29,7 +29,9 @@ import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
@@ -53,9 +55,9 @@ public class KidsBbsBList extends ListActivity {
 	private static final int MENU_PREFERENCES = Menu.FIRST + 1;
 	private static final int MENU_SHOW = Menu.FIRST + 2;
 	private static final int MENU_SELECT = Menu.FIRST + 3;
-
+	
 	private static final String KEY_SELECTED_ITEM = "KEY_SELECTED_ITEM";
-
+	
 	private ContentResolver mResolver;
 
 	private BoardsAdapter mAdapter;
@@ -70,6 +72,11 @@ public class KidsBbsBList extends ListActivity {
 	private UpdateTask mLastUpdate = null;
 	private boolean mError = false;
 
+	// Board selection dialog stuff
+	private String[] mTabnames;
+	private boolean[] mSelectedOld;
+	private boolean[] mSelectedNew;
+	
 	@Override
 	public void onCreate(Bundle _state) {
 		super.onCreate(_state);
@@ -144,17 +151,7 @@ public class KidsBbsBList extends ListActivity {
 		super.onOptionsItemSelected(item);
 		switch (item.getItemId()) {
 		case MENU_SELECT:
-			final String[] FIELDS0 = {
-				KidsBbsProvider.KEY_ID,
-				KidsBbsProvider.KEYB_STATE,
-				KidsBbsProvider.KEYB_TITLE,
-			};
-			Cursor c = mResolver.query(KidsBbsProvider.CONTENT_URI_BOARDS,
-					FIELDS0, null, null, null);
-			AlertDialog.Builder builder = new AlertDialog.Builder(this);
-			builder.setMultiChoiceItems(c, KidsBbsProvider.KEYB_STATE,
-					KidsBbsProvider.KEYB_TITLE, null);
-			builder.create().show();
+			selectBoards();
 			return true;
 		case MENU_REFRESH:
 			refreshList();
@@ -232,6 +229,78 @@ public class KidsBbsBList extends ListActivity {
 		i.setAction(Intent.ACTION_VIEW);
 		i.setData(data);
 		startActivity(i);
+	}
+	
+	private void selectBoards() {
+		final String[] FIELDS = {
+			KidsBbsProvider.KEYB_TABNAME,
+			KidsBbsProvider.KEYB_TITLE,
+			KidsBbsProvider.KEYB_STATE,
+		};
+		final String ORDERBY = KidsBbsProvider.KEYB_STATE + " DESC,LOWER(" +
+			KidsBbsProvider.KEYB_TITLE + ") ASC";
+		String[] titles = null;
+		Cursor c = mResolver.query(KidsBbsProvider.CONTENT_URI_BOARDS,
+				FIELDS, null, null, ORDERBY);
+		if (c != null) {
+			int size = c.getCount();
+			if (size > 0) {
+				mTabnames = new String[size];
+				titles = new String[size];
+				mSelectedOld = new boolean[size];
+				mSelectedNew = new boolean[size];
+				int i = 0;
+				c.moveToFirst();
+				do {
+					mTabnames[i] = c.getString(c.getColumnIndex(
+							KidsBbsProvider.KEYB_TABNAME));
+					titles[i] = c.getString(c.getColumnIndex(
+							KidsBbsProvider.KEYB_TITLE));
+					mSelectedOld[i] = c.getInt(c.getColumnIndex(
+							KidsBbsProvider.KEYB_STATE)) !=
+								KidsBbsProvider.STATE_PAUSED;
+					mSelectedNew[i] = mSelectedOld[i];
+					++i;
+				} while (c.moveToNext());
+			}
+			c.close();
+		}
+		if (titles != null) {
+			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			builder.setTitle(R.string.board_selection_title);
+			builder.setMultiChoiceItems(titles, mSelectedNew,
+					new DialogInterface.OnMultiChoiceClickListener() {
+				public void onClick(DialogInterface _dialog, int _which,
+						boolean _isChecked) {
+					mSelectedNew[_which] = _isChecked;
+				}
+			});
+			builder.setPositiveButton(android.R.string.ok,
+					new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface _dialog, int _which) {
+					int nUpdated = 0;
+					for (int i = 0; i < mSelectedNew.length; ++i) {
+						if (mSelectedNew[i] == mSelectedOld[i]) {
+							continue;
+						}
+						++nUpdated;
+						ContentValues values = new ContentValues();
+						values.put(KidsBbsProvider.KEYB_STATE,
+								mSelectedNew[i] ? KidsBbsProvider.STATE_CREATED :
+									KidsBbsProvider.STATE_PAUSED);
+						mResolver.update(KidsBbsProvider.CONTENT_URI_BOARDS,
+								values, KidsBbsProvider.SELECTION_TABNAME,
+								new String[] { mTabnames[i] });
+					}
+					if (nUpdated > 0) {
+						startService(new Intent(KidsBbsBList.this,
+								KidsBbsService.class));
+					}
+				}
+			});
+			builder.setNegativeButton(android.R.string.cancel, null);
+			builder.create().show();
+		}
 	}
 
 	@Override
@@ -398,6 +467,12 @@ public class KidsBbsBList extends ListActivity {
 			holder.count = (TextView)v.findViewById(R.id.count);
 			v.setTag(holder);
 			return v;
+		}
+		
+		@Override
+		protected void onContentChanged() {
+			super.onContentChanged();
+			updateTitle();
 		}
 	}
 }

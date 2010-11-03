@@ -45,9 +45,6 @@ public class Preferences extends PreferenceActivity {
 	
 	//private SharedPreferences prefs;
 	private LayoutInflater mInflater;
-
-	private String mAboutKidsbbsString;
-	private String mAboutAppString;
 	
 	private static String DEFAULT_UPDATE_FREQ = null;
 	public static final String getDefaultUpdateFreq(Context _context) {
@@ -82,32 +79,26 @@ public class Preferences extends PreferenceActivity {
 				});
 	}
 	
+	private Dialog createAboutDialog(int _id_title, int _id_text) {
+		String text = getResources().getString(_id_text);
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle(_id_title);
+		View v = mInflater.inflate(R.layout.about_dialog, null);
+		builder.setView(v);
+		WebView wv = (WebView)v.findViewById(R.id.about_text);
+		wv.loadData(text, "text/html", "utf-8");
+		return builder.create();
+	}
+	
 	@Override
 	protected Dialog onCreateDialog(int _id) {
-		AlertDialog.Builder builder;
-		View v;
-		WebView tv;
 		switch(_id) {
 		case ABOUT_KIDSBBS_ID:
-			mAboutKidsbbsString = getResources().getString(
+			return createAboutDialog(R.string.about_kidsbbs_title,
 					R.string.about_kidsbbs_text);
-			builder = new AlertDialog.Builder(this);
-			builder.setTitle(R.string.about_kidsbbs_title);
-			v = mInflater.inflate(R.layout.about_dialog, null);
-			builder.setView(v);
-			tv = (WebView)v.findViewById(R.id.about_text);
-			tv.loadData(mAboutKidsbbsString, "text/html", "utf-8");
-			return builder.create();
 		case ABOUT_APP_ID:
-			mAboutAppString = getResources().getString(
+			return createAboutDialog(R.string.about_app_title,
 					R.string.about_app_text);
-			builder = new AlertDialog.Builder(this);
-			builder.setTitle(R.string.about_app_title);
-			v = mInflater.inflate(R.layout.about_dialog, null);
-			builder.setView(v);
-			tv = (WebView)v.findViewById(R.id.about_text);
-			tv.loadData(mAboutAppString, "text/html", "utf-8");;
-			return builder.create();
 		}
 		return null;
 	}

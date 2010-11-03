@@ -163,13 +163,13 @@ public class KidsBbsService extends Service
 		Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
 		ContentResolver cr = getContentResolver();
 		
-		int tabSize = KidsBbs.getBoardTableSize(cr, _tabname);
-		int maxArticles = KidsBbs.MAX_ARTICLES - tabSize;
-		if (tabSize > 0) {
-			maxArticles += KidsBbs.MIN_ARTICLES;
-		}
-		if (maxArticles <= 0) {
-			maxArticles = KidsBbs.MIN_ARTICLES;
+		int maxArticles = KidsBbs.MAX_ARTICLES;
+		if (tabState != KidsBbsProvider.STATE_CREATED) {
+			int tabSize = KidsBbs.getBoardTableSize(cr, _tabname);
+			maxArticles -= tabSize;
+			if (maxArticles <= 0) {
+				maxArticles = 10*KidsBbs.MIN_ARTICLES;
+			}
 		}
 		
 		int state = STATE_INSERT;
@@ -313,8 +313,6 @@ public class KidsBbsService extends Service
 			}
 			start += articles.size();
 		}
-		int trimmed = trimBoardTable(_tabname);
-		Log.i(TAG, _tabname + ": trimed " + trimmed + " articles");
 		if (count > 0 && tabState == KidsBbsProvider.STATE_UPDATED) {
 			KidsBbs.announceNewArticles(KidsBbsService.this, _tabname);
 		}
@@ -326,7 +324,7 @@ public class KidsBbsService extends Service
 			Log.i(TAG, _tabname + ": switching to updated state");
 			setTableState(_tabname, KidsBbsProvider.STATE_UPDATED);
 		}
-		return count - trimmed;
+		return count;
 	}
 
 	private int refreshTables() {
@@ -360,6 +358,9 @@ public class KidsBbsService extends Service
 			int count = refreshTable(tabname); 
 			Log.i(TAG, tabname + ": updated " + count + " articles");
 			total_count += count;
+			
+			int trimmed = trimBoardTable(tabname);
+			Log.i(TAG, tabname + ": trimed " + trimmed + " articles");
 		}
 		return total_count;
 	}
