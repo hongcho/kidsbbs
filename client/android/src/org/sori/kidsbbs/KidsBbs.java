@@ -67,6 +67,7 @@ public class KidsBbs extends Activity {
 	public static final String PKG_BASE = "org.sori.kidsbbs.";
 	public static final String BCAST_BASE = PKG_BASE + "broadcast.";
 	public static final String PARAM_BASE = PKG_BASE + "param.";
+	public static final String ALARM_BASE = PKG_BASE + "alarm.";
 	
 	public static final String BOARD_UPDATED = BCAST_BASE + "BoardUpdated";
 	public static final String NEW_ARTICLES = BCAST_BASE + "NewArticles";
