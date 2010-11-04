@@ -25,6 +25,9 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import android.app.ListActivity;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
@@ -466,6 +469,10 @@ public abstract class KidsBbsAList extends ListActivity
 
 		@Override
 		public void bindView(View _v, Context _context, Cursor _c) {
+			final Pattern PATTERN = Pattern.compile("^Re:\\s*",
+					Pattern.CASE_INSENSITIVE);
+			final String REPLACEMENT = "";
+			
 			KidsBbsAItem itemView = (KidsBbsAItem)_v;
 			itemView.mId = _c.getLong(COLUMN_ID);
 			itemView.mSeq = _c.getInt(COLUMN_SEQ);
@@ -489,6 +496,11 @@ public abstract class KidsBbsAList extends ListActivity
 			date = KidsBbs.KidsToLocalDateString(date);
 			itemView.mDate = KidsBbs.GetShortDateString(date);
 			itemView.mSummary = KidsBbs.generateSummary(body);
+			// Remove "RE:" for threaded list.
+			if (mFields[COLUMN_READ].equals(KidsBbsProvider.KEYA_ALLREAD)) {
+				Matcher m = PATTERN.matcher(itemView.mTitle);
+				itemView.mTitle = m.replaceFirst(REPLACEMENT);
+			}
 			
 			ViewHolder holder = (ViewHolder)itemView.getTag();
 			if (itemView.mRead) {
