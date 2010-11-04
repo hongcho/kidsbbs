@@ -56,8 +56,8 @@ public abstract class KidsBbsAList extends ListActivity
 	protected static final int MENU_REFRESH = Menu.FIRST;
 	protected static final int MENU_SHOW = Menu.FIRST + 1;
 	protected static final int MENU_PREFERENCES = Menu.FIRST + 2;
-	protected static final int MENU_MARK_ALL_READ = Menu.FIRST + 3;
-	protected static final int MENU_MARK_READ = Menu.FIRST + 4;
+	protected static final int MENU_TOGGLE_READ = Menu.FIRST + 3;
+	protected static final int MENU_TOGGLE_ALL_READ = Menu.FIRST + 4;
 
 	protected ContentResolver mResolver;
 	
@@ -94,8 +94,8 @@ public abstract class KidsBbsAList extends ListActivity
 	abstract protected void showItem(int _index);
 	
 	// Marking articles read.
-	abstract protected void markRead(int _index);
-	abstract protected void markAllRead();
+	abstract protected void toggleRead(int _index);
+	abstract protected void toggleAllRead();
 	
 	// A matching broadcast?
 	abstract protected boolean matchingBroadcast(int _seq, String _user,
@@ -182,11 +182,11 @@ public abstract class KidsBbsAList extends ListActivity
 				"android:drawable/ic_menu_refresh", null, null));
 		itemUpdate.setShortcut('0', 'r');
 
-		MenuItem itemMarkAllRead = _menu.add(0, MENU_MARK_ALL_READ, Menu.NONE,
-				R.string.menu_mark_all_read);
-		itemMarkAllRead.setIcon(getResources().getIdentifier(
+		MenuItem itemToggleAllRead = _menu.add(0, MENU_TOGGLE_ALL_READ, Menu.NONE,
+				R.string.menu_toggle_all_read);
+		itemToggleAllRead.setIcon(getResources().getIdentifier(
 				"android:drawable/ic_menu_mark", null, null));
-		itemMarkAllRead.setShortcut('1', 'm');
+		itemToggleAllRead.setShortcut('1', 't');
 
 		MenuItem itemPreferences = _menu.add(0, MENU_PREFERENCES, Menu.NONE,
 				R.string.menu_preferences);
@@ -203,8 +203,8 @@ public abstract class KidsBbsAList extends ListActivity
 		case MENU_REFRESH:
 			refreshList();
 			return true;
-		case MENU_MARK_ALL_READ:
-			markAllRead();
+		case MENU_TOGGLE_ALL_READ:
+			toggleAllRead();
 			return true;
 		case MENU_PREFERENCES:
 			showPreference();
@@ -228,7 +228,8 @@ public abstract class KidsBbsAList extends ListActivity
 		setContextMenuTitle(getResources().getString(
 				R.string.alist_cm_header));
 		mContextMenu.add(0, MENU_SHOW, Menu.NONE, R.string.read_text);
-		mContextMenu.add(1, MENU_MARK_READ, Menu.NONE, R.string.mark_read_text);
+		mContextMenu.add(1, MENU_TOGGLE_READ, Menu.NONE,
+				R.string.toggle_read_text);
 	}
 
 	@Override
@@ -239,8 +240,8 @@ public abstract class KidsBbsAList extends ListActivity
 			showItem(((AdapterView.AdapterContextMenuInfo)
 					_item.getMenuInfo()).position);
 			return true;
-		case MENU_MARK_READ:
-			markRead(((AdapterView.AdapterContextMenuInfo)
+		case MENU_TOGGLE_READ:
+			toggleRead(((AdapterView.AdapterContextMenuInfo)
 					_item.getMenuInfo()).position);
 			return true;
 		}
@@ -313,19 +314,17 @@ public abstract class KidsBbsAList extends ListActivity
 		startActivity(intent);
 	}
 	
-	protected int markReadOne(Cursor _c) {
+	protected int toggleReadOne(Cursor _c) {
 		boolean read = _c.getInt(ArticlesAdapter.COLUMN_READ) != 0;
-		if (!read) {
-	    	int seq = _c.getInt(_c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
-	    	String user = _c.getString(_c.getColumnIndex(
-	    			KidsBbsProvider.KEYA_USER));
-	    	String thread = _c.getString(_c.getColumnIndex(
-	    			KidsBbsProvider.KEYA_THREAD));
-	    	if (KidsBbs.updateArticleRead(mResolver, mTabname, seq, true)) {
-				KidsBbs.announceArticleUpdated(KidsBbsAList.this, mTabname,
-						seq, user, thread);
-				return 1;
-			}
+    	int seq = _c.getInt(_c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
+    	String user = _c.getString(_c.getColumnIndex(
+    			KidsBbsProvider.KEYA_USER));
+    	String thread = _c.getString(_c.getColumnIndex(
+    			KidsBbsProvider.KEYA_THREAD));
+    	if (KidsBbs.updateArticleRead(mResolver, mTabname, seq, !read)) {
+			KidsBbs.announceArticleUpdated(KidsBbsAList.this, mTabname,
+					seq, user, thread);
+			return 1;
 		}
 		return 0;
 	}
@@ -427,7 +426,7 @@ public abstract class KidsBbsAList extends ListActivity
 		KidsBbsProvider.KEYA_BODY,
 		KidsBbsProvider.KEYA_READ,
 	};
-	private class ArticlesAdapter extends CursorAdapter {
+	protected class ArticlesAdapter extends CursorAdapter {
 		public static final int COLUMN_ID = 0;
 		public static final int COLUMN_SEQ = 1;
 		public static final int COLUMN_USER = 2;

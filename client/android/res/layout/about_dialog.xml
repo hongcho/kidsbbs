@@ -32,9 +32,11 @@
     android:layout_height="fill_parent"
     android:padding="8dp"
     >
-    <WebView android:id="@+id/about_text"
+    <TextView android:id="@+id/about_text"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
+        android:background="#f0f0f0"
+        android:textColor="#000000"
         android:typeface="monospace"
         android:textSize="14sp"
         android:autoLink="web"

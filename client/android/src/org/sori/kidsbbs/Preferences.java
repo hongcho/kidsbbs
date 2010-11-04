@@ -33,7 +33,7 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.webkit.WebView;
+import android.widget.TextView;
 
 public class Preferences extends PreferenceActivity {
 	public static final String PREF_UPDATE_FREQ = "PREF_UPDATE_FREQ";
@@ -86,8 +86,8 @@ public class Preferences extends PreferenceActivity {
 		builder.setTitle(_id_title);
 		View v = mInflater.inflate(R.layout.about_dialog, null);
 		builder.setView(v);
-		WebView wv = (WebView)v.findViewById(R.id.about_text);
-		wv.loadData(text, "text/html", "utf-8");
+		TextView tv = (TextView)v.findViewById(R.id.about_text);
+		tv.setText(text);
 		return builder.create();
 	}
 	

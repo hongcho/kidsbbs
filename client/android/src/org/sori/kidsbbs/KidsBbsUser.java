@@ -25,7 +25,9 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
+import android.app.AlertDialog;
 import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
@@ -34,6 +36,7 @@ import android.os.Bundle;
 public class KidsBbsUser extends KidsBbsAList {
 	private String mBoardUser;
 	private String mTitle;
+	private int mUnreadCount;
 	
     @Override
     public void onCreate(Bundle _state) {
@@ -59,10 +62,11 @@ public class KidsBbsUser extends KidsBbsAList {
     }
     
     protected void updateTitle() {
-    	int count = getUnreadCount(KidsBbsProvider.CONTENT_URISTR_LIST,
+    	mUnreadCount = getUnreadCount(KidsBbsProvider.CONTENT_URISTR_LIST,
     			KidsBbsProvider.SELECTION_UNREAD + " AND " +
     			KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "'");
-		setTitle("[" + getBoardTitle() + "] " + mTitle + " (" + count + ")");
+		setTitle("[" + getBoardTitle() + "] " + mTitle +
+				" (" + mUnreadCount + ")");
     }
     
     protected boolean matchingBroadcast(int _seq, String _user,
@@ -77,11 +81,32 @@ public class KidsBbsUser extends KidsBbsAList {
 				"&" + KidsBbs.PARAM_N_SEQ + "=" + seq);
     }
     
-    protected void markRead(int _index) {
-    	markReadOne(getItem(_index));
+    protected void toggleRead(int _index) {
+    	toggleReadOne(getItem(_index));
     }
     
-    protected void markAllRead() {
-    	
+    protected void toggleAllRead() {
+    	AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    	builder.setTitle(R.string.confirm_text);
+    	builder.setMessage(R.string.toggle_all_read_message);
+    	builder.setPositiveButton(android.R.string.ok,
+    			new DialogInterface.OnClickListener() {
+    		public void onClick(DialogInterface _dialog, int _which) {
+    			String where =
+    				KidsBbsProvider.KEYA_USER + "='" + mBoardUser +
+    				"' AND " + KidsBbsProvider.KEYA_READ +
+    				(mUnreadCount == 0 ? "!=0" : "=0");
+    			ContentValues values = new ContentValues();
+    			values.put(KidsBbsProvider.KEYA_READ,
+    					mUnreadCount > 0 ? 1 : 0);
+    			int nChanged = mResolver.update(getUriList(), values,
+    					where, null);
+    			if (nChanged > 0) {
+    				refreshList();
+    				}
+    			}
+    	});
+    	builder.setNegativeButton(android.R.string.cancel, null);
+    	builder.create().show();
     }
 }
