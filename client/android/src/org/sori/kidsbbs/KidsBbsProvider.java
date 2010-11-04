@@ -108,9 +108,7 @@ public class KidsBbsProvider extends ContentProvider {
 		int type = sUriMatcher.match(_uri);
 		switch (type) {
 		case TYPE_LIST:
-			break;
 		case TYPE_TLIST:
-			groupby = KidsBbsProvider.KEYA_THREAD;
 			break;
 		case TYPE_BOARDS:
 			orderby = ORDER_BY_TITLE;
@@ -251,6 +249,8 @@ public class KidsBbsProvider extends ContentProvider {
 	public static final String KEYA_ALLREAD = "allread";
 	public static final String KEYA_ALLREAD_FIELD =
 		"MIN(" + KEYA_READ + ") AS " + KEYA_ALLREAD;
+	public static final String KEYA_READ_ALLREAD_FIELD =
+		KEYA_READ + " AS " + KEYA_ALLREAD;
 
 	public static final String KEYA_CNT = "cnt";
 	public static final String KEYA_CNT_FIELD =
@@ -281,7 +281,7 @@ public class KidsBbsProvider extends ContentProvider {
 		"LOWER(" + KEYB_TITLE + ")";
 
 	private static final String DB_NAME = "kidsbbs.db";
-	private static final int DB_VERSION = 2;
+	private static final int DB_VERSION = 3;
 	private static final String DB_TABLE = "boards";
 
 	private SQLiteDatabase mDB;
@@ -355,8 +355,9 @@ public class KidsBbsProvider extends ContentProvider {
 				KEYB_TABNAME,
 				KEYB_STATE,
 			};   
+			boolean isDestructive = _old < 2;
 			Log.w(TAG, "Upgrading database from version " + _old + " to " +
-					_new + ", which will destroy all old data");
+					_new + ", which may destroy all old data");
 			
 			mUpdateMap.clear();
 			SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
@@ -370,14 +371,22 @@ public class KidsBbsProvider extends ContentProvider {
 						int state = Integer.parseInt(c.getString(
 								c.getColumnIndex(KEYB_STATE)));
 						mUpdateMap.put(tabname, state != STATE_PAUSED);
-						dropArticleTable(_db, tabname);
+						if (!isDestructive) {
+							// We can upgrade gracefully...
+							dropArticleView(_db, tabname);
+							createArticleView(_db, tabname);
+						} else {
+							dropArticleTable(_db, tabname);
+						}
 					} while (c.moveToNext());
 				}
 				c.close();
 			}
 
-			dropMainTable(_db);
-			onCreate(_db);
+			if (isDestructive) {
+				dropMainTable(_db);
+				onCreate(_db);
+			}
 		}
 		
 		private void addBoard(SQLiteDatabase _db, BoardInfo _info,
@@ -404,6 +413,24 @@ public class KidsBbsProvider extends ContentProvider {
 		private void dropMainTable(SQLiteDatabase _db) {
 			_db.execSQL("DROP TABLE IF EXISTS " + DB_TABLE);
 		}
+		
+		private void createArticleView(SQLiteDatabase _db, String _tabname) {
+			_db.execSQL("CREATE VIEW " + getViewname(_tabname) +
+					" AS SELECT " +
+					KEY_ID + "," +
+					KEYA_SEQ + "," +
+					KEYA_USER + "," +
+					KEYA_AUTHOR+ "," +
+					KEYA_DATE + "," +
+					KEYA_TITLE + "," +
+					KEYA_THREAD + "," +
+					KEYA_BODY + "," +
+					KEYA_ALLREAD_FIELD + "," +
+					KEYA_CNT_FIELD +
+					" FROM " + _tabname +
+					" GROUP BY " + KEYA_THREAD +
+					" ORDER BY " + ORDER_BY_SEQ_DESC+ ";");
+		}
 
 		private void createArticleTable(SQLiteDatabase _db, String _tabname) {
 			_db.execSQL("CREATE TABLE " + _tabname + " (" +
@@ -419,15 +446,17 @@ public class KidsBbsProvider extends ContentProvider {
 			_db.execSQL("CREATE INDEX " + _tabname + "_I" + KEYA_SEQ +
 					" ON " + _tabname +
 					" (" + KEYA_SEQ + " DESC)");
-			_db.execSQL("CREATE VIEW " + getViewname(_tabname) +
-					" AS SELECT * FROM " + _tabname +
-					" ORDER BY " + ORDER_BY_SEQ_ASC + ";");
+			createArticleView(_db, _tabname);
+		}
+		
+		private void dropArticleView(SQLiteDatabase _db, String _tabname) {
+			_db.execSQL("DROP VIEW IF EXISTS " + getViewname(_tabname));
 		}
 		
 		private void dropArticleTable(SQLiteDatabase _db, String _tabname) {
 			_db.execSQL("DROP TABLE IF EXISTS " + _tabname);
 			_db.execSQL("DROP INDEX IF EXISTS " + _tabname + "_I" + KEYA_SEQ);
-			_db.execSQL("DROP VIEW IF EXISTS " + getViewname(_tabname));
+			dropArticleView(_db, _tabname);
 		}
 	}
 }

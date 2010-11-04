@@ -259,13 +259,12 @@ public abstract class KidsBbsAList extends ListActivity
 		protected Cursor doInBackground(Void... _args) {
 			String where = mWhere;
 			if (mHideRead) {
-				String colRead = mFields[ArticlesAdapter.COLUMN_READ];
-				if (!colRead.equals(KidsBbsProvider.KEYA_ALLREAD_FIELD)) {
-					if (where != null) {
-						where += " AND ";
-					}
-					where += colRead + "=0";
+				if (where == null) {
+					where = "";
+				} else {
+					where += " AND ";
 				}
+				where += mFields[ArticlesAdapter.COLUMN_READ] + "=0";
 			}
 			return KidsBbsAList.this.managedQuery(mUri, mFields,
 					where, null, null);
@@ -404,6 +403,7 @@ public abstract class KidsBbsAList extends ListActivity
 	
 	private void unregisterReceivers() {
 		unregisterReceiver(mReceiverNew);
+		unregisterReceiver(mReceiverUpdated);
 	}
 	
 	protected static final String[] FIELDS_TLIST = {
@@ -414,8 +414,8 @@ public abstract class KidsBbsAList extends ListActivity
 		KidsBbsProvider.KEYA_TITLE,
 		KidsBbsProvider.KEYA_THREAD,
 		KidsBbsProvider.KEYA_BODY,
-		KidsBbsProvider.KEYA_ALLREAD_FIELD,
-		KidsBbsProvider.KEYA_CNT_FIELD,
+		KidsBbsProvider.KEYA_ALLREAD,
+		KidsBbsProvider.KEYA_CNT,
 	};
 	protected static final String[] FIELDS_LIST = {
 		KidsBbsProvider.KEY_ID,
