@@ -309,6 +309,25 @@ public class KidsBbs extends Activity {
 		return articles;
 	}
 
+	public static final String getBoardTitle(ContentResolver _cr,
+			String _tabname) {
+		final String[] FIELDS = {
+			KidsBbsProvider.KEYB_TITLE,
+		};
+		String title = null;
+		Cursor c = _cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
+				KidsBbsProvider.SELECTION_TABNAME, new String[] {_tabname},
+				null);
+		if (c != null) {
+			if (c.getCount() > 0) {
+				c.moveToFirst();
+				title = c.getString(0);
+			}
+			c.close();
+		}
+		return title;
+	}
+	
 	public static final int getBoardTableSize(ContentResolver _cr,
 			String _tabname) {
 		final String[] FIELDS = {
@@ -320,7 +339,7 @@ public class KidsBbs extends Activity {
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
-				cnt = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_CNT));
+				cnt = c.getInt(0);
 			}
 			c.close();
 		}
@@ -366,8 +385,7 @@ public class KidsBbs extends Activity {
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
-				readOld = c.getInt(c.getColumnIndex(
-						KidsBbsProvider.KEYA_READ)) != 0;
+				readOld = c.getInt(0) != 0;
 			}
 			c.close();
 		}
@@ -392,8 +410,7 @@ public class KidsBbs extends Activity {
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
-				read = c.getInt(c.getColumnIndex(
-						KidsBbsProvider.KEYA_ALLREAD)) != 0;
+				read = c.getInt(0) != 0;
 			}
 			c.close();
 		}
@@ -438,6 +455,9 @@ public class KidsBbs extends Activity {
 		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME,
 				_tabname);
 		_context.sendBroadcast(intent);
+		
+		String title = getBoardTitle(_context.getContentResolver(), _tabname);
+		//Intent notification = new Intent();
 	}
 	
 	public static void announceArticleUpdated(Context _context,
