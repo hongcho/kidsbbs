@@ -30,13 +30,17 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.database.Cursor;
 import android.database.SQLException;
+import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
@@ -48,6 +52,8 @@ public class KidsBbsService extends Service
 	
 	private int mUpdateFreq;
 	private Timer mUpdateTimer;
+	
+	private boolean mIsPaused = false;
 	
 	// Update to onStartCommand when min SDK becomes >= 5...
 	@Override
@@ -81,7 +87,9 @@ public class KidsBbsService extends Service
     		mUpdateTimer = new Timer("KidsBbsUpdates");
     		mUpdateTimer.scheduleAtFixedRate(new TimerTask() {
     				public void run() {
-    					refreshArticles();
+    					if (!mIsPaused) {
+    						refreshArticles();
+    					}
     				}
     			},
     			_delay*60*1000, _period*60*1000);
@@ -90,12 +98,22 @@ public class KidsBbsService extends Service
 	
 	@Override
 	public void onCreate() {
+		super.onCreate();
+		
 		mUpdateTimer = new Timer("KidsBbsUpdates");
 
 		SharedPreferences prefs =
 			PreferenceManager.getDefaultSharedPreferences(
 					getApplicationContext());
 		prefs.registerOnSharedPreferenceChangeListener(this);
+		
+		registerReceivers();
+	}
+	
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		unregisterReceivers();
 	}
 	
 	@Override
@@ -445,5 +463,35 @@ public class KidsBbsService extends Service
 		}
 		
 		return count;
+	}
+	
+	private class ConnectivityReceiver extends BroadcastReceiver {
+		@Override
+		public void onReceive(Context _context, Intent _intent) {
+			String action = _intent.getAction();
+			if (!action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
+				return;
+			}
+			boolean noConn = _intent.getBooleanExtra(
+					ConnectivityManager.EXTRA_NO_CONNECTIVITY, false);
+			if (noConn == mIsPaused) {
+				return;
+			}
+			mIsPaused = noConn;
+			Log.i(TAG, mIsPaused ? "Connectivity DOWN" : "Connectivity UP");
+		}
+	}
+	
+	private ConnectivityReceiver mConnReceiver;
+	
+	private void registerReceivers() {
+		mConnReceiver = new ConnectivityReceiver();
+		IntentFilter filterConn = new IntentFilter(
+				ConnectivityManager.CONNECTIVITY_ACTION);
+		registerReceiver(mConnReceiver, filterConn);
+	}
+	
+	private void unregisterReceivers() {
+		unregisterReceiver(mConnReceiver);
 	}
 }

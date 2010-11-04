@@ -78,16 +78,17 @@
     </string-array>
     
     <string-array name="default_board_tables">
-        <item>b0_ToSysop</item>
+        <item>b0_anonymous</item>
+        <item>b0_AnonymousSerious</item>
     </string-array>
     
     <string-array name="board_table_names">
+        <item>b0_notice</item>
+        <item>b0_ToSysop</item>
         <item>b0_anonymous</item>
         <item>b0_AnonymousSerious</item>
-        <item>b0_guest</item>
         <item>b0_garbages</item>
-        <item>b0_ToSysop</item>
-        <item>b0_notice</item>
+        <item>b0_guest</item>
 
         <item>b0_CinemaPlay</item>
         <item>b0_ComicsAnim</item>

@@ -265,7 +265,7 @@ public class KidsBbsView extends Activity {
 	}
 
 	private void initializeStates() {
-		SavedStates save = (SavedStates) getLastNonConfigurationInstance();
+		SavedStates save = (SavedStates)getLastNonConfigurationInstance();
 		if (save == null) {
 			refreshView();
 		} else {

@@ -36,7 +36,7 @@
     <string name="title_pref">키즈 비비에스 옵션</string>
 
     <string name="read_text">보기</string>
-    <string name="mark_read_text">읽음표시</string>
+    <string name="toggle_read_text">읽음표시 토글</string>
     <string name="blist_cm_header">보드목록 메뉴</string>
     <string name="alist_cm_header">글목록 메뉴</string>
     <string name="tlist_cm_header">쓰레드목록 메뉴</string>
@@ -45,7 +45,7 @@
     
     <string name="menu_select">보드선택</string>
     <string name="menu_refresh">업데이트</string>
-    <string name="menu_mark_all_read">모두읽음 표시</string>
+    <string name="menu_toggle_all_read">전체읽음 토글</string>
     <string name="menu_preferences">설정</string>
 
 	<string name="settings_update">업데이트 옵션</string>
@@ -65,22 +65,15 @@
     
     <string name="board_selection_title">보드를 골라주세요.</string>
     <string name="confirm_text">확실한가요?</string>
-    <string name="mark_all_read_message">전부 읽은 것으로 표시합니다.</string>
+    <string name="toggle_all_read_message">전체 글의 읽음 표시를 토글합니다.</string>
     
-    <string name="about_kidsbbs_text">
-    	<![CDATA[<UL>
-    	<LI>KIDS / Korea Internet Dream Space / Korea Internet DataService System
-    	<LI>텔넷/SSH를 기반으로 하는 BBS
-        <LI>주소: kids.kornet.net
-        </UL>]]>
+    <string name="about_kidsbbs_text">- KIDS / Korea Internet Dream Space
+    	/ Korea Internet DataService System\n- 텔넷/SSH를 기반으로 하는
+    	BBS\n- 주소: kids.kornet.net
     </string>
-    <string name="about_app_text">
-    	<![CDATA[<UL>
-    	<LI>이 앱은 키즈와는 직접적으로는 관련이 전혀 없습니다.
-    	<LI>단지 사용자로서 취미삼아 만들어봤습니다.
-    	<LI>프로젝트:
-    	<A href="http://kidsbbs.googlecode.com/">http://kidsbbs.googlecode.com/</A>
-    	</UL>]]>
+    <string name="about_app_text">- 이 앱은 키즈와는 직접적으로는 관련이 전혀
+    	없습니다.\n- 단지 사용자로서 취미삼아 만들어봤습니다.\n- 프로젝트:
+    	http://kidsbbs.googlecode.com/
     </string>
     
     <string name="update_text">불러오고 있습니다...</string>
