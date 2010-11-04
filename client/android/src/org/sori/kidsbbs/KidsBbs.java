@@ -484,7 +484,10 @@ public class KidsBbs extends Activity {
 
 		startService(new Intent(this, KidsBbsService.class));
 
-		startActivity(new Intent(this, KidsBbsBList.class));
+		Intent intent = new Intent(this, KidsBbsBList.class); 
+		intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+		intent.setAction(Intent.ACTION_VIEW);
+		startActivity(intent);
 		finish();
 	}
 }
