@@ -114,7 +114,7 @@ public class KidsBbs extends Activity {
 		DF_KIDS.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
 	}
 
-	private static final int MAX_DAYS = 14;
+	private static final int MAX_DAYS = 30;
 	public static final int MIN_ARTICLES = 15;
 	public static final int MAX_ARTICLES = 1000;
 	public static final String KST_DIFF = "'-9 hours'";
@@ -455,9 +455,6 @@ public class KidsBbs extends Activity {
 		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME,
 				_tabname);
 		_context.sendBroadcast(intent);
-		
-		String title = getBoardTitle(_context.getContentResolver(), _tabname);
-		//Intent notification = new Intent();
 	}
 	
 	public static void announceArticleUpdated(Context _context,

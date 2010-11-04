@@ -29,6 +29,9 @@ import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
@@ -346,6 +349,35 @@ public class KidsBbsService extends Service
 			setTableState(_tabname, KidsBbsProvider.STATE_UPDATED);
 		}
 		return count;
+	}
+	
+	private void notifyNewArticles(String _tabname) {
+		// Prepare pending intent for notification
+		String title = KidsBbs.getBoardTitle(getContentResolver(), _tabname);
+		Uri data = Uri.parse(KidsBbs.URI_INTENT_TLIST +
+				KidsBbs.PARAM_N_TABNAME + "=" + _tabname +
+				"&" + KidsBbs.PARAM_N_TITLE + "=" + title);
+		Intent i = new Intent(this, KidsBbsTList.class);
+		i.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+		i.setAction(Intent.ACTION_VIEW);
+		i.setData(data);
+		PendingIntent pi = PendingIntent.getActivity(this, 0, i, 0);
+		
+		// Notify new articles.
+		Notification notification = new Notification(
+				android.R.drawable.stat_notify_sync_noanim,
+				"ticker title",
+				System.currentTimeMillis());
+		notification.defaults |= Notification.DEFAULT_SOUND;
+		notification.defaults |= Notification.DEFAULT_VIBRATE;
+		notification.defaults |= Notification.DEFAULT_LIGHTS;
+		notification.setLatestEventInfo(this,
+				"title", "new articles for " + title, pi);
+		
+		NotificationManager manager =
+			(NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+		final int NEW_ARTICLE_ID = 0;
+		manager.notify(NEW_ARTICLE_ID, notification);
 	}
 
 	private int refreshTables() {
