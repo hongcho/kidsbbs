@@ -189,9 +189,12 @@ public class KidsBbsBList extends ListActivity {
 
 		@Override
 		protected Cursor doInBackground(Void... _args) {
+			final String orderby =
+				KidsBbsProvider.ORDER_BY_STATE_DESC + "," +
+				KidsBbsProvider.ORDER_BY_ID;
 			return KidsBbsBList.this.managedQuery(
 					KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
-					KidsBbsProvider.SELECTION_STATE_ACTIVE, null, null);
+					KidsBbsProvider.SELECTION_STATE_ACTIVE, null, orderby);
 		}
 
 		@Override
