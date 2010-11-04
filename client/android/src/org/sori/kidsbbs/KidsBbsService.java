@@ -41,6 +41,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.net.ConnectivityManager;
@@ -51,22 +52,27 @@ import android.util.Log;
 
 public class KidsBbsService extends Service
 				implements OnSharedPreferenceChangeListener {
-	private static final String TAG = "KidsBbsService"; 
+	private static final String TAG = "KidsBbsService";
+	
+	private static final int NEW_ARTICLE_ID = 0;
 	
 	private int mUpdateFreq;
 	private Timer mUpdateTimer;
 	
-	private boolean mIsPaused = false;
+	private Boolean mIsPaused = false;
+
+	private ContentResolver mResolver;
+	private NotificationManager mNotificationManager;
+	private Notification mNewArticlesNotification;
+	private boolean mNotificationOn = true;
+	private int mNotificationDefaults = Notification.DEFAULT_LIGHTS |
+		Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE;
+	private String mNotificationTitleString;
+	private String mNotificationMessage;
 	
 	// Update to onStartCommand when min SDK becomes >= 5...
 	@Override
 	public void onStart(Intent _intent, int _startId) {
-    	SharedPreferences prefs =
-    		PreferenceManager.getDefaultSharedPreferences(
-    				getApplicationContext());
-    	mUpdateFreq = Integer.parseInt(prefs.getString(
-    			Preferences.PREF_UPDATE_FREQ,
-    			Preferences.getDefaultUpdateFreq(this)));
     	setupTimer(0, mUpdateFreq);
 	}
 	
@@ -81,6 +87,26 @@ public class KidsBbsService extends Service
 				mUpdateFreq = updateFreqNew;
 				setupTimer(delay, mUpdateFreq);
 			}
+		} else if (_key.equals(Preferences.PREF_NOTIFICATION)) {
+			mNotificationOn = _prefs.getBoolean(_key, true);
+		} else if (_key.equals(Preferences.PREF_NOTIFICATION_LIGHTS)) {
+			if (_prefs.getBoolean(_key, true)) {
+				mNotificationDefaults |= Notification.DEFAULT_LIGHTS;
+			} else {
+				mNotificationDefaults &= ~Notification.DEFAULT_LIGHTS;
+			}
+		} else if (_key.equals(Preferences.PREF_NOTIFICATION_SOUND)) {
+			if (_prefs.getBoolean(_key, true)) {
+				mNotificationDefaults |= Notification.DEFAULT_SOUND;
+			} else {
+				mNotificationDefaults &= ~Notification.DEFAULT_SOUND;
+			}
+		} else if (_key.equals(Preferences.PREF_NOTIFICATION_VIBRATE)) {
+			if (_prefs.getBoolean(_key, true)) {
+				mNotificationDefaults |= Notification.DEFAULT_VIBRATE;
+			} else {
+				mNotificationDefaults &= ~Notification.DEFAULT_VIBRATE;
+			}
 		}
 	}
 	
@@ -90,8 +116,10 @@ public class KidsBbsService extends Service
     		mUpdateTimer = new Timer("KidsBbsUpdates");
     		mUpdateTimer.scheduleAtFixedRate(new TimerTask() {
     				public void run() {
-    					if (!mIsPaused) {
-    						refreshArticles();
+    					synchronized(mIsPaused) {
+	    					if (!mIsPaused) {
+	    						refreshArticles();
+	    					}
     					}
     				}
     			},
@@ -104,10 +132,39 @@ public class KidsBbsService extends Service
 		super.onCreate();
 		
 		mUpdateTimer = new Timer("KidsBbsUpdates");
+		
+		Resources resources = getResources();
+		mNotificationTitleString = resources.getString(
+				R.string.notification_title_text);
+		mNotificationMessage = resources.getString(
+				R.string.notification_message);
+		
+		mResolver = getContentResolver();
+		mNotificationManager = (NotificationManager)getSystemService(
+				Context.NOTIFICATION_SERVICE);
+		mNewArticlesNotification = new Notification(R.drawable.icon,
+				mNotificationTitleString,
+				System.currentTimeMillis());
+		mNewArticlesNotification.flags |= Notification.FLAG_AUTO_CANCEL;
 
 		SharedPreferences prefs =
 			PreferenceManager.getDefaultSharedPreferences(
 					getApplicationContext());
+    	mUpdateFreq = Integer.parseInt(prefs.getString(
+    			Preferences.PREF_UPDATE_FREQ,
+    			Preferences.getDefaultUpdateFreq(this)));
+    	mNotificationOn = prefs.getBoolean(
+    			Preferences.PREF_NOTIFICATION, true);
+    	mNotificationDefaults = 0;
+    	if (prefs.getBoolean(Preferences.PREF_NOTIFICATION_LIGHTS, true)) {
+    		mNotificationDefaults |= Notification.DEFAULT_LIGHTS;
+    	}
+    	if (prefs.getBoolean(Preferences.PREF_NOTIFICATION_SOUND, true)) {
+    		mNotificationDefaults |= Notification.DEFAULT_SOUND;
+    	}
+    	if (prefs.getBoolean(Preferences.PREF_NOTIFICATION_VIBRATE, true)) {
+    		mNotificationDefaults |= Notification.DEFAULT_VIBRATE;
+    	}
 		prefs.registerOnSharedPreferenceChangeListener(this);
 		
 		registerReceivers();
@@ -328,16 +385,16 @@ public class KidsBbsService extends Service
 				}
 				if (result) {
 					++count;
-					KidsBbs.announceBoardUpdated(KidsBbsService.this,
-							_tabname);
 				}
 			}
 			start += articles.size();
+			KidsBbs.announceBoardUpdated(KidsBbsService.this, _tabname);
 		}
 		int trimmed = trimBoardTable(_tabname);
 		Log.i(TAG, _tabname + ": trimed " + trimmed + " articles");
 		if (count > 0 && tabState == KidsBbsProvider.STATE_UPDATED) {
 			KidsBbs.announceNewArticles(KidsBbsService.this, _tabname);
+			notifyNewArticles(_tabname, count);
 		}
 		if (error > 0) {
 			Log.e(TAG, _tabname + ": error after updating " +
@@ -351,33 +408,30 @@ public class KidsBbsService extends Service
 		return count;
 	}
 	
-	private void notifyNewArticles(String _tabname) {
+	private void notifyNewArticles(String _tabname, int _count) {
+		if (!mNotificationOn) {
+			return;
+		}
+		
 		// Prepare pending intent for notification
-		String title = KidsBbs.getBoardTitle(getContentResolver(), _tabname);
-		Uri data = Uri.parse(KidsBbs.URI_INTENT_TLIST +
-				KidsBbs.PARAM_N_TABNAME + "=" + _tabname +
-				"&" + KidsBbs.PARAM_N_TITLE + "=" + title);
-		Intent i = new Intent(this, KidsBbsTList.class);
-		i.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-		i.setAction(Intent.ACTION_VIEW);
-		i.setData(data);
-		PendingIntent pi = PendingIntent.getActivity(this, 0, i, 0);
+		String title = KidsBbs.getBoardTitle(mResolver, _tabname);
+		Intent intent = new Intent(this, KidsBbsBList.class);
+		intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+		intent.setAction(Intent.ACTION_VIEW);
+		PendingIntent pendingIntent =
+			PendingIntent.getActivity(this, 0, intent, 0);
 		
 		// Notify new articles.
-		Notification notification = new Notification(
-				android.R.drawable.stat_notify_sync_noanim,
-				"ticker title",
-				System.currentTimeMillis());
-		notification.defaults |= Notification.DEFAULT_SOUND;
-		notification.defaults |= Notification.DEFAULT_VIBRATE;
-		notification.defaults |= Notification.DEFAULT_LIGHTS;
-		notification.setLatestEventInfo(this,
-				"title", "new articles for " + title, pi);
+		mNewArticlesNotification.tickerText =
+			title + " (" + _count + ")";
+		mNewArticlesNotification.when = System.currentTimeMillis();
+		mNewArticlesNotification.defaults |= mNotificationDefaults;
+		mNewArticlesNotification.setLatestEventInfo(this,
+				mNotificationTitleString,
+				mNotificationMessage,
+				pendingIntent);
 		
-		NotificationManager manager =
-			(NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
-		final int NEW_ARTICLE_ID = 0;
-		manager.notify(NEW_ARTICLE_ID, notification);
+		mNotificationManager.notify(NEW_ARTICLE_ID, mNewArticlesNotification);
 	}
 
 	private int refreshTables() {
@@ -506,11 +560,13 @@ public class KidsBbsService extends Service
 			}
 			boolean noConn = _intent.getBooleanExtra(
 					ConnectivityManager.EXTRA_NO_CONNECTIVITY, false);
-			if (noConn == mIsPaused) {
-				return;
+			synchronized(mIsPaused) {
+				if (noConn == mIsPaused) {
+					return;
+				}
+				mIsPaused = noConn;
+				Log.i(TAG, mIsPaused ? "Connectivity DOWN" : "Connectivity UP");
 			}
-			mIsPaused = noConn;
-			Log.i(TAG, mIsPaused ? "Connectivity DOWN" : "Connectivity UP");
 		}
 	}
 	

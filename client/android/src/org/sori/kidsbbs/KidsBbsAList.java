@@ -259,12 +259,13 @@ public abstract class KidsBbsAList extends ListActivity
 		protected Cursor doInBackground(Void... _args) {
 			String where = mWhere;
 			if (mHideRead) {
-				if (where != null) {
-					where += " AND ";
-				} else {
-					where = "";
+				String colRead = mFields[ArticlesAdapter.COLUMN_READ];
+				if (!colRead.equals(KidsBbsProvider.KEYA_ALLREAD_FIELD)) {
+					if (where != null) {
+						where += " AND ";
+					}
+					where += colRead + "=0";
 				}
-				where += mFields[ArticlesAdapter.COLUMN_READ] + "=0";
 			}
 			return KidsBbsAList.this.managedQuery(mUri, mFields,
 					where, null, null);

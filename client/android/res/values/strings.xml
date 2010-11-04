@@ -46,7 +46,7 @@
     <string name="menu_select">보드선택</string>
     <string name="menu_refresh">업데이트</string>
     <string name="menu_toggle_all_read">전체읽음 토글</string>
-    <string name="menu_preferences">설정</string>
+    <string name="menu_preferences">옵션</string>
 
 	<string name="settings_update">업데이트 옵션</string>
     <string name="update_freq_title">업데이트 주기</string>
@@ -56,6 +56,14 @@
 	<string name="hide_read_title">읽은 글 숨기기</string>
 	<string name="hide_read_summary">읽은 글을 목록에서 제외시킵니다.</string>
 	
+	<string name="settings_notification">알림 옵션</string>
+	<string name="notification_title">알림 옵션</string>
+	<string name="notification_summary">새 글이 왔을 때 알려드릴까요?</string>
+	<string name="settings_notification_options">알림방식 옵션</string>
+	<string name="notification_lights">LED 알림</string>
+	<string name="notification_sound">소리 알림</string>
+	<string name="notification_vibrate">진동 알림</string>
+	
 	<string name="settings_general">일반 옵션</string>
     <string name="about_kidsbbs_title">키즈 비비에스란?</string>
     <string name="about_app_title">이 앱에 대하여</string>
@@ -64,8 +72,11 @@
     <string name="update_error_text">서버에서 글을 불러오는데 문제가 있습니다</string>
     
     <string name="board_selection_title">보드를 골라주세요.</string>
-    <string name="confirm_text">확실한가요?</string>
+    <string name="confirm_text">확인 좀 하겠습니다</string>
     <string name="toggle_all_read_message">전체 글의 읽음 표시를 토글합니다.</string>
+    
+    <string name="notification_title_text">새 글이 올라왔습니다.</string>
+    <string name="notification_message">보드 목록으로 가서 확인합시다.</string>
     
     <string name="about_kidsbbs_text">- KIDS / Korea Internet Dream Space
     	/ Korea Internet DataService System\n- 텔넷/SSH를 기반으로 하는

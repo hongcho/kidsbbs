@@ -28,9 +28,11 @@ package org.sori.kidsbbs;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
@@ -38,15 +40,27 @@ import android.widget.TextView;
 public class Preferences extends PreferenceActivity {
 	public static final String PREF_UPDATE_FREQ = "PREF_UPDATE_FREQ";
 	public static final String PREF_HIDE_READ = "PREF_HIDE_READ";
+	public static final String PREF_NOTIFICATION = "PREF_NOTIFICATION";
+	public static final String PREF_NOTIFICATION_LIGHTS =
+		"PREF_NOTIFICATION_LIGHTS";
+	public static final String PREF_NOTIFICATION_SOUND =
+		"PREF_NOTIFICATION_SOUND";
+	public static final String PREF_NOTIFICATION_VIBRATE =
+		"PREF_NOTIFICATION_VIBRATE";
 	public static final String PREF_ABOUT_KIDSBBS = "PREF_ABOUT_KIDSBBS";
 	public static final String PREF_ABOUT_APP = "PREF_ABOUT_APP";
 	
 	private static final int ABOUT_APP_ID = 0;
 	private static final int ABOUT_KIDSBBS_ID = 1;
 	
-	//private SharedPreferences prefs;
 	private LayoutInflater mInflater;
-	
+
+	private SharedPreferences mPrefs;
+	private Preference mPrefNotification;
+	private Preference mPrefNotificationLights;
+	private Preference mPrefNotificationSound;
+	private Preference mPrefNotificationVibrate;
+
 	private static String DEFAULT_UPDATE_FREQ = null;
 	public static final String getDefaultUpdateFreq(Context _context) {
 		if (DEFAULT_UPDATE_FREQ == null) {
@@ -56,16 +70,38 @@ public class Preferences extends PreferenceActivity {
 		return DEFAULT_UPDATE_FREQ;
 	}
 	
+	private void notificationEnable(boolean _on) {
+		mPrefNotificationLights.setEnabled(_on);
+		mPrefNotificationSound.setEnabled(_on);
+		mPrefNotificationVibrate.setEnabled(_on);
+	}
+	
 	@Override
 	public void onCreate(Bundle _state) {
 		super.onCreate(_state);
 		addPreferencesFromResource(R.xml.userpreferences);
 		
 		mInflater = LayoutInflater.from(this);
+
+		mPrefs = PreferenceManager.getDefaultSharedPreferences(
+    				getApplicationContext());
+		mPrefNotification = findPreference(PREF_NOTIFICATION);
+		mPrefNotificationLights = findPreference(PREF_NOTIFICATION_LIGHTS);
+		mPrefNotificationSound = findPreference(PREF_NOTIFICATION_SOUND);
+		mPrefNotificationVibrate = findPreference(PREF_NOTIFICATION_VIBRATE);
+		
+		mPrefNotification.setOnPreferenceClickListener(
+				new Preference.OnPreferenceClickListener() {
+					public boolean onPreferenceClick(Preference _preference) {
+						notificationEnable(mPrefs.getBoolean(
+								PREF_NOTIFICATION, true));
+						return true;
+					}
+				});
 		
 		findPreference(PREF_ABOUT_KIDSBBS).setOnPreferenceClickListener(
 				new Preference.OnPreferenceClickListener() {
-					public boolean onPreferenceClick(Preference preference) {
+					public boolean onPreferenceClick(Preference _preference) {
 						showDialog(ABOUT_KIDSBBS_ID);
 						return true;
 					}
@@ -73,11 +109,13 @@ public class Preferences extends PreferenceActivity {
 		
 		findPreference(PREF_ABOUT_APP).setOnPreferenceClickListener(
 				new Preference.OnPreferenceClickListener() {
-					public boolean onPreferenceClick(Preference preference) {
+					public boolean onPreferenceClick(Preference _preference) {
 						showDialog(ABOUT_APP_ID);
 						return true;
 					}
 				});
+		
+		notificationEnable(mPrefs.getBoolean(PREF_NOTIFICATION, true));
 	}
 	
 	private Dialog createAboutDialog(int _id_title, int _id_text) {
