@@ -119,6 +119,7 @@ my $dbi_passwd = $mysql_passwd;
 # SQL Constants.
 
 my $K_MINCNT = 15;
+my $K_MAXCNT = 2000;
 my $K_MINDAYS = 7;		# 1 week(s)
 my $K_MAXDAYS = 31;		# 1 month(s)
 
@@ -602,22 +603,42 @@ sub ArticleValues
 }
 
 ######################################################################
-# Compare the existing article values
-sub CompareArticleValues
+# Fetch an old entry.
+sub FetchArticleValues
 {
-    my ($dbh, $tn, $seq, $v) = @_;
+    my ($dbh, $tn, $seq) = @_;
     my $sth = $dbh->prepare("SELECT * FROM $tn WHERE a0_seq=$seq");
-    $sth->execute
-	or print("failed to find $seq in $tn: ",
-		 "$DBI::errstr ($DBI::err)\n"),return -1;
-    my @r = $sth->fetchrow_array;
-    scalar(@$v) == scalar(@r) or return 1;
-    $r[1] eq $v->[1] or return 1; # username
-    $r[3] eq $v->[3] or return 1; # guestkey
-    ($r[4] eq '0000-00-00 00:00:00' or
-     $r[4] eq $v->[4]) or return 1; # datesql
-    $r[5] eq $v->[5] or return 1; # title
+    $sth->execute or return undef;
+    return $sth->fetchrow_arrayref;
+}
+
+######################################################################
+# Compare Values.
+sub CompareArticleRows
+{
+    my ($r1, $r2) = @_;
+    (defined($r1) and defined($r2)) or return -1;
+    scalar(@$r1) == scalar(@$r2) or return 1;
+    $r1->[1] eq $r2->[1] or return 1; # username
+    $r1->[3] eq $r2->[3] or return 1; # guestkey
+    ($r1->[4] eq '0000-00-00 00:00:00' or
+     $r1->[4] eq $r2->[4]) or return 1; # datesql
+    $r1->[5] eq $r2->[5] or return 1; # title
     return 0;
+}
+
+######################################################################
+# Get the last seq of the board.
+sub GetLastSeq
+{
+    my ($dbh, $tn) = @_;
+    my $sth = $dbh->prepare("SELECT a0_seq FROM $tn ".
+			    "ORDER BY a0_seq DESC LIMIT 1");
+    $sth->execute
+	or print("failed to find the last seq for $tn: ",
+		 "$DBI::errstr ($DBI::err)\n"),return -1;
+    my $r = $sth->fetchrow_arrayref;
+    return defined($r) ? $r->[0] : 0;
 }
 
 ######################################################################
@@ -667,8 +688,8 @@ sub BoardTableSize
     $sth->execute
 	or print("failed to get size of $tn: ",
 		 "$DBI::errstr ($DBI::err)\n"),return 0;
-    my @r = $sth->fetchrow_array;
-    return $r[0];
+    my $r = $sth->fetchrow_arrayref;
+    return defined($r) ? $r->[0] : 0;
 }
 
 ######################################################################
@@ -704,8 +725,8 @@ sub ExistsBoardTable
     $sth->execute
 	or print("failed to look up $tn: ",
 		 "$DBI::errstr ($DBI::err)\n"),return 0;
-    my @r = $sth->fetchrow_array;
-    return $r[0];
+    my $r = $sth->fetchrow_arrayref;
+    return defined($r) ? $r->[0] : 0;
 }
 
 ######################################################################
@@ -720,9 +741,9 @@ sub TrimBoardTable
     $sth->execute
 	or print("failed to find the trim point for $tn: ",
 		 "$DBI::errstr ($DBI::err)\n"),return 0;
-    my @r = $sth->fetchrow_array;
-    if (scalar(@r)) {
-	$dbh->do("DELETE FROM $tn WHERE a0_seq<=$r[0] ".
+    my $r = $sth->fetchrow_arrayref;
+    if (defined($r) and scalar(@$r)) {
+	$dbh->do("DELETE FROM $tn WHERE a0_seq<=$r->[0] ".
 		 "ORDER BY a0_seq LIMIT $limit")
 	    or print("failed to trim $tn: ",
 		     "$DBI::errstr ($DBI::err)\n"),return 0;
@@ -807,8 +828,8 @@ sub GetBoardListFromDB
     $sth->execute
 	or print("DropAllTables: failed to list all tables\n"),return undef;
     my $bl;
-    while (my @r = $sth->fetchrow_array) {
-	$bl->{$r[0]} = 0;
+    while (my $r = $sth->fetchrow_arrayref) {
+	$bl->{$r->[0]} = 0;
     }
     $dbh->disconnect;
     return $bl;
@@ -828,8 +849,8 @@ sub DropAllTables
     $sth->execute
 	or print("DropAllTables: failed to list all tables\n"),exit(-1);
     my @bl;
-    while (my @r = $sth->fetchrow_array) {
-	push(@bl, $r[0]);
+    while (my $r = $sth->fetchrow_arrayref) {
+	push(@bl, $r->[0]);
     }
     if (scalar(@bl) > 0) {
 	LockTables($dbh, 'WRITE', @bl)
@@ -852,17 +873,20 @@ sub UpdateBoardDB
     defined($b) and defined($t) or return -1;
     defined($init) or $init = 0;
     my $tn = GetTableName($b, $t);
+    my $ret = 0;
     my $dbh;
     my ($sth0, $sth1);
-    my $st = 0;
     my $done = 0;
+    my $error = 0;
     my $days = $init ? $K_MINDAYS : $K_MAXDAYS;
     # open db.
     $dbh = DBI->connect($dbi_db, $dbi_user, $dbi_passwd,
 			{AutoCommit => 0})
 	or print("UpdateBoardDB: failed to connect to DB\n"),return -1;
     PrepareBoardTable($dbh, $tn, \$init)
-	or print("UpdateBoardDB: failed to prepare $tn\n"),return -1;
+	or print("UpdateBoardDB: failed to prepare $tn\n"),
+	$dbh->disconnect,return -1;
+    my $seqL = GetLastSeq($dbh, $tn);
     # prepare SQL statements...
     $sth0 = $dbh->prepare("INSERT INTO $tn($A_NAMES) VALUES($A_VALUES)");
     $sth1 = $dbh->prepare("REPLACE INTO $tn($A_NAMES) VALUES($A_VALUES)");
@@ -871,40 +895,41 @@ sub UpdateBoardDB
     my $first = 0;
     my $p = 'Last';
     my $c = 0;
+    my $u = 0;
     while (1) {
 	my $bp = GetBoardPage($b, $t, $p);
 	defined($bp)
 	    or print("fetch failed <$b, $t, $p>\n"),
-	    $dbh->disconnect,return -1;
+	    ++$error,$done=1,last;
 	my $dx;
 	foreach my $e (reverse(@{$bp->{list}})) {
 	    my $a = GetArticlePage($b, $t, $e->{seq},
 				   $e->{id}.' ('.$e->{name}.')',
 				   $e->{title});
 	    if (defined($a)) {
+		++$c;		# always count
 		$first or $first=1,FixBoardTable($dbh, $tn, $e->{seq});
 		$dx = GetDaysFromDateSql($a->{datesql});
 		(!defined($d0) and defined($dx) and $dx != 0) and $d0 = $dx;
 		my $v = ArticleValues($a);
-		if ($st == 0) {
-		    if (!$sth0->execute(@$v)) {
-			$init and $done=1,last;
-			CompareArticleValues($dbh, $tn, $e->{seq}, $v)
-			    or $done=1,last;
-			$st = 1;
-			print("switching to replace: $e->{seq}...");
-			$sth1->execute(@$v) or $done=1,last;
+		my $r = FetchArticleValues($dbh, $tn, $e->{seq});
+		if (defined($r)) {
+		    if (CompareArticleRows($r, $v)) {
+			$sth1->execute(@$v) and ++$u
+			    or ++$error,$done=1,last;
+		    } elsif (!$init) {
+			$done=1,last;
 		    }
-		} elsif ($st == 1) {
-		    CompareArticleValues($dbh, $tn, $e->{seq}, $v)
-			or $done=1,last;
-		    $sth1->execute(@$v) or $done=1,last;
 		} else {
-		    print("UpdateBoardDB: invalid state: $st\n"),return -1;
+		    $sth0->execute(@$v) and ++$u
+			or ++$error,$done=1,last;
 		}
-		++$c;
-		(defined($d0) and defined($dx) and $dx != 0
-		 and $d0 - $dx >= $days and $c >= $K_MINCNT) and $done=1,last;
+		if ($c >= $K_MAXCNT or
+		    ($c >= $K_MINCNT and
+		     defined($d0) and defined($dx) and
+		     $dx != 0 and $d0 - $dx >= $days)) {
+		    $done=1,last;
+		}
 	    }
 	}
 	# enough?
@@ -913,12 +938,18 @@ sub UpdateBoardDB
 	$p = $bp->{list}->[0]->{seq} - 1;
 	$p = 'P'.$p;
     }
-    $dbh->commit
-	or print("commit failed: $DBI::errstr ($DBI::err)\n"),
-	$dbh->disconnect,return -1;
+    if ($error > 0) {
+	print("error after $u articles; abort commit\n");
+	$ret = -1;
+    } else {
+	if (!$dbh->commit) {
+	    print("commit failed: $DBI::errstr ($DBI::err)\n");
+	    $ret = -1;
+	}
+	print($u ? "committed $u articles.\n" : "no change\n");
+    }
     UnlockTables($dbh);
     $dbh->disconnect;
-    print($c ? "commited $c articles.\n" : "no change\n");
     return 0;
 }
 
