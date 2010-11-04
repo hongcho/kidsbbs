@@ -65,11 +65,16 @@
             >
         </activity>
         <provider android:name=".KidsBbsProvider"
-            android:authorities="org.sori.provider.kidsbbs"
+            android:authorities="org.sori.kidsbbs.provider"
             />
         <service android:name=".KidsBbsService"
             android:enabled="true"
             />
+        <receiver android:name=".KidsBbsAlarmReceiver">
+        	<intent-filter>
+        		<action android:name="org.sori.kidsbbs.alarm.UpdateBoards" />
+        	</intent-filter>
+        </receiver>
     </application>
     <uses-sdk android:minSdkVersion="4" />
     <uses-permission android:name="android.permission.INTERNET" />

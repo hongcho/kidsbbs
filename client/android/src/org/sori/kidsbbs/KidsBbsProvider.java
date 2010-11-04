@@ -45,7 +45,7 @@ import android.util.Log;
 
 public class KidsBbsProvider extends ContentProvider {
 	private static final String TAG = "KidsBbsProvider";
-	private static final String PROVIDER = "org.sori.provider.kidsbbs";
+	private static final String PROVIDER = KidsBbs.PKG_BASE + "provider";
 	private static final String CONTENT_URI_BASE =
 		"content://" + PROVIDER + "/";
 
