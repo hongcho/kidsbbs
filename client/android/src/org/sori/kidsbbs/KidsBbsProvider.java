@@ -373,8 +373,8 @@ public class KidsBbsProvider extends ContentProvider {
 						mUpdateMap.put(tabname, state != STATE_PAUSED);
 						if (!isDestructive) {
 							// We can upgrade gracefully...
-							dropArticleView(_db, tabname);
-							createArticleView(_db, tabname);
+							dropArticleViews(_db, tabname);
+							createArticleViews(_db, tabname);
 						} else {
 							dropArticleTable(_db, tabname);
 						}
@@ -414,7 +414,7 @@ public class KidsBbsProvider extends ContentProvider {
 			_db.execSQL("DROP TABLE IF EXISTS " + DB_TABLE);
 		}
 		
-		private void createArticleView(SQLiteDatabase _db, String _tabname) {
+		private void createArticleViews(SQLiteDatabase _db, String _tabname) {
 			_db.execSQL("CREATE VIEW " + getViewname(_tabname) +
 					" AS SELECT " +
 					KEY_ID + "," +
@@ -427,9 +427,9 @@ public class KidsBbsProvider extends ContentProvider {
 					KEYA_BODY + "," +
 					KEYA_ALLREAD_FIELD + "," +
 					KEYA_CNT_FIELD +
-					" FROM " + _tabname +
-					" GROUP BY " + KEYA_THREAD +
-					" ORDER BY " + ORDER_BY_SEQ_DESC+ ";");
+					" FROM (SELECT * FROM " + _tabname +
+					" ORDER BY " + ORDER_BY_SEQ_ASC +
+					") AS t GROUP BY " + KEYA_THREAD + ";");
 		}
 
 		private void createArticleTable(SQLiteDatabase _db, String _tabname) {
@@ -446,17 +446,17 @@ public class KidsBbsProvider extends ContentProvider {
 			_db.execSQL("CREATE INDEX " + _tabname + "_I" + KEYA_SEQ +
 					" ON " + _tabname +
 					" (" + KEYA_SEQ + " DESC)");
-			createArticleView(_db, _tabname);
+			createArticleViews(_db, _tabname);
 		}
 		
-		private void dropArticleView(SQLiteDatabase _db, String _tabname) {
+		private void dropArticleViews(SQLiteDatabase _db, String _tabname) {
 			_db.execSQL("DROP VIEW IF EXISTS " + getViewname(_tabname));
 		}
 		
 		private void dropArticleTable(SQLiteDatabase _db, String _tabname) {
 			_db.execSQL("DROP TABLE IF EXISTS " + _tabname);
 			_db.execSQL("DROP INDEX IF EXISTS " + _tabname + "_I" + KEYA_SEQ);
-			dropArticleView(_db, _tabname);
+			dropArticleViews(_db, _tabname);
 		}
 	}
 }
