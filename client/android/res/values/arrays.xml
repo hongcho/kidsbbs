@@ -80,6 +80,8 @@
     <string-array name="default_board_tables">
         <item>b0_anonymous</item>
         <item>b0_AnonymousSerious</item>
+        <item>b0_guest</item>
+        <item>b0_garbages</item>
     </string-array>
     
     <string-array name="board_table_names">
@@ -87,15 +89,14 @@
         <item>b0_ToSysop</item>
         <item>b0_anonymous</item>
         <item>b0_AnonymousSerious</item>
-        <item>b0_garbages</item>
         <item>b0_guest</item>
+        <item>b0_garbages</item>
 
         <item>b0_CinemaPlay</item>
         <item>b0_ComicsAnim</item>
         <item>b0_ComputerGamenia</item>
         <item>b0_Music</item>
         <item>b0_OpenDiary</item>
-        <item>b0_p</item>
         <item>b0_QuizWit</item>
         <item>b0_Season</item>
         <item>b0_sExLife</item>
@@ -223,5 +224,6 @@
 		<item>b1_hwirim</item>
 		<item>b1_Memo</item>
 		<item>b1_SF</item>
+        <item>b0_p</item>
     </string-array>
 </resources>

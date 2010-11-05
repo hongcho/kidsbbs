@@ -64,6 +64,7 @@ public class KidsBbsService extends Service
 	PendingIntent mAlarmIntent;
 	
 	private Boolean mIsPaused = false;
+	private Boolean mIsPending = false;
 
 	private ContentResolver mResolver;
 	private NotificationManager mNotificationManager;
@@ -116,14 +117,17 @@ public class KidsBbsService extends Service
 	
 	private void setupAlarm(long _delay, long _period) {
     	if (_period > 0) {
+    		long msDelay = _delay*60*1000;
     		long msPeriod = _period*60*1000;
     		mAlarms.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-    				SystemClock.elapsedRealtime() + msPeriod,
+    				SystemClock.elapsedRealtime() + msDelay,
     				msPeriod, mAlarmIntent);
     	} else {
     		mAlarms.cancel(mAlarmIntent);
     	}
-		refreshArticles();
+    	if (_delay == 0) {
+    		refreshArticles();
+    	}
 	}
 	
 	@Override
@@ -185,13 +189,29 @@ public class KidsBbsService extends Service
 	
 	private class UpdateTask extends AsyncTask<Void,Void,Integer> {
 		@Override
+		protected void onPreExecute() {
+			synchronized(mIsPending) {
+				mIsPending = false;
+			}
+		}
+		
+		@Override
 		protected Integer doInBackground(Void... _args) {
 			return refreshTables();
 		}
 		
 		@Override
 		protected void onPostExecute(Integer _result) {
-			stopSelf();
+			boolean isPending;
+			synchronized(mIsPending) {
+				isPending = mIsPending;
+			}
+			if (isPending) {
+				startService(new Intent(KidsBbsService.this,
+						KidsBbsService.class));
+			} else {
+				stopSelf();
+			}
 		}
 
 		private int getTableState(String _tabname) {
@@ -398,10 +418,13 @@ public class KidsBbsService extends Service
 					}
 					if (result) {
 						++count;
+						if (count % 100 == 0) {
+							KidsBbs.announceBoardUpdated(KidsBbsService.this,
+									_tabname);
+						}
 					}
 				}
 				start += articles.size();
-				KidsBbs.announceBoardUpdated(KidsBbsService.this, _tabname);
 			}
 			int trimmed = trimBoardTable(_tabname);
 			Log.i(TAG, _tabname + ": trimed " + trimmed + " articles");
@@ -492,13 +515,20 @@ public class KidsBbsService extends Service
 	}
 	
 	private void refreshArticles() {
+		boolean isPaused;
 		synchronized(mIsPaused) {
-			if (!mIsPaused &&
-					(mLastUpdate == null ||
-							mLastUpdate.getStatus().equals(
-									AsyncTask.Status.FINISHED))) {
+			isPaused = mIsPaused;
+		}
+		if (!isPaused) {
+			if (mLastUpdate == null ||
+					mLastUpdate.getStatus().equals(
+							AsyncTask.Status.FINISHED)) {
 				mLastUpdate = new UpdateTask();
 				mLastUpdate.execute();
+			} else {
+				synchronized(mIsPending) {
+					mIsPending = true;
+				}
 			}
 		}
 	}
