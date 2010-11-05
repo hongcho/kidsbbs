@@ -445,7 +445,7 @@ public class KidsBbsProvider extends ContentProvider {
 					KEYA_READ_DEF + ");");
 			_db.execSQL("CREATE INDEX " + _tabname + "_I" + KEYA_SEQ +
 					" ON " + _tabname +
-					" (" + KEYA_SEQ + " DESC)");
+					" (" + KEYA_SEQ + ")");
 			createArticleViews(_db, _tabname);
 		}
 		
