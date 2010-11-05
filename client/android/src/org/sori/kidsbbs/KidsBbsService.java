@@ -64,7 +64,6 @@ public class KidsBbsService extends Service
 	PendingIntent mAlarmIntent;
 	
 	private Boolean mIsPaused = false;
-	private Boolean mIsPending = false;
 
 	private ContentResolver mResolver;
 	private NotificationManager mNotificationManager;
@@ -78,7 +77,7 @@ public class KidsBbsService extends Service
 	// Update to onStartCommand when min SDK becomes >= 5...
 	@Override
 	public void onStart(Intent _intent, int _startId) {
-    	setupAlarm(0, mUpdateFreq);
+    	setupAlarm(mUpdateFreq);
 	}
 	
 	public void onSharedPreferenceChanged(SharedPreferences _prefs,
@@ -87,10 +86,8 @@ public class KidsBbsService extends Service
 			int updateFreqNew = Integer.parseInt(_prefs.getString(_key,
 					Preferences.getDefaultUpdateFreq(this)));
 			if (updateFreqNew != mUpdateFreq) {
-				int delay = mUpdateFreq < updateFreqNew ?
-					mUpdateFreq : updateFreqNew;
 				mUpdateFreq = updateFreqNew;
-				setupAlarm(delay, mUpdateFreq);
+				setupAlarm(mUpdateFreq);
 			}
 		} else if (_key.equals(Preferences.PREF_NOTIFICATION)) {
 			mNotificationOn = _prefs.getBoolean(_key, true);
@@ -115,19 +112,16 @@ public class KidsBbsService extends Service
 		}
 	}
 	
-	private void setupAlarm(long _delay, long _period) {
+	private void setupAlarm(long _period) {
     	if (_period > 0) {
-    		long msDelay = _delay*60*1000;
     		long msPeriod = _period*60*1000;
     		mAlarms.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-    				SystemClock.elapsedRealtime() + msDelay,
+    				SystemClock.elapsedRealtime() + msPeriod,
     				msPeriod, mAlarmIntent);
     	} else {
     		mAlarms.cancel(mAlarmIntent);
     	}
-    	if (_delay == 0) {
-    		refreshArticles();
-    	}
+    	refreshArticles();
 	}
 	
 	@Override
@@ -189,29 +183,13 @@ public class KidsBbsService extends Service
 	
 	private class UpdateTask extends AsyncTask<Void,Void,Integer> {
 		@Override
-		protected void onPreExecute() {
-			synchronized(mIsPending) {
-				mIsPending = false;
-			}
-		}
-		
-		@Override
 		protected Integer doInBackground(Void... _args) {
 			return refreshTables();
 		}
 		
 		@Override
 		protected void onPostExecute(Integer _result) {
-			boolean isPending;
-			synchronized(mIsPending) {
-				isPending = mIsPending;
-			}
-			if (isPending) {
-				startService(new Intent(KidsBbsService.this,
-						KidsBbsService.class));
-			} else {
-				stopSelf();
-			}
+			stopSelf();
 		}
 
 		private int getTableState(String _tabname) {
@@ -525,10 +503,6 @@ public class KidsBbsService extends Service
 							AsyncTask.Status.FINISHED)) {
 				mLastUpdate = new UpdateTask();
 				mLastUpdate.execute();
-			} else {
-				synchronized(mIsPending) {
-					mIsPending = true;
-				}
 			}
 		}
 	}
