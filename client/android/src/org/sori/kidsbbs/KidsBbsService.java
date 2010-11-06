@@ -25,6 +25,7 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import android.app.AlarmManager;
@@ -487,14 +488,31 @@ public class KidsBbsService extends Service
 			}
 			
 			// Update each board in the list.
-			for (int i = 0; i < tabnames.size(); ++i) {
+			int i = 0;
+			int nTries = 0;
+			while (i < tabnames.size()) {
+				synchronized(mIsPaused) {
+					while (mIsPaused) {
+						try {
+							mIsPaused.wait();
+						} catch (Exception e) {}
+					}
+				}
 				String tabname = tabnames.get(i);
 				try {
 					int count = refreshTable(tabname);
 					Log.i(TAG, tabname + ": updated " + count + " articles");
 					total_count += count;
+					++i; nTries = 0;
+				} catch (IOException e) {
+					Log.i(TAG, tabname + ": IOException while updating (#" +
+							nTries + ")");
+					if (++nTries > 2) {
+						break;
+					}
 				} catch (Exception e) {
 					Log.i(TAG, tabname + ": exception while updating", e);
+					break;
 				}
 			}
 			return total_count;
@@ -502,17 +520,11 @@ public class KidsBbsService extends Service
 	}
 	
 	private void refreshArticles() {
-		boolean isPaused;
-		synchronized(mIsPaused) {
-			isPaused = mIsPaused;
-		}
-		if (!isPaused) {
-			if (mLastUpdate == null ||
-					mLastUpdate.getStatus().equals(
-							AsyncTask.Status.FINISHED)) {
-				mLastUpdate = new UpdateTask();
-				mLastUpdate.execute();
-			}
+		if (mLastUpdate == null ||
+				mLastUpdate.getStatus().equals(
+						AsyncTask.Status.FINISHED)) {
+			mLastUpdate = new UpdateTask();
+			mLastUpdate.execute();
 		}
 	}
 	
@@ -608,6 +620,9 @@ public class KidsBbsService extends Service
 				}
 				mIsPaused = isPaused;
 				Log.i(TAG, mIsPaused ? "Update DISABLED" : "Update ENABLED");
+				if (!mIsPaused) {
+					mIsPaused.notify();
+				}
 			}
 		}
 	}
