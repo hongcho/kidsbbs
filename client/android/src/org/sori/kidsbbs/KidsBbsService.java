@@ -93,9 +93,11 @@ public class KidsBbsService extends Service
 			mNotificationOn = _prefs.getBoolean(_key, true);
 		} else if (_key.equals(Preferences.PREF_NOTIFICATION_LIGHTS)) {
 			if (_prefs.getBoolean(_key, true)) {
-				mNotificationDefaults |= Notification.DEFAULT_LIGHTS;
+				mNotificationDefaults |=
+					Notification.DEFAULT_LIGHTS | Notification.FLAG_SHOW_LIGHTS;
 			} else {
-				mNotificationDefaults &= ~Notification.DEFAULT_LIGHTS;
+				mNotificationDefaults &=
+					~(Notification.DEFAULT_LIGHTS | Notification.FLAG_SHOW_LIGHTS);
 			}
 		} else if (_key.equals(Preferences.PREF_NOTIFICATION_SOUND)) {
 			if (_prefs.getBoolean(_key, true)) {
@@ -142,6 +144,7 @@ public class KidsBbsService extends Service
 				mNotificationTitleString,
 				System.currentTimeMillis());
 		mNewArticlesNotification.flags |= Notification.FLAG_AUTO_CANCEL;
+		mNewArticlesNotification.ledARGB = 0x3030f0;
 		
 		mAlarms = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
 		Intent intent = new Intent(KidsBbsAlarmReceiver.UPDATE_BOARDS_ALARM);
