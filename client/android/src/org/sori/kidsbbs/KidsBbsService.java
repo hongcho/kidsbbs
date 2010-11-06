@@ -60,10 +60,13 @@ public class KidsBbsService extends Service
 	private int mUpdateFreq;
 	private UpdateTask mLastUpdate = null;
 	
+	ConnectivityManager mConnectivities;
 	AlarmManager mAlarms;
 	PendingIntent mAlarmIntent;
 	
 	private Boolean mIsPaused = false;
+	private boolean mBgDataEnabled = true;
+	private boolean mNoConnectivity = false;
 
 	private ContentResolver mResolver;
 	private NotificationManager mNotificationManager;
@@ -137,6 +140,9 @@ public class KidsBbsService extends Service
 				R.string.notification_message);
 		
 		mResolver = getContentResolver();
+		
+		mConnectivities = (ConnectivityManager)getSystemService(
+				Context.CONNECTIVITY_SERVICE);
 
 		mNotificationManager = (NotificationManager)getSystemService(
 				Context.NOTIFICATION_SERVICE);
@@ -586,27 +592,32 @@ public class KidsBbsService extends Service
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
 			String action = _intent.getAction();
-			if (!action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
+			if (action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
+				mNoConnectivity = _intent.getBooleanExtra(
+						ConnectivityManager.EXTRA_NO_CONNECTIVITY, false);
+			} else if (action.equals(
+					ConnectivityManager.ACTION_BACKGROUND_DATA_SETTING_CHANGED)) {
+				mBgDataEnabled = mConnectivities.getBackgroundDataSetting();
+			} else {
 				return;
 			}
-			boolean noConn = _intent.getBooleanExtra(
-					ConnectivityManager.EXTRA_NO_CONNECTIVITY, false);
+			boolean isPaused = mNoConnectivity || !mBgDataEnabled;
 			synchronized(mIsPaused) {
-				if (noConn == mIsPaused) {
+				if (isPaused == mIsPaused) {
 					return;
 				}
-				mIsPaused = noConn;
-				Log.i(TAG, mIsPaused ? "Connectivity DOWN" : "Connectivity UP");
+				mIsPaused = isPaused;
+				Log.i(TAG, mIsPaused ? "Update DISABLED" : "Update ENABLED");
 			}
 		}
 	}
-	
 	private ConnectivityReceiver mConnReceiver;
 	
 	private void registerReceivers() {
 		mConnReceiver = new ConnectivityReceiver();
 		IntentFilter filterConn = new IntentFilter(
-				ConnectivityManager.CONNECTIVITY_ACTION);
+				ConnectivityManager.ACTION_BACKGROUND_DATA_SETTING_CHANGED);
+		filterConn.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
 		registerReceiver(mConnReceiver, filterConn);
 	}
 	
