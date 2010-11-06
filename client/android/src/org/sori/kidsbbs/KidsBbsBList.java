@@ -154,6 +154,7 @@ public class KidsBbsBList extends ListActivity {
 			selectBoards();
 			return true;
 		case MENU_REFRESH:
+			startService(new Intent(this, KidsBbsService.class));
 			refreshList();
 			return true;
 		case MENU_PREFERENCES:
