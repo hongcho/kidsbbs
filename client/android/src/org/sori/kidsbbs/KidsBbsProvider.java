@@ -355,7 +355,6 @@ public class KidsBbsProvider extends ContentProvider {
 				KEYB_TABNAME,
 				KEYB_STATE,
 			};   
-			boolean isDestructive = _old < 2;
 			Log.w(TAG, "Upgrading database from version " + _old + " to " +
 					_new + ", which may destroy all old data");
 			
@@ -371,19 +370,28 @@ public class KidsBbsProvider extends ContentProvider {
 						int state = Integer.parseInt(c.getString(
 								c.getColumnIndex(KEYB_STATE)));
 						mUpdateMap.put(tabname, state != STATE_PAUSED);
-						if (!isDestructive) {
-							// We can upgrade gracefully...
-							dropArticleViews(_db, tabname);
-							createArticleViews(_db, tabname);
-						} else {
-							dropArticleTable(_db, tabname);
-						}
+						upgradeArticleDB(_db, tabname, _old);
 					} while (c.moveToNext());
 				}
 				c.close();
 			}
-
-			if (isDestructive) {
+			
+			upgradeBoardDB(_db, _old);
+		}
+		
+		private void upgradeArticleDB(SQLiteDatabase _db, String _tabname,
+				int _old) {
+			if (_old < 2) {
+				dropArticleTable(_db, _tabname);
+			} else {
+				// We can upgrade gracefully...
+				dropArticleViews(_db, _tabname);
+				createArticleViews(_db, _tabname);
+			}
+		}
+		
+		private void upgradeBoardDB(SQLiteDatabase _db, int _old) {
+			if (_old < 2) {
 				dropMainTable(_db);
 				onCreate(_db);
 			}
