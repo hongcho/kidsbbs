@@ -25,7 +25,6 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 import android.app.AlarmManager;
@@ -504,15 +503,12 @@ public class KidsBbsService extends Service
 					Log.i(TAG, tabname + ": updated " + count + " articles");
 					total_count += count;
 					++i; nTries = 0;
-				} catch (IOException e) {
-					Log.i(TAG, tabname + ": IOException while updating (#" +
+				} catch (Exception e) {
+					Log.i(TAG, tabname + ": exception while updating (#" +
 							nTries + ")");
 					if (++nTries > 2) {
 						break;
 					}
-				} catch (Exception e) {
-					Log.i(TAG, tabname + ": exception while updating", e);
-					break;
 				}
 			}
 			return total_count;
