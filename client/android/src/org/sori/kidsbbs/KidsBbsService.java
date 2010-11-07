@@ -64,7 +64,8 @@ public class KidsBbsService extends Service
 	AlarmManager mAlarms;
 	PendingIntent mAlarmIntent;
 	
-	private Boolean mIsPaused = false;
+	private Integer mIsPausedSync = 0;
+	private boolean mIsPaused = false;
 	private boolean mBgDataEnabled = true;
 	private boolean mNoConnectivity = false;
 
@@ -490,10 +491,10 @@ public class KidsBbsService extends Service
 			int i = 0;
 			int nTries = 0;
 			while (i < tabnames.size()) {
-				synchronized(mIsPaused) {
+				synchronized(mIsPausedSync) {
 					while (mIsPaused) {
 						try {
-							mIsPaused.wait();
+							mIsPausedSync.wait();
 						} catch (Exception e) {}
 					}
 				}
@@ -610,14 +611,14 @@ public class KidsBbsService extends Service
 				return;
 			}
 			boolean isPaused = mNoConnectivity || !mBgDataEnabled;
-			synchronized(mIsPaused) {
+			synchronized(mIsPausedSync) {
 				if (isPaused == mIsPaused) {
 					return;
 				}
 				mIsPaused = isPaused;
 				Log.i(TAG, mIsPaused ? "Update DISABLED" : "Update ENABLED");
 				if (!mIsPaused) {
-					mIsPaused.notify();
+					mIsPausedSync.notify();
 				}
 			}
 		}
