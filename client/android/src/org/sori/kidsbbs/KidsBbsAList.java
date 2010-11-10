@@ -36,8 +36,12 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.content.res.ColorStateList;
 import android.content.res.Resources;
+import android.content.res.TypedArray;
+import android.content.res.Resources.Theme;
 import android.database.Cursor;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -445,6 +449,8 @@ public abstract class KidsBbsAList extends ListActivity
 		private LayoutInflater mInflater;
 		private Drawable mBgRead;
 		private Drawable mBgUnread;
+		private ColorStateList mTextColorPrimary;
+		private ColorStateList mTextColorSecondary;
 
 		public ArticlesAdapter(Context _context) {
 			super(_context, null, true);
@@ -457,6 +463,17 @@ public abstract class KidsBbsAList extends ListActivity
 					R.drawable.list_item_background_read);
 			mBgUnread = resources.getDrawable(
 					R.drawable.list_item_background_unread);
+			
+			Theme theme = _context.getTheme();
+			TypedArray array;
+			array = theme.obtainStyledAttributes(
+					new int[] { android.R.attr.textColorPrimary });
+			mTextColorPrimary = resources.getColorStateList(
+					array.getResourceId(0, 0));
+			array = theme.obtainStyledAttributes(
+					new int[] { android.R.attr.textColorSecondary });
+			mTextColorSecondary = resources.getColorStateList(
+					array.getResourceId(0, 0));
 		}
 
 		private class ViewHolder {
@@ -503,15 +520,27 @@ public abstract class KidsBbsAList extends ListActivity
 			}
 			
 			ViewHolder holder = (ViewHolder)itemView.getTag();
-			if (itemView.mRead) {
-				holder.item.setBackgroundDrawable(mBgRead);
-			} else {
-				holder.item.setBackgroundDrawable(mBgUnread);
-			}
 			holder.title.setText(itemView.mTitle);
 			holder.date.setText(itemView.mDate);
 			holder.username.setText(user);
 			holder.summary.setText(itemView.mSummary);
+			if (itemView.mRead) {
+				holder.title.setTypeface(Typeface.DEFAULT);
+				holder.username.setTypeface(Typeface.DEFAULT);
+				holder.title.setTextColor(mTextColorSecondary);
+				holder.date.setTextColor(mTextColorSecondary);
+				holder.username.setTextColor(mTextColorSecondary);
+				holder.summary.setTextColor(mTextColorSecondary);
+				holder.item.setBackgroundDrawable(mBgRead);
+			} else {
+				holder.title.setTypeface(Typeface.DEFAULT_BOLD);
+				holder.username.setTypeface(Typeface.DEFAULT_BOLD);
+				holder.title.setTextColor(mTextColorPrimary);
+				holder.date.setTextColor(mTextColorPrimary);
+				holder.username.setTextColor(mTextColorPrimary);
+				holder.summary.setTextColor(mTextColorPrimary);
+				holder.item.setBackgroundDrawable(mBgUnread);
+			}
 		}
 
 		@Override
