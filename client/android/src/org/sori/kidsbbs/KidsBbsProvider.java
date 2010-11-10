@@ -417,7 +417,7 @@ public class KidsBbsProvider extends ContentProvider {
 		}
 		
 		private void createMainTable(SQLiteDatabase _db) {
-			_db.execSQL("CREATE TABLE " + DB_TABLE + " (" +
+			_db.execSQL("CREATE TABLE IF NOT EXISTS " + DB_TABLE + " (" +
 					KEY_ID_DEF + "," +
 					KEYB_TABNAME_DEF + "," +
 					KEYB_TITLE_DEF + "," +
@@ -429,7 +429,7 @@ public class KidsBbsProvider extends ContentProvider {
 		}
 		
 		private void createArticleViews(SQLiteDatabase _db, String _tabname) {
-			_db.execSQL("CREATE VIEW " + getViewname(_tabname) +
+			_db.execSQL("CREATE VIEW IF NOT EXISTS " + getViewname(_tabname) +
 					" AS SELECT " +
 					KEY_ID + "," +
 					KEYA_SEQ + "," +
@@ -447,7 +447,7 @@ public class KidsBbsProvider extends ContentProvider {
 		}
 
 		private void createArticleTable(SQLiteDatabase _db, String _tabname) {
-			_db.execSQL("CREATE TABLE " + _tabname + " (" +
+			_db.execSQL("CREATE TABLE IF NOT EXISTS " + _tabname + " (" +
 					KEY_ID_DEF + "," +
 					KEYA_SEQ_DEF + "," +
 					KEYA_USER_DEF + "," +
@@ -457,7 +457,7 @@ public class KidsBbsProvider extends ContentProvider {
 					KEYA_THREAD_DEF + "," +
 					KEYA_BODY_DEF + "," +
 					KEYA_READ_DEF + ");");
-			_db.execSQL("CREATE INDEX " + _tabname + "_I" + KEYA_SEQ +
+			_db.execSQL("CREATE INDEX IF NOT EXISTS " + _tabname + "_I" + KEYA_SEQ +
 					" ON " + _tabname +
 					" (" + KEYA_SEQ + ")");
 			createArticleViews(_db, _tabname);
