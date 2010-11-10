@@ -36,6 +36,7 @@ import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
@@ -361,22 +362,27 @@ public class KidsBbsProvider extends ContentProvider {
 			mUpdateMap.clear();
 			SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
 			qb.setTables(DB_TABLE);
-			Cursor c = qb.query(_db, FIELDS, null, null, null, null, null);
-			if (c != null) {
-				if (c.getCount() > 0) {
-					c.moveToFirst();
-					do {
-						String tabname = c.getString(c.getColumnIndex(KEYB_TABNAME));
-						int state = Integer.parseInt(c.getString(
-								c.getColumnIndex(KEYB_STATE)));
-						mUpdateMap.put(tabname, state != STATE_PAUSED);
-						upgradeArticleDB(_db, tabname, _old);
-					} while (c.moveToNext());
+			try {
+				Cursor c = qb.query(_db, FIELDS, null, null, null, null, null);
+				if (c != null) {
+					if (c.getCount() > 0) {
+						c.moveToFirst();
+						do {
+							String tabname = c.getString(c.getColumnIndex(KEYB_TABNAME));
+							int state = Integer.parseInt(c.getString(
+									c.getColumnIndex(KEYB_STATE)));
+							mUpdateMap.put(tabname, state != STATE_PAUSED);
+							upgradeArticleDB(_db, tabname, _old);
+						} while (c.moveToNext());
+					}
+					c.close();
 				}
-				c.close();
+				
+				upgradeBoardDB(_db, _old);
+			} catch (SQLiteException e) {
+				// For whatever the reason, the table seems to have disappeared
+				createMainTable(_db);
 			}
-			
-			upgradeBoardDB(_db, _old);
 		}
 		
 		private void upgradeArticleDB(SQLiteDatabase _db, String _tabname,
