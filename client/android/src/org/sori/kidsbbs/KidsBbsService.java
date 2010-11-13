@@ -73,7 +73,8 @@ public class KidsBbsService extends Service
 	private NotificationManager mNotificationManager;
 	private Notification mNewArticlesNotification;
 	private boolean mNotificationOn = true;
-	private int mNotificationDefaults = Notification.DEFAULT_LIGHTS |
+	private int mNotificationDefaults =
+		Notification.DEFAULT_LIGHTS | Notification.FLAG_SHOW_LIGHTS |
 		Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE;
 	private String mNotificationTitleString;
 	private String mNotificationMessage;
@@ -167,7 +168,8 @@ public class KidsBbsService extends Service
     			Preferences.PREF_NOTIFICATION, true);
     	mNotificationDefaults = 0;
     	if (prefs.getBoolean(Preferences.PREF_NOTIFICATION_LIGHTS, true)) {
-    		mNotificationDefaults |= Notification.DEFAULT_LIGHTS;
+    		mNotificationDefaults |=
+    			Notification.DEFAULT_LIGHTS | Notification.FLAG_SHOW_LIGHTS;
     	}
     	if (prefs.getBoolean(Preferences.PREF_NOTIFICATION_SOUND, true)) {
     		mNotificationDefaults |= Notification.DEFAULT_SOUND;
