@@ -29,20 +29,16 @@
 <resources>
 	<string-array name="update_freq_options">
 		<item>수동</item>
-		<item>15분</item>
-		<item>30분</item>
+		<item>20분</item>
 		<item>1시간</item>
-		<item>3시간</item>
 		<item>6시간</item>
 		<item>12시간</item>
 		<item>하루</item>
 	</string-array>
 	<string-array name="update_freq_values">
 		<item>0</item>
-		<item>15</item>
-		<item>30</item>
+		<item>20</item>
 		<item>60</item>
-		<item>180</item>
 		<item>360</item>
 		<item>720</item>
 		<item>1440</item>
