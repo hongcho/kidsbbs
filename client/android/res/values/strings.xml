@@ -72,8 +72,8 @@
     <string name="update_error_text">서버에서 글을 불러오는데 문제가 있습니다</string>
     
     <string name="board_selection_title">보드를 골라주세요.</string>
-    <string name="confirm_text">정말로 진행하겠습니까?</string>
-    <string name="toggle_all_read_message">전체 글의 읽음 표시를 토글합니다.</string>
+    <string name="confirm_text">정말로 계속하겠습니까?</string>
+    <string name="toggle_all_read_message">글목록 전체의 읽음 표시를 토글합니다.</string>
     
     <string name="notification_title_text">새 글이 올라왔습니다.</string>
     <string name="notification_message">보드 목록으로 가서 읽으세요.</string>
