@@ -126,6 +126,7 @@ public class Preferences extends PreferenceActivity {
 		builder.setView(v);
 		TextView tv = (TextView)v.findViewById(R.id.about_text);
 		tv.setText(text);
+		builder.setPositiveButton(android.R.string.ok, null);
 		return builder.create();
 	}
 	
