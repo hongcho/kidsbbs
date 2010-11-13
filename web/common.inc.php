@@ -370,7 +370,7 @@ function gen_list(&$qr)
       $title = pad_title($title);
       echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
       echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
-      echo "<TR><TD><FONT size=\"4pt\" style=\"font-family:monospace\"><A href=\"?m=view&b=$b&t=$t&p=$seq\">$title</A>&nbsp;</FONT>\n";
+      echo "<TR><TD><FONT size=\"4pt\" style=\"font-family:monospace\"><A href=\"?m=view&b=$_b&t=$_t&p=$seq\">$title</A>&nbsp;</FONT>\n";
       echo "<TD align=\"right\"><FONT size=\"2pt\">&nbsp;</FONT>\n";
       echo "</TABLE>\n";
       echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
