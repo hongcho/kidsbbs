@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.sori.kidsbbs"
+    android:versionCode="00006"
+    android:versionName="0.6"
+    >
+    <application
+        android:icon="@drawable/icon"
+        android:label="@string/title_app"
+        >
+        <activity android:name=".KidsBbs"
+            android:label="@string/title_app"
+            >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".KidsBbsBList"
+            android:label="@string/title_blist"
+            >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".KidsBbsTList"
+            android:label="@string/title_tlist"
+            >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".KidsBbsThread"
+            android:label="@string/title_thread"
+            >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".KidsBbsUser"
+            android:label="@string/title_user"
+            >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".KidsBbsView"
+            android:label="@string/title_view"
+            >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".Preferences"
+            android:label="@string/title_pref"
+            >
+        </activity>
+        <provider android:name=".KidsBbsProvider"
+            android:authorities="org.sori.kidsbbs.provider"
+            />
+        <service android:name=".KidsBbsService"
+            android:enabled="true"
+            />
+        <receiver android:name=".KidsBbsAlarmReceiver">
+        	<intent-filter>
+        		<action android:name="org.sori.kidsbbs.alarm.UpdateBoards" />
+        	</intent-filter>
+        </receiver>
+    </application>
+    <uses-sdk android:minSdkVersion="4" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+</manifest> 
