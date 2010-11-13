@@ -118,7 +118,7 @@ my $dbi_passwd = $mysql_passwd;
 ######################################################################
 # SQL Constants.
 
-my $K_MINCNT = 15;
+my $K_MINCNT = 17;
 my $K_MAXCNT = 2000;
 my $K_MINDAYS = 7;		# 1 week(s)
 my $K_MAXDAYS = 31;		# 1 month(s)
@@ -866,36 +866,19 @@ sub DropAllTables
 }
 
 ######################################################################
-# Update the board database
-sub UpdateBoardDB
+# Initialize the board table
+# - assumes the table is empty.
+sub InitBoardTable
 {
-    my ($b, $t, $init) = @_;
-    defined($b) and defined($t) or return -1;
-    defined($init) or $init = 0;
-    my $tn = GetTableName($b, $t);
-    my $ret = 0;
-    my $dbh;
-    my ($sth0, $sth1);
+    my ($b, $t, $dbh, $tn) = @_;
+    my $sthI = $dbh->prepare("INSERT INTO $tn($A_NAMES) VALUES($A_VALUES)");
     my $done = 0;
     my $error = 0;
-    my $days = $init ? $K_MINDAYS : $K_MAXDAYS;
-    # open db.
-    $dbh = DBI->connect($dbi_db, $dbi_user, $dbi_passwd,
-			{AutoCommit => 0})
-	or print("UpdateBoardDB: failed to connect to DB\n"),return -1;
-    PrepareBoardTable($dbh, $tn, \$init)
-	or print("UpdateBoardDB: failed to prepare $tn\n"),
-	$dbh->disconnect,return -1;
-    my $seqL = GetLastSeq($dbh, $tn);
-    # prepare SQL statements...
-    $sth0 = $dbh->prepare("INSERT INTO $tn($A_NAMES) VALUES($A_VALUES)");
-    $sth1 = $dbh->prepare("REPLACE INTO $tn($A_NAMES) VALUES($A_VALUES)");
-    # go through the board pages
+    my $days = $K_MINDAYS;
     my $d0;
-    my $first = 0;
-    my $p = 'Last';
     my $c = 0;
     my $u = 0;
+    my $p = 'Last';
     while (1) {
 	my $bp = GetBoardPage($b, $t, $p);
 	defined($bp)
@@ -906,30 +889,21 @@ sub UpdateBoardDB
 	    my $a = GetArticlePage($b, $t, $e->{seq},
 				   $e->{id}.' ('.$e->{name}.')',
 				   $e->{title});
-	    if (defined($a)) {
-		++$c;		# always count
-		$first or $first=1,FixBoardTable($dbh, $tn, $e->{seq});
-		$dx = GetDaysFromDateSql($a->{datesql});
-		(!defined($d0) and defined($dx) and $dx != 0) and $d0 = $dx;
-		my $v = ArticleValues($a);
-		my $r = FetchArticleValues($dbh, $tn, $e->{seq});
-		if (defined($r)) {
-		    if (CompareArticleRows($r, $v)) {
-			$sth1->execute(@$v) and ++$u
-			    or ++$error,$done=1,last;
-		    } elsif (!$init) {
-			$done=1,last;
-		    }
-		} else {
-		    $sth0->execute(@$v) and ++$u
-			or ++$error,$done=1,last;
-		}
-		if ($c >= $K_MAXCNT or
-		    ($c >= $K_MINCNT and
-		     defined($d0) and defined($dx) and
-		     $dx != 0 and $d0 - $dx >= $days)) {
-		    $done=1,last;
-		}
+	    defined($a)
+		or print("fetch failed <$b, $t, $e->{seq}>\n"),
+		++$error,$done=1,last;
+
+	    ++$c;		# always count
+	    $dx = GetDaysFromDateSql($a->{datesql});
+	    (!defined($d0) and defined($dx) and $dx != 0) and $d0 = $dx;
+	    my $v = ArticleValues($a);
+	    $sthI->execute(@$v) and ++$u
+		or ++$error,$done=1,last;
+	    if ($c >= $K_MAXCNT or
+		($c >= $K_MINCNT and
+		 defined($d0) and defined($dx) and
+		 $dx != 0 and $d0 - $dx >= $days)) {
+		$done=1,last;
 	    }
 	}
 	# enough?
@@ -938,19 +912,97 @@ sub UpdateBoardDB
 	$p = $bp->{list}->[0]->{seq} - 1;
 	$p = 'P'.$p;
     }
-    if ($error > 0) {
-	print("error after $u articles; abort commit\n");
+    return $error > 0 ? -1 : $u;
+}
+
+######################################################################
+# Update the board table
+sub UpdateBoardTable
+{
+    my ($b, $t, $dbh, $tn, $seqDBL) = @_;
+    my $ret = 0;
+    my $sthI = $dbh->prepare("INSERT INTO $tn($A_NAMES) VALUES($A_VALUES)");
+    my $sthU = $dbh->prepare("REPLACE INTO $tn($A_NAMES) VALUES($A_VALUES)");
+    my $done = 0;
+    my $u = 0;
+    my $p = $seqDBL + (17 - 3);	# Just in case something got deleted
+    $p = 'P'.$p;
+    while (1) {
+	my $bp = GetBoardPage($b, $t, $p);
+	defined($bp)
+	    or print("fetch failed <$b, $t, $p>\n"),
+	    $done=1,last;
+	if (scalar(@{$bp->{list}}) == 0) {
+	    $done=1,last;
+	}
+	foreach my $e (@{$bp->{list}}) {
+	    my $a = GetArticlePage($b, $t, $e->{seq},
+				   $e->{id}.' ('.$e->{name}.')',
+				   $e->{title});
+	    defined($a)
+		or print("fetch failed <$b, $t, $e->{seq}>\n"),
+		$done=1,last;
+
+	    my $v = ArticleValues($a);
+	    my $r = FetchArticleValues($dbh, $tn, $e->{seq});
+	    if (defined($r)) {
+		if (CompareArticleRows($r, $v)) {
+		    $sthU->execute(@$v) and ++$u
+			or $done=1,last;
+		}
+	    } else {
+		$sthI->execute(@$v) and ++$u
+		    or $done=1,last;
+	    }
+	}
+	# enough?
+	last if ($done);
+	# previous page
+	$p = $bp->{list}->[0]->{seq} - 1;
+	$p = 'N'.$p;
+    }
+    return $u;
+}
+
+######################################################################
+# Update the board database
+sub UpdateBoardDB
+{
+    my ($b, $t, $init) = @_;
+    defined($b) and defined($t) or return -1;
+    defined($init) or $init = 0;
+    my $tn = GetTableName($b, $t);
+    my $ret = 0;
+    my $dbh;
+    # open db.
+    $dbh = DBI->connect($dbi_db, $dbi_user, $dbi_passwd,
+			{AutoCommit => 0})
+	or print("UpdateBoardDB: failed to connect to DB\n"),return -1;
+    PrepareBoardTable($dbh, $tn, \$init)
+	or print("UpdateBoardDB: failed to prepare $tn\n"),
+	$dbh->disconnect,return -1;
+
+    my $seqDBL = GetLastSeq($dbh, $tn);
+    if ($seqDBL == 0) {
+        $ret = InitBoardTable($b, $t, $dbh, $tn);
+    } else {
+	$ret = UpdateBoardTable($b, $t, $dbh, $tn, $seqDBL);
+    }
+
+    if ($ret < 0) {
+	print("abort commit\n");
 	$ret = -1;
     } else {
 	if (!$dbh->commit) {
 	    print("commit failed: $DBI::errstr ($DBI::err)\n");
 	    $ret = -1;
+	} else {
+	    print($ret ? "committed $ret articles.\n" : "no change\n");
 	}
-	print($u ? "committed $u articles.\n" : "no change\n");
     }
     UnlockTables($dbh);
     $dbh->disconnect;
-    return 0;
+    return $ret;
 }
 
 ######################################################################
