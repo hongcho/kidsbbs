@@ -33,6 +33,7 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.UriMatcher;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
@@ -250,6 +251,34 @@ public class KidsBbsProvider extends ContentProvider {
 	private static final String getViewname(String _tabname) {
 		return _tabname + "_view";
 	}
+	
+	private static final int getUnreadCount(SQLiteDatabase _db,
+			String _tabname) {
+		final String[] FIELDS1 = {
+			KEYA_CNT_FIELD,
+		};
+		int count = 0;
+		SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
+		qb.setTables(_tabname);
+		Cursor c1 = qb.query(_db, FIELDS1,
+				SELECTION_UNREAD, null, null, null, null);
+		if (c1 != null) {
+			if (c1.getCount() > 0) {
+				c1.moveToFirst();
+				count = c1.getInt(0);
+			}
+			c1.close();
+		}
+		return count;
+	}
+	
+	private static final int setMainUnreadCount(SQLiteDatabase _db,
+			String _tabname, int count) {
+		ContentValues values = new ContentValues();
+		values.put(KEYB_COUNT, count);
+		return _db.update(DB_TABLE, values, SELECTION_TABNAME,
+				new String[] {_tabname});
+	}
 
 	// Common ID
 	private static final String KEY_ID_DEF = KEY_ID +
@@ -290,14 +319,12 @@ public class KidsBbsProvider extends ContentProvider {
 	private SQLiteDatabase mDB;
 
 	private static class DBHelper extends SQLiteOpenHelper {
-		private Context mContext;
-		private HashMap<String, Boolean> mUpdateMap =
-			new HashMap<String, Boolean>();
+		private Resources mResources;
 		
 		public DBHelper(Context _context, String _name, CursorFactory _factory,
 				int _version) {
 			super(_context, _name, _factory, _version);
-			mContext = _context;
+			mResources = _context.getResources();
 		}
 
 		@Override
@@ -305,28 +332,29 @@ public class KidsBbsProvider extends ContentProvider {
 			createMainTable(_db);
 			
 			// Board table...
-			String[] tabnames = mContext.getResources().getStringArray(
+			String[] tabnames = mResources.getStringArray(
 					R.array.board_table_names);
-			String[] typeNames = mContext.getResources().getStringArray(
+			String[] typeNames = mResources.getStringArray(
 					R.array.board_type_names);
-			String[] nameMapKeys = mContext.getResources().getStringArray(
+			String[] nameMapKeys = mResources.getStringArray(
 					R.array.board_name_map_in);
-			String[] nameMapValues = mContext.getResources().getStringArray(
+			String[] nameMapValues = mResources.getStringArray(
 					R.array.board_name_map_out);
-			String[] defaultMapKeys = mContext.getResources().getStringArray(
+			String[] defaultMapKeys = mResources.getStringArray(
 					R.array.default_board_tables);
 			
 			HashMap<String, String> nameMap = new HashMap<String, String>();
 			for (int i = 0; i < nameMapKeys.length; ++i) {
 				nameMap.put(nameMapKeys[i], nameMapValues[i]);
 			}
-			if (mUpdateMap.isEmpty()) {
-				for (int i = 0; i < tabnames.length; ++i) {
-					mUpdateMap.put(tabnames[i], false);
-				}
-				for (int i = 0; i < defaultMapKeys.length; ++i) {
-					mUpdateMap.put(defaultMapKeys[i], true);
-				}
+			
+			HashMap<String, Boolean> updateMap =
+				new HashMap<String, Boolean>();
+			for (int i = 0; i < tabnames.length; ++i) {
+				updateMap.put(tabnames[i], false);
+			}
+			for (int i = 0; i < defaultMapKeys.length; ++i) {
+				updateMap.put(defaultMapKeys[i], true);
 			}
 			
 			// Populate...
@@ -347,7 +375,7 @@ public class KidsBbsProvider extends ContentProvider {
 					title += name;
 				}
 				addBoard(_db, new BoardInfo(tabnames[i], title),
-						mUpdateMap.get(tabnames[i]) ?
+						updateMap.get(tabnames[i]) ?
 							STATE_INIT : STATE_PAUSED);
 			}
 		}
@@ -356,12 +384,10 @@ public class KidsBbsProvider extends ContentProvider {
 		public void onUpgrade(SQLiteDatabase _db, int _old, int _new) {
 			final String[] FIELDS = {
 				KEYB_TABNAME,
-				KEYB_STATE,
 			};   
 			Log.w(TAG, "Upgrading database from version " + _old + " to " +
 					_new + ", which may destroy all old data");
 			
-			mUpdateMap.clear();
 			SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
 			qb.setTables(DB_TABLE);
 			try {
@@ -370,10 +396,7 @@ public class KidsBbsProvider extends ContentProvider {
 					if (c.getCount() > 0) {
 						c.moveToFirst();
 						do {
-							String tabname = c.getString(c.getColumnIndex(KEYB_TABNAME));
-							int state = Integer.parseInt(c.getString(
-									c.getColumnIndex(KEYB_STATE)));
-							mUpdateMap.put(tabname, state != STATE_PAUSED);
+							String tabname = c.getString(0);
 							upgradeArticleDB(_db, tabname, _old);
 						} while (c.moveToNext());
 					}
@@ -390,18 +413,44 @@ public class KidsBbsProvider extends ContentProvider {
 		private void upgradeArticleDB(SQLiteDatabase _db, String _tabname,
 				int _old) {
 			if (_old < 2) {
+				// We need to recreate the tables from scratch.
 				dropArticleTable(_db, _tabname);
-			} else {
-				// We can upgrade gracefully...
+				createArticleTable(_db, _tabname);
+			} else if (_old < 3) {
+				// We can upgrade views.
 				dropArticleViews(_db, _tabname);
 				createArticleViews(_db, _tabname);
+			} else {
+				// Nothing to do.
 			}
 		}
 		
 		private void upgradeBoardDB(SQLiteDatabase _db, int _old) {
 			if (_old < 4) {
-				dropMainTable(_db);
-				onCreate(_db);
+				// New column in DB_VERSION 4.
+				_db.execSQL("ALTER TABLE " + DB_TABLE +
+						" ADD COLUMN " + KEYB_COUNT_DEF + ";");
+				
+				// Fill it out.
+				final String[] FIELDS = {
+					KEYB_TABNAME,
+				};   
+				SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
+				qb.setTables(DB_TABLE);
+				Cursor c = qb.query(_db, FIELDS, null, null, null, null, null);
+				if (c != null) {
+					if (c.getCount() > 0) {
+						c.moveToFirst();
+						do {
+							String tabname = c.getString(0);
+							int unreadCount = getUnreadCount(_db, tabname);
+							if (unreadCount > 0) {
+								setMainUnreadCount(_db, tabname, unreadCount);
+							}
+						} while (c.moveToNext());
+					}
+					c.close();
+				}
 			}
 		}
 		
@@ -410,8 +459,8 @@ public class KidsBbsProvider extends ContentProvider {
 			ContentValues values = new ContentValues();
 			values.put(KEYB_TABNAME, _info.getTabname());
 			values.put(KEYB_TITLE, _info.getTitle());
-			values.put(KEYB_COUNT, 0);
 			values.put(KEYB_STATE, _state);
+			values.put(KEYB_COUNT, 0);
 			if (_db.insert(DB_TABLE, null, values) < 0) {
 				throw new SQLException(
 						"addBoard: Failed to insert row into " + DB_TABLE);
@@ -424,13 +473,13 @@ public class KidsBbsProvider extends ContentProvider {
 					KEY_ID_DEF + "," +
 					KEYB_TABNAME_DEF + "," +
 					KEYB_TITLE_DEF + "," +
-					KEYB_COUNT_DEF + "," +
-					KEYB_STATE_DEF + ");");
+					KEYB_STATE_DEF + "," +
+					KEYB_COUNT_DEF + ");");
 		}
 		
-		private void dropMainTable(SQLiteDatabase _db) {
-			_db.execSQL("DROP TABLE IF EXISTS " + DB_TABLE);
-		}
+		//private void dropMainTable(SQLiteDatabase _db) {
+		//	_db.execSQL("DROP TABLE IF EXISTS " + DB_TABLE);
+		//}
 		
 		private void createArticleViews(SQLiteDatabase _db, String _tabname) {
 			_db.execSQL("CREATE VIEW IF NOT EXISTS " + getViewname(_tabname) +
