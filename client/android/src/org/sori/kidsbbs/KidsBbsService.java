@@ -286,6 +286,7 @@ public class KidsBbsService extends Service
 					break;
 				}
 				if (articles.isEmpty()) {
+					Log.i(TAG, _tabname + ": no more articles");
 					state = STATE_DONE;
 					break;
 				}
