@@ -408,7 +408,7 @@ public class KidsBbsService extends Service
 					}
 					if (result) {
 						++count;
-						if (count % 100 == 0) {
+						if (count % 40 == 0) {
 							KidsBbs.announceBoardUpdated(KidsBbsService.this,
 									_tabname);
 						}
@@ -419,9 +419,9 @@ public class KidsBbsService extends Service
 			int trimmed = trimBoardTable(_tabname);
 			Log.i(TAG, _tabname + ": trimed " + trimmed + " articles");
 			if (count > 0 && tabState == KidsBbsProvider.STATE_UPDATED) {
-				KidsBbs.announceNewArticles(KidsBbsService.this, _tabname);
 				notifyNewArticles(_tabname, count);
 			}
+			KidsBbs.announceBoardUpdated(KidsBbsService.this, _tabname);
 			if (error > 0) {
 				Log.e(TAG, _tabname + ": error after updating " +
 						count + " articles");
@@ -599,6 +599,17 @@ public class KidsBbsService extends Service
 		return count;
 	}
 	
+	private class ArticleUpdatedReceiver extends BroadcastReceiver {
+		@Override
+		public void onReceive(Context _context, Intent _intent) {
+			String tabname = _intent.getStringExtra(
+					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME);
+			KidsBbs.updateBoardCount(mResolver, tabname);
+		}
+	}
+	
+	private ArticleUpdatedReceiver mUpdateReceiver;
+	
 	private class ConnectivityReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
@@ -628,14 +639,19 @@ public class KidsBbsService extends Service
 	private ConnectivityReceiver mConnReceiver;
 	
 	private void registerReceivers() {
+		IntentFilter filter;
 		mConnReceiver = new ConnectivityReceiver();
-		IntentFilter filterConn = new IntentFilter(
+		filter = new IntentFilter(
 				ConnectivityManager.ACTION_BACKGROUND_DATA_SETTING_CHANGED);
-		filterConn.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-		registerReceiver(mConnReceiver, filterConn);
+		filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+		registerReceiver(mConnReceiver, filter);
+		mUpdateReceiver = new ArticleUpdatedReceiver();
+		filter = new IntentFilter(KidsBbs.ARTICLE_UPDATED);
+		registerReceiver(mUpdateReceiver, filter);
 	}
 	
 	private void unregisterReceivers() {
 		unregisterReceiver(mConnReceiver);
+		unregisterReceiver(mUpdateReceiver);
 	}
 }

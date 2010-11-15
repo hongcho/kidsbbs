@@ -79,7 +79,7 @@ public abstract class KidsBbsAList extends ListActivity
 	private Uri mUriList;
 
 	private String mBoardTitle;
-	private String mTabname;
+	protected String mTabname;
 	
 	private String mUpdateText;
 
@@ -366,18 +366,6 @@ public abstract class KidsBbsAList extends ListActivity
 		refreshList();
 	}
 	
-	private class NewArticlesReceiver extends BroadcastReceiver {
-		@Override
-		public void onReceive(Context _context, Intent _intent) {
-			String tabname = _intent.getStringExtra(
-					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME);
-			if (mTabname != null && tabname != null &&
-					tabname.equals(mTabname)) {
-				//refreshList();
-			}
-		}
-	}
-	
 	private class ArticleUpdatedReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
@@ -396,20 +384,16 @@ public abstract class KidsBbsAList extends ListActivity
 		}
 	}
 	
-	private NewArticlesReceiver mReceiverNew;
 	private ArticleUpdatedReceiver mReceiverUpdated;
 	
 	private void registerReceivers() {
-		mReceiverNew = new NewArticlesReceiver();
-		IntentFilter filterNew = new IntentFilter(KidsBbs.NEW_ARTICLES);
-		registerReceiver(mReceiverNew, filterNew);
+		IntentFilter filter;
 		mReceiverUpdated = new ArticleUpdatedReceiver();
-		IntentFilter filterUpdated = new IntentFilter(KidsBbs.ARTICLE_UPDATED);
-		registerReceiver(mReceiverUpdated, filterUpdated);
+		filter = new IntentFilter(KidsBbs.ARTICLE_UPDATED);
+		registerReceiver(mReceiverUpdated, filter);
 	}
 	
 	private void unregisterReceivers() {
-		unregisterReceiver(mReceiverNew);
 		unregisterReceiver(mReceiverUpdated);
 	}
 	

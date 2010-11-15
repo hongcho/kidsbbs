@@ -69,7 +69,7 @@
     <string name="about_app_title">이 앱에 대하여</string>
     
     <string name="default_update_freq">20</string>
-    <string name="update_error_text">서버에서 글을 불러오는데 문제가 있습니다</string>
+    <string name="update_error_text">배경 서비스가 글을 불러오는데 문제가 있었습니다</string>
     
     <string name="board_selection_title">보드를 골라주세요.</string>
     <string name="confirm_text">정말로 계속하겠습니까?</string>

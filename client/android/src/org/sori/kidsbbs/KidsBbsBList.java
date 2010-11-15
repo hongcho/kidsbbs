@@ -34,8 +34,13 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.ColorStateList;
 import android.content.res.Resources;
+import android.content.res.TypedArray;
+import android.content.res.Resources.Theme;
 import android.database.Cursor;
+import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -191,8 +196,9 @@ public class KidsBbsBList extends ListActivity {
 		@Override
 		protected Cursor doInBackground(Void... _args) {
 			final String orderby =
+				KidsBbsProvider.ORDER_BY_COUNT_DESC + "," +
 				KidsBbsProvider.ORDER_BY_STATE_DESC + "," +
-				KidsBbsProvider.ORDER_BY_ID;
+				KidsBbsProvider.ORDER_BY_TITLE;
 			return KidsBbsBList.this.managedQuery(
 					KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
 					KidsBbsProvider.SELECTION_STATE_ACTIVE, null, orderby);
@@ -242,7 +248,7 @@ public class KidsBbsBList extends ListActivity {
 			KidsBbsProvider.KEYB_STATE,
 		};
 		final String ORDERBY = KidsBbsProvider.ORDER_BY_STATE_DESC + "," +
-			KidsBbsProvider.ORDER_BY_ID;
+			KidsBbsProvider.ORDER_BY_TITLE;
 		String[] titles = null;
 		Cursor c = mResolver.query(KidsBbsProvider.CONTENT_URI_BOARDS,
 				FIELDS, null, null, ORDERBY);
@@ -333,17 +339,6 @@ public class KidsBbsBList extends ListActivity {
 		refreshList();
 	}
 	
-	private boolean updateUnreadCount(String _tabname) {
-		for (int i = 0; i < mAdapter.getCount(); ++i) {
-			Cursor c = (Cursor)mAdapter.getItem(i);
-			String tabname = c.getString(BoardsAdapter.COLUMN_TABNAME);
-			if (_tabname.equals(tabname)) {
-				return true;
-			}
-		}
-		return false;
-	}
-	
 	private void setError() {
 		mError = true;
 		mStatusView.setVisibility(View.VISIBLE);
@@ -364,86 +359,73 @@ public class KidsBbsBList extends ListActivity {
 	private class BoardUpdatedReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
-			String tabname = _intent.getStringExtra(
-					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME);
 			clearError();
-			if (updateUnreadCount(tabname)) {
-				mAdapter.notifyDataSetChanged();
-			}
-		}
-	}
-	
-	private class ArticleUpdatedReceiver extends BroadcastReceiver {
-		@Override
-		public void onReceive(Context _context, Intent _intent) {
-			String tabname = _intent.getStringExtra(
-					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME);
-			if (updateUnreadCount(tabname)) {
-				mAdapter.notifyDataSetChanged();
-			}
-		}
-	}
-	
-	private class NewArticlesReceiver extends BroadcastReceiver {
-		@Override
-		public void onReceive(Context _context, Intent _intent) {
-			String tabname = _intent.getStringExtra(
-					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME);
-			clearError();
-			if (updateUnreadCount(tabname)) {
-				mAdapter.notifyDataSetChanged();
-			}
 		}
 	}
 	
 	private UpdateErrorReceiver mReceiverError;
 	private BoardUpdatedReceiver mReceiverBoard;
-	private ArticleUpdatedReceiver mReceiverArticle;
-	private NewArticlesReceiver mReceiverNew;
 	
 	private void registerReceivers() {
+		IntentFilter filter;
 		mReceiverError = new UpdateErrorReceiver();
-		IntentFilter filterError = new IntentFilter(KidsBbs.UPDATE_ERROR);
-		registerReceiver(mReceiverError, filterError);
+		filter = new IntentFilter(KidsBbs.UPDATE_ERROR);
+		registerReceiver(mReceiverError, filter);
 		mReceiverBoard = new BoardUpdatedReceiver();
-		IntentFilter filterBoard = new IntentFilter(KidsBbs.BOARD_UPDATED);
-		registerReceiver(mReceiverBoard, filterBoard);
-		mReceiverArticle = new ArticleUpdatedReceiver();
-		IntentFilter filterArticle = new IntentFilter(KidsBbs.ARTICLE_UPDATED);
-		registerReceiver(mReceiverArticle, filterArticle);
-		mReceiverNew = new NewArticlesReceiver();
-		IntentFilter filterNew = new IntentFilter(KidsBbs.NEW_ARTICLES);
-		registerReceiver(mReceiverNew, filterNew);
+		filter = new IntentFilter(KidsBbs.BOARD_UPDATED);
+		registerReceiver(mReceiverBoard, filter);
 	}
 	
 	private void unregisterReceivers() {
 		unregisterReceiver(mReceiverError);
 		unregisterReceiver(mReceiverBoard);
-		unregisterReceiver(mReceiverArticle);
-		unregisterReceiver(mReceiverNew);
 	}
 	
 	private static final String[] FIELDS = {
 		KidsBbsProvider.KEY_ID,
 		KidsBbsProvider.KEYB_TABNAME,
 		KidsBbsProvider.KEYB_TITLE,
+		KidsBbsProvider.KEYB_COUNT,
 	};
 	private class BoardsAdapter extends CursorAdapter {
 		public static final int COLUMN_ID = 0;
 		public static final int COLUMN_TABNAME = 1;
 		public static final int COLUMN_TITLE = 2;
+		public static final int COLUMN_COUNT = 3;
 		
 		private Context mContext;
 		private LayoutInflater mInflater;
+		private Drawable mBgRead;
+		private Drawable mBgUnread;
+		private ColorStateList mTextColorPrimary;
+		private ColorStateList mTextColorSecondary;
 
 		public BoardsAdapter(Context _context) {
 			super(_context, null, true);
 			mContext = _context;
 			mInflater = (LayoutInflater)mContext.getSystemService(
 					Context.LAYOUT_INFLATER_SERVICE);
+			
+			Resources resources = mContext.getResources();
+			mBgRead = resources.getDrawable(
+					R.drawable.list_item_background_read);
+			mBgUnread = resources.getDrawable(
+					R.drawable.list_item_background_unread);
+			
+			Theme theme = _context.getTheme();
+			TypedArray array;
+			array = theme.obtainStyledAttributes(
+					new int[] { android.R.attr.textColorPrimary });
+			mTextColorPrimary = resources.getColorStateList(
+					array.getResourceId(0, 0));
+			array = theme.obtainStyledAttributes(
+					new int[] { android.R.attr.textColorSecondary });
+			mTextColorSecondary = resources.getColorStateList(
+					array.getResourceId(0, 0));
 		}
 
 		private class ViewHolder {
+			View item;
 			TextView title;
 			TextView count;
 		}
@@ -454,12 +436,24 @@ public class KidsBbsBList extends ListActivity {
 			itemView.mId = _c.getLong(COLUMN_ID);
 			itemView.mTabname = _c.getString(COLUMN_TABNAME);
 			itemView.mTitle = _c.getString(COLUMN_TITLE);
-			itemView.mCount = KidsBbs.getBoardUnreadCount(
-					getContentResolver(), itemView.mTabname);
+			itemView.mCount = _c.getInt(COLUMN_COUNT);
 			
 			ViewHolder holder = (ViewHolder)itemView.getTag();
 			holder.title.setText(itemView.mTitle);
 			holder.count.setText(Integer.toString(itemView.mCount));
+			if (itemView.mCount > 0) {
+				holder.title.setTypeface(Typeface.DEFAULT_BOLD);
+				holder.count.setTypeface(Typeface.DEFAULT_BOLD);
+				holder.title.setTextColor(mTextColorPrimary);
+				holder.count.setTextColor(mTextColorPrimary);
+				holder.item.setBackgroundDrawable(mBgUnread);
+			} else {
+				holder.title.setTypeface(Typeface.DEFAULT);
+				holder.count.setTypeface(Typeface.DEFAULT);
+				holder.title.setTextColor(mTextColorSecondary);
+				holder.count.setTextColor(mTextColorSecondary);
+				holder.item.setBackgroundDrawable(mBgRead);
+			}
 		}
 
 		@Override
@@ -467,6 +461,7 @@ public class KidsBbsBList extends ListActivity {
 			View v = mInflater.inflate(R.layout.board_list_item, _parent,
 					false);
 			ViewHolder holder = new ViewHolder();
+			holder.item = v.findViewById(R.id.item);
 			holder.title = (TextView)v.findViewById(R.id.title);
 			holder.count = (TextView)v.findViewById(R.id.count);
 			v.setTag(holder);

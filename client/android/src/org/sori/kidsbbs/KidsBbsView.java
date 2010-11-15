@@ -297,7 +297,8 @@ public class KidsBbsView extends Activity {
 	private ArticleUpdatedReceiver mReceiver;
 	
 	private void registerReceivers() {
-		IntentFilter filter = new IntentFilter(KidsBbs.ARTICLE_UPDATED);
+		IntentFilter filter;
+		filter = new IntentFilter(KidsBbs.ARTICLE_UPDATED);
 		mReceiver = new ArticleUpdatedReceiver();
 		registerReceiver(mReceiver, filter);
 	}
