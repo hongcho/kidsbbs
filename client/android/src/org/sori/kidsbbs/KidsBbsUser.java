@@ -62,11 +62,12 @@ public class KidsBbsUser extends KidsBbsAList {
     }
     
     protected void updateTitle() {
-    	mUnreadCount = getUnreadCount(KidsBbsProvider.CONTENT_URISTR_LIST,
+    	mUnreadCount = getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
     			KidsBbsProvider.SELECTION_UNREAD + " AND " +
     			KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "'");
-		setTitle("[" + getBoardTitle() + "] " + mTitle +
-				" (" + mUnreadCount + ")");
+    	int count =  getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
+    			KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "'");
+    	setTitleCommon(mTitle, mUnreadCount, count);
     }
     
     protected boolean matchingBroadcast(int _seq, String _user,
