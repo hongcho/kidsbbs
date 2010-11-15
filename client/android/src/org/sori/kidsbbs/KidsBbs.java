@@ -348,11 +348,11 @@ public class KidsBbs extends Activity {
 
 	public static final int getBoardUnreadCount(ContentResolver _cr,
 			String _tabname) {
-		return getTableUnreadCount(_cr, KidsBbsProvider.CONTENT_URISTR_LIST,
+		return getTableCount(_cr, KidsBbsProvider.CONTENT_URISTR_LIST,
 				_tabname, KidsBbsProvider.SELECTION_UNREAD);
 	}
 	
-	public static final int getTableUnreadCount(ContentResolver _cr,
+	public static final int getTableCount(ContentResolver _cr,
 			String _uriBase, String _tabname, String _where) {
 		final String[] FIELDS = {
 			KidsBbsProvider.KEYA_CNT_FIELD,

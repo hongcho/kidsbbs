@@ -115,9 +115,15 @@ public abstract class KidsBbsAList extends ListActivity
 		return mUriList;
 	}
 	
-	protected final int getUnreadCount(String _uriBase, String _where) {
-		return KidsBbs.getTableUnreadCount(mResolver, _uriBase, mTabname,
+	protected final int getCount(String _uriBase, String _where) {
+		return KidsBbs.getTableCount(mResolver, _uriBase, mTabname,
 				_where);
+	}
+	
+	protected final void setTitleCommon(String _title, int _unread,
+			int _total) {
+		setTitle("[" + mBoardTitle + "] " + _title +
+				" (" + _unread + "/" + _total + ")");
 	}
 
 	protected final Cursor getItem(int _index) {
