@@ -70,7 +70,6 @@ public class KidsBbs extends Activity {
 	public static final String ALARM_BASE = PKG_BASE + "alarm.";
 	
 	public static final String BOARD_UPDATED = BCAST_BASE + "BoardUpdated";
-	public static final String NEW_ARTICLES = BCAST_BASE + "NewArticles";
 	public static final String ARTICLE_UPDATED = BCAST_BASE + "ArticleUpdated";
 	public static final String UPDATE_ERROR = BCAST_BASE + "UpdateError";
 
@@ -267,9 +266,9 @@ public class KidsBbs extends Activity {
 		ArrayList<ArticleInfo> articles = new ArrayList<ArticleInfo>();
 		String tabname = BoardInfo.buildTabname(_board, _type);
 		String urlString = _base +
-			KidsBbs.PARAM_N_BOARD + "=" + _board +
-			"&" + KidsBbs.PARAM_N_TYPE + "=" + _type +
-			"&" + KidsBbs.PARAM_N_START + "=" + _start;
+			PARAM_N_BOARD + "=" + _board +
+			"&" + PARAM_N_TYPE + "=" + _type +
+			"&" + PARAM_N_START + "=" + _start;
 		HttpClient client = new DefaultHttpClient();
 		client.getParams().setParameter(
 				HttpConnectionParams.CONNECTION_TIMEOUT, 30*1000);
@@ -370,6 +369,15 @@ public class KidsBbs extends Activity {
 		}
 		return count;
 	}
+	
+	public static final void updateBoardCount(ContentResolver _cr,
+			String _tabname) {
+		ContentValues values = new ContentValues();
+		values.put(KidsBbsProvider.KEYB_COUNT,
+				getBoardUnreadCount(_cr, _tabname));
+		_cr.update(KidsBbsProvider.CONTENT_URI_BOARDS, values,
+				KidsBbsProvider.SELECTION_TABNAME, new String[] {_tabname});
+	}
 
 	public static final boolean updateArticleRead(ContentResolver _cr,
 			String _tabname, int _seq, boolean _read) {
@@ -420,7 +428,7 @@ public class KidsBbs extends Activity {
 	
 	public static final boolean isRecent(String _dateString) {
 		boolean result = true;
-		Date local = KidsBbs.KidsToLocalDate(_dateString);
+		Date local = KidsToLocalDate(_dateString);
 		if (local != null) {
 			Calendar calLocal = new GregorianCalendar();
 			Calendar calRecent = new GregorianCalendar();
@@ -438,36 +446,32 @@ public class KidsBbs extends Activity {
 	}
 
 	public static final void announceUpdateError(Context _context) {
-		Intent intent = new Intent(KidsBbs.UPDATE_ERROR);
+		Intent intent = new Intent(UPDATE_ERROR);
 		_context.sendBroadcast(intent);
 	}
-
+	
 	public static final void announceBoardUpdated(Context _context,
 			String _tabname) {
-		Intent intent = new Intent(KidsBbs.BOARD_UPDATED);
-		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME,
-				_tabname);
-		_context.sendBroadcast(intent);
-	}
-
-	public static final void announceNewArticles(Context _context,
-			String _tabname) {
-		Intent intent = new Intent(KidsBbs.NEW_ARTICLES);
-		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME,
+		updateBoardCount(_context.getContentResolver(), _tabname);
+		
+		Intent intent = new Intent(BOARD_UPDATED);
+		intent.putExtra(PARAM_BASE + KidsBbsProvider.KEYB_TABNAME,
 				_tabname);
 		_context.sendBroadcast(intent);
 	}
 	
 	public static void announceArticleUpdated(Context _context,
 			String _tabname, int _seq, String _user, String _thread) {
-		Intent intent = new Intent(KidsBbs.ARTICLE_UPDATED);
-		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME,
+		updateBoardCount(_context.getContentResolver(), _tabname);
+		
+		Intent intent = new Intent(ARTICLE_UPDATED);
+		intent.putExtra(PARAM_BASE + KidsBbsProvider.KEYB_TABNAME,
 				_tabname);
-		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_SEQ,
+		intent.putExtra(PARAM_BASE + KidsBbsProvider.KEYA_SEQ,
 				_seq);
-		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_USER,
+		intent.putExtra(PARAM_BASE + KidsBbsProvider.KEYA_USER,
 				_user);
-		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_THREAD,
+		intent.putExtra(PARAM_BASE + KidsBbsProvider.KEYA_THREAD,
 				_thread);
 		_context.sendBroadcast(intent);
 	}

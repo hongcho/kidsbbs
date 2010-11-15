@@ -72,6 +72,56 @@ public class KidsBbsProvider extends ContentProvider {
 	private static final String TYPESTR_BASE = "vnd.sori.cursor.";
 	private static final String TYPESTR_DIR_BASE =
 		TYPESTR_BASE + "dir/vnd.sori.";
+	
+	// Common ID
+	public static final String KEY_ID = "_id";
+	// Board meta table
+	public static final String KEYB_TABNAME = "tabname";
+	public static final String KEYB_TITLE = "title";
+	public static final String KEYB_COUNT = "count";
+	public static final String KEYB_STATE = "state";
+	
+	// Board states
+	public static final int STATE_PAUSED = 0; // no table or not updating
+	public static final int STATE_INIT = 1; // table is created, not updated
+	public static final int STATE_UPDATED = 2; // update is done
+	public static final int STATE_IN_PROGRESS = 0x80;
+	
+	// Article table
+	public static final String KEYA_SEQ = "seq";
+	public static final String KEYA_USER = "user";
+	public static final String KEYA_AUTHOR = "author";
+	public static final String KEYA_DATE = "date";
+	public static final String KEYA_TITLE = "title";
+	public static final String KEYA_THREAD = "thread";
+	public static final String KEYA_BODY = "body";
+	public static final String KEYA_READ = "read";
+	
+	// Aggregate columns
+	public static final String KEYA_ALLREAD = "allread";
+	public static final String KEYA_ALLREAD_FIELD =
+		"MIN(" + KEYA_READ + ") AS " + KEYA_ALLREAD;
+	public static final String KEYA_READ_ALLREAD_FIELD = KEYA_READ +
+		" AS " + KEYA_ALLREAD;
+	public static final String KEYA_CNT = "cnt";
+	public static final String KEYA_CNT_FIELD = "COUNT(*) AS " + KEYA_CNT;
+	
+	// Selections
+	public static final String SELECTION_TABNAME = KEYB_TABNAME + "=?";
+	public static final String SELECTION_STATE_ACTIVE = KEYB_STATE +
+		"!=" + STATE_PAUSED;
+	public static final String SELECTION_SEQ = KEYA_SEQ + "=?";
+	public static final String SELECTION_UNREAD = KEYA_READ + "=0";
+	public static final String SELECTION_ALLUNREAD = KEYA_ALLREAD + "=0";
+	
+	// Orderings
+	public static final String ORDER_BY_ID = KEY_ID + " ASC";
+	public static final String ORDER_BY_SEQ_DESC = KEYA_SEQ + " DESC";
+	public static final String ORDER_BY_SEQ_ASC = KEYA_SEQ + " ASC";
+	public static final String ORDER_BY_COUNT_DESC = KEYB_COUNT + " DESC";
+	public static final String ORDER_BY_STATE_ASC = KEYB_STATE + " ASC";
+	public static final String ORDER_BY_STATE_DESC = KEYB_STATE + " DESC";
+	public static final String ORDER_BY_TITLE = "LOWER(" + KEYB_TITLE + ")";
 
 	@Override
 	public boolean onCreate() {
@@ -201,88 +251,40 @@ public class KidsBbsProvider extends ContentProvider {
 		return _tabname + "_view";
 	}
 
-	// Common ID...
-	public static final String KEY_ID = "_id";
-	private static final String KEY_ID_DEF =
-			KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT";
+	// Common ID
+	private static final String KEY_ID_DEF = KEY_ID +
+		" INTEGER PRIMARY KEY AUTOINCREMENT";
 
 	// Board table
-	public static final String KEYB_TABNAME = "tabname";
-	private static final String KEYB_TABNAME_DEF =
-		KEYB_TABNAME + " CHAR(36) NOT NULL UNIQUE";
-	public static final String KEYB_TITLE = "title";
-	private static final String KEYB_TITLE_DEF =
-		KEYB_TITLE + " VARCHAR(40) NOT NULL";
-	public static final String KEYB_STATE = "state";
-	private static final String KEYB_STATE_DEF =
-		KEYB_STATE + " TINYINT DEFAULT 0";
-
-	public static final int STATE_PAUSED = 0; // no table or not updating
-	public static final int STATE_INIT = 1; // table is created, not updated
-	public static final int STATE_UPDATED = 2; // update is done
+	private static final String KEYB_TABNAME_DEF = KEYB_TABNAME +
+		" CHAR(36) NOT NULL UNIQUE";
+	private static final String KEYB_TITLE_DEF = KEYB_TITLE +
+		" VARCHAR(40) NOT NULL";
+	private static final String KEYB_COUNT_DEF = KEYB_COUNT +
+		" INTEGER DEFAULT 0";
+	private static final String KEYB_STATE_DEF = KEYB_STATE +
+		" TINYINT DEFAULT 0";
 
 	// Article table
-	public static final String KEYA_SEQ = "seq";
-	private static final String KEYA_SEQ_DEF =
-		KEYA_SEQ + " INTEGER NOT NULL UNIQUE";
-	public static final String KEYA_USER = "user";
-	private static final String KEYA_USER_DEF =
-		KEYA_USER + " CHAR(12) NOT NULL";
-	public static final String KEYA_AUTHOR = "author";
-	private static final String KEYA_AUTHOR_DEF =
-		KEYA_AUTHOR + " VARCHAR(40) NOT NULL";
-	public static final String KEYA_DATE = "date";
-	private static final String KEYA_DATE_DEF =
-		KEYA_DATE + " DATETIME NOT NULL";
-	public static final String KEYA_TITLE = "title";
-	private static final String KEYA_TITLE_DEF =
-		KEYA_TITLE + " VARCHAR(40) NOT NULL";
-	public static final String KEYA_THREAD = "thread";
-	private static final String KEYA_THREAD_DEF =
-		KEYA_THREAD + " CHAR(32) NOT NULL";
-	public static final String KEYA_BODY = "body";
-	private static final String KEYA_BODY_DEF =
-		KEYA_BODY + " TEXT";
-	public static final String KEYA_READ = "read";
-	private static final String KEYA_READ_DEF =
-		KEYA_READ + " TINYINT DEFAULT 0";
-	
-	public static final String KEYA_ALLREAD = "allread";
-	public static final String KEYA_ALLREAD_FIELD =
-		"MIN(" + KEYA_READ + ") AS " + KEYA_ALLREAD;
-	public static final String KEYA_READ_ALLREAD_FIELD =
-		KEYA_READ + " AS " + KEYA_ALLREAD;
-
-	public static final String KEYA_CNT = "cnt";
-	public static final String KEYA_CNT_FIELD =
-		"COUNT(*) AS " + KEYA_CNT;
-	
-	public static final String SELECTION_TABNAME =
-		KEYB_TABNAME + "=?";
-	public static final String SELECTION_STATE_ACTIVE =
-		KEYB_STATE + "!=" + STATE_PAUSED;
-	public static final String SELECTION_SEQ =
-		KEYA_SEQ + "=?";
-	public static final String SELECTION_UNREAD =
-		KEYA_READ + "=0";
-	public static final String SELECTION_ALLUNREAD =
-		KEYA_ALLREAD + "=0";
-	
-	public static final String ORDER_BY_ID =
-		KEY_ID + " ASC";
-	public static final String ORDER_BY_SEQ_DESC =
-		KEYA_SEQ + " DESC";
-	public static final String ORDER_BY_SEQ_ASC =
-		KEYA_SEQ + " ASC";
-	public static final String ORDER_BY_STATE_ASC =
-		KEYB_STATE + " ASC";
-	public static final String ORDER_BY_STATE_DESC =
-		KEYB_STATE + " DESC";
-	public static final String ORDER_BY_TITLE =
-		"LOWER(" + KEYB_TITLE + ")";
+	private static final String KEYA_SEQ_DEF = KEYA_SEQ +
+		" INTEGER NOT NULL UNIQUE";
+	private static final String KEYA_USER_DEF = KEYA_USER +
+		" CHAR(12) NOT NULL";
+	private static final String KEYA_AUTHOR_DEF = KEYA_AUTHOR +
+		" VARCHAR(40) NOT NULL";
+	private static final String KEYA_DATE_DEF = KEYA_DATE +
+		" DATETIME NOT NULL";
+	private static final String KEYA_TITLE_DEF = KEYA_TITLE +
+		" VARCHAR(40) NOT NULL";
+	private static final String KEYA_THREAD_DEF = KEYA_THREAD +
+		" CHAR(32) NOT NULL";
+	private static final String KEYA_BODY_DEF = KEYA_BODY +
+		" TEXT";
+	private static final String KEYA_READ_DEF = KEYA_READ +
+		" TINYINT DEFAULT 0";
 
 	private static final String DB_NAME = "kidsbbs.db";
-	private static final int DB_VERSION = 3;
+	private static final int DB_VERSION = 4;
 	private static final String DB_TABLE = "boards";
 
 	private SQLiteDatabase mDB;
@@ -397,7 +399,7 @@ public class KidsBbsProvider extends ContentProvider {
 		}
 		
 		private void upgradeBoardDB(SQLiteDatabase _db, int _old) {
-			if (_old < 2) {
+			if (_old < 4) {
 				dropMainTable(_db);
 				onCreate(_db);
 			}
@@ -408,6 +410,7 @@ public class KidsBbsProvider extends ContentProvider {
 			ContentValues values = new ContentValues();
 			values.put(KEYB_TABNAME, _info.getTabname());
 			values.put(KEYB_TITLE, _info.getTitle());
+			values.put(KEYB_COUNT, 0);
 			values.put(KEYB_STATE, _state);
 			if (_db.insert(DB_TABLE, null, values) < 0) {
 				throw new SQLException(
@@ -421,6 +424,7 @@ public class KidsBbsProvider extends ContentProvider {
 					KEY_ID_DEF + "," +
 					KEYB_TABNAME_DEF + "," +
 					KEYB_TITLE_DEF + "," +
+					KEYB_COUNT_DEF + "," +
 					KEYB_STATE_DEF + ");");
 		}
 		

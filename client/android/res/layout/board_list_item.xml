@@ -27,6 +27,7 @@
 	THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 <org.sori.kidsbbs.KidsBbsBItem xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/item"
 	android:layout_width="fill_parent"
 	android:layout_height="?android:attr/listPreferredItemHeight"
 	android:gravity="center_vertical"

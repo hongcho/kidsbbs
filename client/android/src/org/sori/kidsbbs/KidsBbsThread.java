@@ -102,9 +102,10 @@ public class KidsBbsThread extends KidsBbsAList {
     			int nChanged = mResolver.update(getUriList(), values,
     					where, null);
     			if (nChanged > 0) {
+    	    		KidsBbs.updateBoardCount(mResolver, mTabname);
     				refreshList();
-    				}
-    			}
+				}
+			}
     	});
     	builder.setNegativeButton(android.R.string.cancel, null);
     	builder.create().show();
