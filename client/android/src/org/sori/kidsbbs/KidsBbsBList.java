@@ -197,7 +197,6 @@ public class KidsBbsBList extends ListActivity {
 		protected Cursor doInBackground(Void... _args) {
 			final String orderby =
 				KidsBbsProvider.ORDER_BY_COUNT_DESC + "," +
-				KidsBbsProvider.ORDER_BY_STATE_DESC + "," +
 				KidsBbsProvider.ORDER_BY_TITLE;
 			return KidsBbsBList.this.managedQuery(
 					KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,

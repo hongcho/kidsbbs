@@ -152,7 +152,6 @@ public class KidsBbsService extends Service
 				mNotificationTitleString,
 				System.currentTimeMillis());
 		mNewArticlesNotification.flags |= Notification.FLAG_AUTO_CANCEL;
-		mNewArticlesNotification.ledARGB = 0x3030f0;
 		
 		mAlarms = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
 		Intent intent = new Intent(KidsBbsAlarmReceiver.UPDATE_BOARDS_ALARM);
@@ -409,10 +408,10 @@ public class KidsBbsService extends Service
 					}
 					if (result) {
 						++count;
-						if (count % 40 == 0) {
+						//if (count % 40 == 0) {
 							KidsBbs.announceBoardUpdated(KidsBbsService.this,
 									_tabname);
-						}
+						//}
 					}
 				}
 				start += articles.size();
