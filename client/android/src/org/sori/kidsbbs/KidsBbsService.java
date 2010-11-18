@@ -55,8 +55,6 @@ public class KidsBbsService extends Service
 				implements OnSharedPreferenceChangeListener {
 	private static final String TAG = "KidsBbsService";
 	
-	private static final int NEW_ARTICLE_ID = 0;
-	
 	private int mUpdateFreq;
 	private UpdateTask mLastUpdate = null;
 	
@@ -152,6 +150,7 @@ public class KidsBbsService extends Service
 				mNotificationTitleString,
 				System.currentTimeMillis());
 		mNewArticlesNotification.flags |= Notification.FLAG_AUTO_CANCEL;
+		mNotificationDefaults |= mNewArticlesNotification.defaults;
 		
 		mAlarms = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
 		Intent intent = new Intent(KidsBbsAlarmReceiver.UPDATE_BOARDS_ALARM);
@@ -443,8 +442,6 @@ public class KidsBbsService extends Service
 			String title = KidsBbs.getBoardTitle(mResolver, _tabname);
 			Intent intent = new Intent(KidsBbsService.this,
 					KidsBbsBList.class);
-			intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-			intent.setAction(Intent.ACTION_VIEW);
 			PendingIntent pendingIntent =
 				PendingIntent.getActivity(KidsBbsService.this, 0, intent, 0);
 			
@@ -452,14 +449,17 @@ public class KidsBbsService extends Service
 			mNewArticlesNotification.tickerText =
 				title + " (" + _count + ")";
 			mNewArticlesNotification.when = System.currentTimeMillis();
-			mNewArticlesNotification.defaults |= mNotificationDefaults;
+			mNewArticlesNotification.defaults = mNotificationDefaults;
+			mNewArticlesNotification.number = KidsBbs.getTotalUnreadCount(
+					mResolver);
 			mNewArticlesNotification.setLatestEventInfo(
 					KidsBbsService.this,
 					mNotificationTitleString,
 					mNotificationMessage,
 					pendingIntent);
 			
-			mNotificationManager.notify(NEW_ARTICLE_ID, mNewArticlesNotification);
+			mNotificationManager.notify(KidsBbs.NOTIFICATION_NEW_ARTICLE,
+					mNewArticlesNotification);
 		}
 
 		private int refreshTables() {

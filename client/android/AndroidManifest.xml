@@ -22,6 +22,7 @@
         </activity>
         <activity android:name=".KidsBbsBList"
             android:label="@string/title_blist"
+            android:launchMode="singleTask"
             >
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -30,6 +31,7 @@
         </activity>
         <activity android:name=".KidsBbsTList"
             android:label="@string/title_tlist"
+            android:launchMode="singleTop"
             >
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -38,6 +40,7 @@
         </activity>
         <activity android:name=".KidsBbsThread"
             android:label="@string/title_thread"
+            android:launchMode="singleTop"
             >
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -46,6 +49,7 @@
         </activity>
         <activity android:name=".KidsBbsUser"
             android:label="@string/title_user"
+            android:launchMode="singleTop"
             >
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -54,6 +58,7 @@
         </activity>
         <activity android:name=".KidsBbsView"
             android:label="@string/title_view"
+            android:launchMode="singleTop"
             >
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -62,6 +67,7 @@
         </activity>
         <activity android:name=".Preferences"
             android:label="@string/title_pref"
+            android:launchMode="singleTop"
             >
         </activity>
         <provider android:name=".KidsBbsProvider"
