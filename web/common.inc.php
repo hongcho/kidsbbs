@@ -50,6 +50,9 @@ if ($_o == NULL) {
 $_id = $_GET['id'];
 // optional: posting position
 $_p = $_GET['p'];
+if ($_p == NULL || $_p < 0) {
+  $_p = 0;
+ }
 // optional: username
 $_u = $_GET['u'];
 // start/count...
@@ -218,6 +221,10 @@ function get_dbquery($m)
     return "SELECT a0_seq,a1_username,a2_author,a4_date,a5_title,a7_body ".
       "FROM $tn ORDER BY a0_seq DESC LIMIT 1";
     break;
+  case 'plist':
+    $p = mysql_real_escape_string($_p);
+    return "SELECT a0_seq,a1_username,a2_author,a4_date,a5_title,a6_thread,a7_body ".
+      "FROM $tn WHERE a0_seq>=$p ORDER BY a0_seq ASC";
   case 'list':
     return "SELECT a0_seq,a1_username,a2_author,a4_date,a5_title,a6_thread,a7_body ".
       "FROM $tn ORDER BY a0_seq DESC";
@@ -268,6 +275,7 @@ function display_header($b, $t, $title, $nt, $s, $n, $type)
     echo "<?xml version=\"1.0\" encoding=\"euc-kr\"?>\n";
     echo "<KIDSBBS>\n";
     switch ($type) {
+    case 'plist':
     case 'list':
     case 'tlist':
     case 'thread':
@@ -343,6 +351,50 @@ function gen_xml_item($thread, $cnt,
   }
   echo "</ITEM>\n";
 }
+// generate plist
+function gen_plist(&$qr)
+{
+  global $_b,$_t,$_o,$_s,$_n;
+  $nr = mysql_num_rows($qr);
+  $s = $_s < $nr ? $_s : $nr;
+  $n = $s + $_n <= $nr ? $_n : $nr - $s;
+
+  display_header($_b, $_t, get_boardname($_b, $_t)." ($n posts)", $nr,
+		 $s, $n, 'plist');
+  for ($i = $s; $i < $s + $n; ++$i) {
+    $seq = mysql_result($qr, $i, 'a0_seq');
+    $username = mysql_result($qr, $i, 'a1_username');
+    $author = mysql_result($qr, $i, 'a2_author');
+    $date = mysql_result($qr, $i, 'a4_date');
+    $title = mysql_result($qr, $i, 'a5_title');
+    $thread = mysql_result($qr, $i, 'a6_thread');
+    $body = mysql_result($qr, $i, 'a7_body');
+
+    $body = remove_kids_html($body);
+    $body = trim_broken_korean($body, strlen($body));
+
+    switch ($_o) {
+    case 0:
+      $title = pad_title($title);
+      echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
+      echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
+      echo "<TR><TD><FONT size=\"4pt\" style=\"font-family:monospace\"><A href=\"?m=view&b=$_b&t=$_t&p=$seq\">$title</A>&nbsp;</FONT>\n";
+      echo "<TD align=\"right\"><FONT size=\"2pt\">&nbsp;</FONT>\n";
+      echo "</TABLE>\n";
+      echo "<TR><TD><TABLE width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n";
+      echo "<TR><TD width=\"60\"><FONT size=\"2pt\"><A href=\"?m=user&b=$_b&t=$_t&u=$username\">$username</A>&nbsp;</FONT>\n";
+      echo "<TD>\n";
+      echo "<TD align=\"right\"><FONT size=\"2pt\"><A href=\"?m=view&b=$_b&t=$_t&p=$seq\">$date</A></FONT>\n";
+      echo "</TABLE>\n";
+      echo "</TABLE>\n";
+      break;
+    case 1:
+      gen_xml_item($thread, 1, $seq, $username, $author, $date, $title, $body);
+      break;
+    }
+  }
+  display_footer('plist');
+}
 // generate list
 function gen_list(&$qr)
 {
@@ -351,7 +403,7 @@ function gen_list(&$qr)
   $s = $_s < $nr ? $_s : $nr;
   $n = $s + $_n <= $nr ? $_n : $nr - $s;
 
-  display_header($_b, $_t, get_boardname($_b, $_t)." ($n threads)", $nr,
+  display_header($_b, $_t, get_boardname($_b, $_t)." ($n posts)", $nr,
 		 $s, $n, 'list');
   for ($i = $s; $i < $s + $n; ++$i) {
     $seq = mysql_result($qr, $i, 'a0_seq');
@@ -644,6 +696,9 @@ function gen_output()
   $q = get_dbquery($_m);
   $qr = mysql_query($q);
   switch ($_m) {
+  case 'plist':
+    gen_plist($qr);
+    break;
   case 'list':
     gen_list($qr);
     break;
