@@ -27,6 +27,7 @@ package org.sori.kidsbbs;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -64,6 +65,7 @@ public class KidsBbsBList extends ListActivity {
 	private static final String KEY_SELECTED_ITEM = "KEY_SELECTED_ITEM";
 	
 	private ContentResolver mResolver;
+	private NotificationManager mNotificationManager;
 
 	private BoardsAdapter mAdapter;
 	private int mSavedItemPosition;
@@ -95,6 +97,8 @@ public class KidsBbsBList extends ListActivity {
 		mUpdateErrorText = resources.getString(R.string.update_error_text);
 		
 		mResolver = getContentResolver();
+		mNotificationManager = (NotificationManager)getSystemService(
+				Context.NOTIFICATION_SERVICE);
 
 		mAdapter = new BoardsAdapter(this);
 		setListAdapter(mAdapter);
@@ -109,6 +113,12 @@ public class KidsBbsBList extends ListActivity {
 	protected void onDestroy() {
 		super.onDestroy();
 		unregisterReceivers();
+	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		mNotificationManager.cancel(KidsBbs.NOTIFICATION_NEW_ARTICLE);
 	}
 
 	@Override
@@ -234,8 +244,6 @@ public class KidsBbsBList extends ListActivity {
 				KidsBbs.PARAM_N_TABNAME + "=" + tabname +
 				"&" + KidsBbs.PARAM_N_TITLE + "=" + title);
 		Intent i = new Intent(this, KidsBbsTList.class);
-		i.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-		i.setAction(Intent.ACTION_VIEW);
 		i.setData(data);
 		startActivity(i);
 	}

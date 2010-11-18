@@ -220,8 +220,6 @@ public class KidsBbsView extends Activity {
 					"&" + KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle +
 					"&" + KidsBbs.PARAM_N_THREAD + "=" + mThread);
 			Intent i = new Intent(this, KidsBbsThread.class);
-			i.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-			i.setAction(Intent.ACTION_VIEW);
 			i.setData(data);
 			startActivity(i);
 		}
@@ -234,8 +232,6 @@ public class KidsBbsView extends Activity {
 					"&" + KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle +
 					"&" + KidsBbs.PARAM_N_USER + "=" + mUser);
 			Intent i = new Intent(this, KidsBbsUser.class);
-			i.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-			i.setAction(Intent.ACTION_VIEW);
 			i.setData(data);
 			startActivity(i);
 		}

@@ -321,8 +321,6 @@ public abstract class KidsBbsAList extends ListActivity
 			"&" + KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle +
 			_extra;
 		Intent intent = new Intent(_from, _to);
-		intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-		intent.setAction(Intent.ACTION_VIEW);
 		intent.setData(Uri.parse(uriString));
 		startActivity(intent);
 	}

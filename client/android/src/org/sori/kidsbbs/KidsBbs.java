@@ -113,6 +113,8 @@ public class KidsBbs extends Activity {
 		DF_KIDS = new SimpleDateFormat(DATE_FORMAT);
 		DF_KIDS.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
 	}
+	
+	public static final int NOTIFICATION_NEW_ARTICLE = 0;
 
 	private static final int MAX_DAYS = 30;
 	public static final int MIN_ARTICLES = 15;
@@ -370,6 +372,24 @@ public class KidsBbs extends Activity {
 		return count;
 	}
 	
+	public static final int getTotalUnreadCount(ContentResolver _cr) {
+		final String[] FIELDS = {
+			"TOTAL(" + KidsBbsProvider.KEYB_COUNT + ")",
+		};
+		final String WHERE = KidsBbsProvider.SELECTION_STATE_ACTIVE;
+		int count = 0;
+		Cursor c = _cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
+				WHERE, null, null);
+		if (c != null) {
+			if (c.getCount() > 0) {
+				c.moveToFirst();
+				count = c.getInt(0);
+			}
+			c.close();
+		}
+		return count;
+	}
+	
 	public static final void updateBoardCount(ContentResolver _cr,
 			String _tabname) {
 		ContentValues values = new ContentValues();
@@ -489,10 +509,7 @@ public class KidsBbs extends Activity {
 
 		startService(new Intent(this, KidsBbsService.class));
 
-		Intent intent = new Intent(this, KidsBbsBList.class); 
-		intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-		intent.setAction(Intent.ACTION_VIEW);
-		startActivity(intent);
+		startActivity(new Intent(this, KidsBbsBList.class));
 		finish();
 	}
 }
