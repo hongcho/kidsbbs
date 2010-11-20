@@ -86,7 +86,7 @@ public class KidsBbsService extends Service
 	public void onSharedPreferenceChanged(SharedPreferences _prefs,
 			String _key) {
 		if (_key.equals(Preferences.PREF_UPDATE_FREQ)) {
-			int updateFreqNew = Integer.parseInt(_prefs.getString(_key,
+			final int updateFreqNew = Integer.parseInt(_prefs.getString(_key,
 					Preferences.getDefaultUpdateFreq(this)));
 			if (updateFreqNew != mUpdateFreq) {
 				mUpdateFreq = updateFreqNew;
@@ -119,7 +119,7 @@ public class KidsBbsService extends Service
 	
 	private void setupAlarm(long _period) {
     	if (_period > 0) {
-    		long msPeriod = _period*60*1000;
+    		final long msPeriod = _period*60*1000;
     		mAlarms.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
     				SystemClock.elapsedRealtime() + msPeriod,
     				msPeriod, mAlarmIntent);
@@ -133,7 +133,7 @@ public class KidsBbsService extends Service
 	public void onCreate() {
 		super.onCreate();
 		
-		Resources resources = getResources();
+		final Resources resources = getResources();
 		mNotificationTitleString = resources.getString(
 				R.string.notification_title_text);
 		mNotificationMessage = resources.getString(
@@ -156,7 +156,7 @@ public class KidsBbsService extends Service
 		mAlarmIntent = PendingIntent.getBroadcast(this, 0,
 				new Intent(KidsBbsAlarmReceiver.UPDATE_BOARDS_ALARM), 0);
 
-		SharedPreferences prefs =
+		final SharedPreferences prefs =
 			PreferenceManager.getDefaultSharedPreferences(
 					getApplicationContext());
     	mUpdateFreq = Integer.parseInt(prefs.getString(
@@ -207,8 +207,9 @@ public class KidsBbsService extends Service
 				KidsBbsProvider.KEYB_STATE,
 			};
 			int result = KidsBbsProvider.STATE_PAUSED;
-			Cursor c = mResolver.query(KidsBbsProvider.CONTENT_URI_BOARDS,
-					FIELDS, KidsBbsProvider.SELECTION_TABNAME,
+			final Cursor c = mResolver.query(
+					KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
+					KidsBbsProvider.SELECTION_TABNAME,
 					new String[] {_tabname}, null);
 			if (c != null) {
 				if (c.getCount() > 0) {
@@ -222,10 +223,11 @@ public class KidsBbsService extends Service
 		}
 
 		private boolean setTableState(String _tabname, int _state) {
-			ContentValues values = new ContentValues();
+			final ContentValues values = new ContentValues();
 			values.put(KidsBbsProvider.KEYB_STATE, _state);
-			int count = mResolver.update(KidsBbsProvider.CONTENT_URI_BOARDS,
-					values, KidsBbsProvider.SELECTION_TABNAME,
+			final int count = mResolver.update(
+					KidsBbsProvider.CONTENT_URI_BOARDS, values,
+					KidsBbsProvider.SELECTION_TABNAME,
 					new String[] {_tabname});
 			return count > 0;
 		}
@@ -239,7 +241,7 @@ public class KidsBbsService extends Service
 				KidsBbsProvider.KEYA_READ,
 			};
 			
-			int tabState = getTableState(_tabname);
+			final int tabState = getTableState(_tabname);
 			if (tabState == KidsBbsProvider.STATE_PAUSED) {
 				return 0;
 			}
@@ -247,9 +249,9 @@ public class KidsBbsService extends Service
 			
 			int error = 0;
 			int count = 0;
-			String[] parsed = BoardInfo.parseTabname(_tabname);
-			String board = parsed[1];
-			int type = Integer.parseInt(parsed[0]);
+			final String[] parsed = BoardInfo.parseTabname(_tabname);
+			final String board = parsed[1];
+			final int type = Integer.parseInt(parsed[0]);
 			int start = KidsBbs.getBoardLastSeq(mResolver, _tabname) - 10;
 			if (start <= 0) {
 				start = KidsBbs.getArticlesLastSeq(board, type) -
@@ -258,7 +260,8 @@ public class KidsBbsService extends Service
 					start = 0;
 				}
 			}
-			Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
+			final Uri uri = Uri.parse(
+					KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
 			
 			boolean fDone = false;
 			while (!fDone) {
@@ -277,29 +280,29 @@ public class KidsBbsService extends Service
 					break;
 				}
 				for (int i = 0; !fDone && i < articles.size(); ++i) {
-					ArticleInfo info = articles.get(i);
+					final ArticleInfo info = articles.get(i);
 					if (!KidsBbs.isRecent(info.getDateString())) {
 						continue;
 					}
-					String[] args = new String[] {
+					final String[] args = new String[] {
 						Integer.toString(info.getSeq())
 					};
 					ArticleInfo old = null;
-					Cursor c = mResolver.query(uri, FIELDS,
+					final Cursor c = mResolver.query(uri, FIELDS,
 							KidsBbsProvider.SELECTION_SEQ, args, null);
 					if (c != null) {
 						if (c.getCount() > 0) {
 							c.moveToFirst();
 							// Cache the old entry.
-							int seq = c.getInt(c.getColumnIndex(
+							final int seq = c.getInt(c.getColumnIndex(
 									KidsBbsProvider.KEYA_SEQ));
-							String user = c.getString(c.getColumnIndex(
+							final String user = c.getString(c.getColumnIndex(
 									KidsBbsProvider.KEYA_USER));
-							String date = c.getString(c.getColumnIndex(
+							final String date = c.getString(c.getColumnIndex(
 									KidsBbsProvider.KEYA_DATE));
-							String title = c.getString(c.getColumnIndex(
+							final String title = c.getString(c.getColumnIndex(
 									KidsBbsProvider.KEYA_TITLE));
-							boolean read = c.getInt(c.getColumnIndex(
+							final boolean read = c.getInt(c.getColumnIndex(
 									KidsBbsProvider.KEYA_READ)) != 0;
 							old = new ArticleInfo(_tabname, seq, user, null,
 									date, title, null, null, 1, read);
@@ -313,7 +316,7 @@ public class KidsBbsService extends Service
 						break;
 					}
 					
-					ContentValues values = new ContentValues();
+					final ContentValues values = new ContentValues();
 					values.put(KidsBbsProvider.KEYA_SEQ, info.getSeq());
 					values.put(KidsBbsProvider.KEYA_USER, info.getUser());
 					values.put(KidsBbsProvider.KEYA_AUTHOR, info.getAuthor());
@@ -361,7 +364,7 @@ public class KidsBbsService extends Service
 				start = ((ArticleInfo)articles.get(articles.size() - 1))
 					.getSeq() + 1;
 			}
-			int trimmed = trimBoardTable(_tabname);
+			final int trimmed = trimBoardTable(_tabname);
 			Log.i(TAG, _tabname + ": trimed " + trimmed + " articles");
 			if (count > 0) {
 				notifyNewArticles(_tabname, count);
@@ -382,8 +385,8 @@ public class KidsBbsService extends Service
 			}
 			
 			// Prepare pending intent for notification
-			String title = KidsBbs.getBoardTitle(mResolver, _tabname);
-			PendingIntent pendingIntent = PendingIntent.getActivity(
+			final String title = KidsBbs.getBoardTitle(mResolver, _tabname);
+			final PendingIntent pendingIntent = PendingIntent.getActivity(
 					KidsBbsService.this, 0,
 					new Intent(KidsBbsService.this, KidsBbsBList.class), 0);
 			
@@ -414,11 +417,12 @@ public class KidsBbsService extends Service
 				KidsBbsProvider.ORDER_BY_ID;
 
 			int total_count = 0;
-			ArrayList<String> tabnames = new ArrayList<String>(); 
+			final ArrayList<String> tabnames = new ArrayList<String>(); 
 
 			// Get all the boards...
-			Cursor c = mResolver.query(KidsBbsProvider.CONTENT_URI_BOARDS,
-					FIELDS, WHERE, null, ORDERBY);
+			final Cursor c = mResolver.query(
+					KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS, WHERE, null,
+					ORDERBY);
 			if (c != null) {
 				if (c.getCount() > 0) {
 					c.moveToFirst();
@@ -441,9 +445,9 @@ public class KidsBbsService extends Service
 						} catch (Exception e) {}
 					}
 				}
-				String tabname = tabnames.get(i);
+				final String tabname = tabnames.get(i);
 				try {
-					int count = refreshTable(tabname);
+					final int count = refreshTable(tabname);
 					Log.i(TAG, tabname + ": updated " + count + " articles");
 					total_count += count;
 					++i; nTries = 0;
@@ -470,11 +474,11 @@ public class KidsBbsService extends Service
 	
 	private int deleteArticles(Uri _uri, Cursor _c,
 			int _max) {
-		int col_index = _c.getColumnIndex(KidsBbsProvider.KEYA_SEQ);
+		final int col_index = _c.getColumnIndex(KidsBbsProvider.KEYA_SEQ);
 		int count = 0;
 		_c.moveToFirst();
 		do {
-			int seq = _c.getInt(col_index);
+			final int seq = _c.getInt(col_index);
 			if (seq > 0) {
 				count += mResolver.delete(_uri, KidsBbsProvider.SELECTION_SEQ,
 						new String[] {Integer.toString(seq)});
@@ -498,7 +502,8 @@ public class KidsBbsService extends Service
 			return 0;
 		}
 		
-		Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
+		final Uri uri = Uri.parse(
+				KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
 		
 		// Find the trim point.
 		int seq = 0;
@@ -543,7 +548,7 @@ public class KidsBbsService extends Service
 	private class ArticleUpdatedReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
-			String tabname = _intent.getStringExtra(
+			final String tabname = _intent.getStringExtra(
 					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME);
 			KidsBbs.updateBoardCount(mResolver, tabname);
 		}
@@ -554,7 +559,7 @@ public class KidsBbsService extends Service
 	private class ConnectivityReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
-			String action = _intent.getAction();
+			final String action = _intent.getAction();
 			if (action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
 				mNoConnectivity = _intent.getBooleanExtra(
 						ConnectivityManager.EXTRA_NO_CONNECTIVITY, false);
@@ -564,7 +569,7 @@ public class KidsBbsService extends Service
 			} else {
 				return;
 			}
-			boolean isPaused = mNoConnectivity || !mBgDataEnabled;
+			final boolean isPaused = mNoConnectivity || !mBgDataEnabled;
 			synchronized(mIsPausedSync) {
 				if (isPaused == mIsPaused) {
 					return;

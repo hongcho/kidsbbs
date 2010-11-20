@@ -119,12 +119,12 @@ public class Preferences extends PreferenceActivity {
 	}
 	
 	private Dialog createAboutDialog(int _id_title, int _id_text) {
-		String text = getResources().getString(_id_text);
-		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		final String text = getResources().getString(_id_text);
+		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setTitle(_id_title);
-		View v = mInflater.inflate(R.layout.about_dialog, null);
+		final View v = mInflater.inflate(R.layout.about_dialog, null);
 		builder.setView(v);
-		TextView tv = (TextView)v.findViewById(R.id.about_text);
+		final TextView tv = (TextView)v.findViewById(R.id.about_text);
 		tv.setText(text);
 		builder.setPositiveButton(android.R.string.ok, null);
 		return builder.create();

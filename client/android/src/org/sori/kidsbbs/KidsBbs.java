@@ -27,7 +27,6 @@ package org.sori.kidsbbs;
 
 import java.io.InputStream;
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -126,17 +125,16 @@ public class KidsBbs extends Activity {
 	
 	public static final Date KidsToLocalDate(String _dateString) {
 		try {
-			Date date = DF_FULL.parse(KidsToLocalDateString(_dateString));
-			return date;
-		} catch (ParseException e) {
+			return DF_FULL.parse(KidsToLocalDateString(_dateString));
+		} catch (Exception e) {
 			return null;
 		}
 	}
 	
 	public static final String GetShortDateString(String _dateString) {
 		try {
-			Date local = DF_FULL.parse(_dateString);
-			Date now = new Date();
+			final Date local = DF_FULL.parse(_dateString);
+			final Date now = new Date();
 			if (now.getYear() == local.getYear()
 					&& now.getMonth() == local.getMonth()
 					&& now.getDate() == local.getDate()) {
@@ -144,7 +142,7 @@ public class KidsBbs extends Activity {
 			} else {
 				return DF_DATE.format(local);
 			}
-		} catch (ParseException e) {
+		} catch (Exception e) {
 			return DATESHORT_INVALID;
 		}
 	}
@@ -153,16 +151,16 @@ public class KidsBbs extends Activity {
 		try {
 			Date date = DF_KIDS.parse(_dateString);
 			return DF_FULL.format(date);
-		} catch (ParseException e) {
+		} catch (Exception e) {
 			return DATE_INVALID;
 		}
 	}
 	
 	public static final String LocalToKidsDateString(String _dateString) {
 		try {
-			Date date = DF_FULL.parse(_dateString);
+			final Date date = DF_FULL.parse(_dateString);
 			return DF_KIDS.format(date);
-		} catch (ParseException e) {
+		} catch (Exception e) {
 			return DATE_INVALID;
 		}
 	}
@@ -201,14 +199,14 @@ public class KidsBbs extends Activity {
 			if (n == null) {
 				throw new KidsParseException("ParseException: THREAD");
 			}
-			String thread = n != null ? n.getNodeValue() : null;
+			final String thread = n != null ? n.getNodeValue() : null;
 			
 			nl = _item.getElementsByTagName("TITLE");
 			if (nl == null || nl.getLength() <= 0) {
 				throw new KidsParseException("ParseException: TITLE");
 			}
 			n = ((Element)nl.item(0)).getFirstChild();
-			String title = n != null ? n.getNodeValue() : "";
+			final String title = n != null ? n.getNodeValue() : "";
 
 			nl = _item.getElementsByTagName("SEQ");
 			if (nl == null || nl.getLength() <= 0) {
@@ -218,7 +216,7 @@ public class KidsBbs extends Activity {
 			if (n == null) {
 				throw new KidsParseException("ParseException: SEQ");
 			}
-			int seq = Integer.parseInt(n.getNodeValue());
+			final int seq = Integer.parseInt(n.getNodeValue());
 
 			nl = _item.getElementsByTagName("DATE");
 			if (nl == null || nl.getLength() <= 0) {
@@ -228,7 +226,7 @@ public class KidsBbs extends Activity {
 			if (n == null) {
 				throw new KidsParseException("ParseException: DATE");
 			}
-			String date = n.getNodeValue();
+			final String date = n.getNodeValue();
 
 			nl = _item.getElementsByTagName("USER");
 			if (nl == null || nl.getLength() <= 0) {
@@ -238,7 +236,7 @@ public class KidsBbs extends Activity {
 			if (n == null) {
 				throw new KidsParseException("ParseException: USER");
 			}
-			String user = n.getNodeValue();
+			final String user = n.getNodeValue();
 
 			nl = _item.getElementsByTagName("AUTHOR");
 			if (nl == null || nl.getLength() <= 0) {
@@ -248,7 +246,7 @@ public class KidsBbs extends Activity {
 			if (n == null) {
 				throw new KidsParseException("ParseException: AUTHOR");
 			}
-			String author = n != null ? n.getNodeValue() : null;
+			final String author = n != null ? n.getNodeValue() : null;
 
 			String desc = "";
 			nl = _item.getElementsByTagName("DESCRIPTION");
@@ -259,7 +257,7 @@ public class KidsBbs extends Activity {
 
 			return new ArticleInfo(_tabname, seq, user, author, date, title,
 					thread, desc, 1, false);
-		} catch (KidsParseException e) {
+		} catch (Exception e) {
 			Log.w(TAG, e);
 			return null;
 		}
@@ -267,42 +265,42 @@ public class KidsBbs extends Activity {
 	
 	public static final ArrayList<ArticleInfo> getArticles(String _board,
 			int _type, int _start) throws Exception {
-		ArrayList<ArticleInfo> articles = new ArrayList<ArticleInfo>();
-		String tabname = BoardInfo.buildTabname(_board, _type);
-		String urlString = URL_PLIST +
+		final ArrayList<ArticleInfo> articles = new ArrayList<ArticleInfo>();
+		final String tabname = BoardInfo.buildTabname(_board, _type);
+		final String urlString = URL_PLIST +
 			PARAM_N_BOARD + "=" + _board +
 			"&" + PARAM_N_TYPE + "=" + _type +
 			"&" + PARAM_N_SEQ + "=" + _start;
-		HttpClient client = new DefaultHttpClient();
+		final HttpClient client = new DefaultHttpClient();
 		client.getParams().setParameter(
 				HttpConnectionParams.CONNECTION_TIMEOUT, CONN_TIMEOUT);
-		HttpGet get = new HttpGet(urlString);
-		HttpResponse response = client.execute(get);
-		HttpEntity entity = response.getEntity();
+		final HttpGet get = new HttpGet(urlString);
+		final HttpResponse response = client.execute(get);
+		final HttpEntity entity = response.getEntity();
 		if (entity == null) {
 			// ???
 		} else if (response.getStatusLine().getStatusCode() ==
 				HttpStatus.SC_OK) {
-			InputStream is = entity.getContent();
-			DocumentBuilder db =
+			final InputStream is = entity.getContent();
+			final DocumentBuilder db =
 				DocumentBuilderFactory.newInstance().newDocumentBuilder();
 
 			// Parse the article list.
-			Document dom = db.parse(is);
-			Element docEle = dom.getDocumentElement();
+			final Document dom = db.parse(is);
+			final Element docEle = dom.getDocumentElement();
 			NodeList nl;
 
 			nl = docEle.getElementsByTagName("ITEMS");
 			if (nl == null || nl.getLength() <= 0) {
 				throw new KidsParseException("ParseException: ITEMS");
 			}
-			Element items = (Element)nl.item(0);
+			final Element items = (Element)nl.item(0);
 
 			// Get a board item
 			nl = items.getElementsByTagName("ITEM");
 			if (nl != null && nl.getLength() > 0) {
 				for (int i = 0; i < nl.getLength(); ++i) {
-					ArticleInfo info = parseArticle(tabname,
+					final ArticleInfo info = parseArticle(tabname,
 							(Element)nl.item(i));
 					if (info != null) {
 						articles.add(info);
@@ -314,42 +312,42 @@ public class KidsBbs extends Activity {
 	}
 	
 	public static final int getArticlesLastSeq(String _board, int _type) {
-		String tabname = BoardInfo.buildTabname(_board, _type);
-		String urlString = URL_LIST +
+		final String tabname = BoardInfo.buildTabname(_board, _type);
+		final String urlString = URL_LIST +
 			PARAM_N_BOARD + "=" + _board +
 			"&" + PARAM_N_TYPE + "=" + _type +
 			"&" + PARAM_N_START + "=0" +
 			"&" + PARAM_N_COUNT + "=1";
-		HttpClient client = new DefaultHttpClient();
+		final HttpClient client = new DefaultHttpClient();
 		client.getParams().setParameter(
 				HttpConnectionParams.CONNECTION_TIMEOUT, CONN_TIMEOUT);
-		HttpGet get = new HttpGet(urlString);
+		final HttpGet get = new HttpGet(urlString);
 		try {
-			HttpResponse response = client.execute(get);
-			HttpEntity entity = response.getEntity();
+			final HttpResponse response = client.execute(get);
+			final HttpEntity entity = response.getEntity();
 			if (entity == null) {
 				// ???
 			} else if (response.getStatusLine().getStatusCode() ==
 					HttpStatus.SC_OK) {
-				InputStream is = entity.getContent();
-				DocumentBuilder db =
+				final InputStream is = entity.getContent();
+				final DocumentBuilder db =
 					DocumentBuilderFactory.newInstance().newDocumentBuilder();
 	
 				// Parse the article list.
-				Document dom = db.parse(is);
-				Element docEle = dom.getDocumentElement();
+				final Document dom = db.parse(is);
+				final Element docEle = dom.getDocumentElement();
 				NodeList nl;
 	
 				nl = docEle.getElementsByTagName("ITEMS");
 				if (nl == null || nl.getLength() <= 0) {
 					throw new KidsParseException("ParseException: ITEMS");
 				}
-				Element items = (Element)nl.item(0);
+				final Element items = (Element)nl.item(0);
 	
 				// Get a board item
 				nl = items.getElementsByTagName("ITEM");
 				if (nl != null && nl.getLength() > 0) {
-					ArticleInfo info = parseArticle(tabname,
+					final ArticleInfo info = parseArticle(tabname,
 							(Element)nl.item(0));
 					if (info != null) {
 						return info.getSeq();
@@ -366,8 +364,9 @@ public class KidsBbs extends Activity {
 			KidsBbsProvider.KEYA_SEQ,
 		};
 		int seq = 0;
-		Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
-		Cursor c = _cr.query(uri, FIELDS, null, null,
+		final Uri uri = Uri.parse(
+				KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
+		final Cursor c = _cr.query(uri, FIELDS, null, null,
 				KidsBbsProvider.ORDER_BY_SEQ_DESC);
 		if (c != null) {
 			if (c.getCount() > 0) {
@@ -385,7 +384,7 @@ public class KidsBbs extends Activity {
 			KidsBbsProvider.KEYB_TITLE,
 		};
 		String title = null;
-		Cursor c = _cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
+		final Cursor c = _cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
 				KidsBbsProvider.SELECTION_TABNAME, new String[] {_tabname},
 				null);
 		if (c != null) {
@@ -404,8 +403,9 @@ public class KidsBbs extends Activity {
 			KidsBbsProvider.KEYA_CNT_FIELD,
 		};
 		int cnt = 0;
-		Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
-		Cursor c = _cr.query(uri, FIELDS, null, null, null);
+		final Uri uri = Uri.parse(
+				KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
+		final Cursor c = _cr.query(uri, FIELDS, null, null, null);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -428,8 +428,8 @@ public class KidsBbs extends Activity {
 			KidsBbsProvider.KEYA_CNT_FIELD,
 		};
 		int count = 0;
-		Uri uri = Uri.parse(_uriBase + _tabname);
-		Cursor c = _cr.query(uri, FIELDS, _where, null, null);
+		final Uri uri = Uri.parse(_uriBase + _tabname);
+		final Cursor c = _cr.query(uri, FIELDS, _where, null, null);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -446,7 +446,7 @@ public class KidsBbs extends Activity {
 		};
 		final String WHERE = KidsBbsProvider.SELECTION_STATE_ACTIVE;
 		int count = 0;
-		Cursor c = _cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
+		final Cursor c = _cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
 				WHERE, null, null);
 		if (c != null) {
 			if (c.getCount() > 0) {
@@ -460,7 +460,7 @@ public class KidsBbs extends Activity {
 	
 	public static final void updateBoardCount(ContentResolver _cr,
 			String _tabname) {
-		ContentValues values = new ContentValues();
+		final ContentValues values = new ContentValues();
 		values.put(KidsBbsProvider.KEYB_COUNT,
 				getBoardUnreadCount(_cr, _tabname));
 		_cr.update(KidsBbsProvider.CONTENT_URI_BOARDS, values,
@@ -472,12 +472,12 @@ public class KidsBbs extends Activity {
 		final String[] FIELDS = {
 				KidsBbsProvider.KEYA_READ,
 		};
-		Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST +
-				_tabname);
-		String[] args = new String[] { Integer.toString(_seq) };
+		final Uri uri = Uri.parse(
+				KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
+		final String[] args = new String[] { Integer.toString(_seq) };
 		
 		boolean readOld = false;
-		Cursor c = _cr.query(uri, FIELDS, KidsBbsProvider.SELECTION_SEQ, args,
+		final Cursor c = _cr.query(uri, FIELDS, KidsBbsProvider.SELECTION_SEQ, args,
 				null);
 		if (c != null) {
 			if (c.getCount() > 0) {
@@ -490,9 +490,9 @@ public class KidsBbs extends Activity {
 			return false;
 		}
 		
-		ContentValues values = new ContentValues();
+		final ContentValues values = new ContentValues();
 		values.put(KidsBbsProvider.KEYA_READ, _read ? 1 : 0);
-		int count = _cr.update(uri, values, KidsBbsProvider.SELECTION_SEQ,
+		final int count = _cr.update(uri, values, KidsBbsProvider.SELECTION_SEQ,
 				args);
 		return (count > 0);
 	}
@@ -503,7 +503,7 @@ public class KidsBbs extends Activity {
 			KidsBbsProvider.KEYA_ALLREAD_FIELD,
 		};
 		boolean read = false;
-		Cursor c = _cr.query(_uri, FIELDS, _where, _whereArgs, null);
+		final Cursor c = _cr.query(_uri, FIELDS, _where, _whereArgs, null);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -516,10 +516,10 @@ public class KidsBbs extends Activity {
 	
 	public static final boolean isRecent(String _dateString) {
 		boolean result = true;
-		Date local = KidsToLocalDate(_dateString);
+		final Date local = KidsToLocalDate(_dateString);
 		if (local != null) {
-			Calendar calLocal = new GregorianCalendar();
-			Calendar calRecent = new GregorianCalendar();
+			final Calendar calLocal = new GregorianCalendar();
+			final Calendar calRecent = new GregorianCalendar();
 			calLocal.setTime(local);
 			calRecent.setTime(new Date());
 			// "Recent" one is marked unread.
@@ -541,7 +541,7 @@ public class KidsBbs extends Activity {
 			String _tabname) {
 		updateBoardCount(_context.getContentResolver(), _tabname);
 		
-		Intent intent = new Intent(BOARD_UPDATED);
+		final Intent intent = new Intent(BOARD_UPDATED);
 		intent.putExtra(PARAM_BASE + KidsBbsProvider.KEYB_TABNAME,
 				_tabname);
 		_context.sendBroadcast(intent);
@@ -551,7 +551,7 @@ public class KidsBbs extends Activity {
 			String _tabname, int _seq, String _user, String _thread) {
 		updateBoardCount(_context.getContentResolver(), _tabname);
 		
-		Intent intent = new Intent(ARTICLE_UPDATED);
+		final Intent intent = new Intent(ARTICLE_UPDATED);
 		intent.putExtra(PARAM_BASE + KidsBbsProvider.KEYB_TABNAME,
 				_tabname);
 		intent.putExtra(PARAM_BASE + KidsBbsProvider.KEYA_SEQ,

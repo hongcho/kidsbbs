@@ -42,10 +42,10 @@ public class KidsBbsThread extends KidsBbsAList {
     public void onCreate(Bundle _state) {
         super.onCreate(_state);
         
-        Uri data = getIntent().getData();
+        final Uri data = getIntent().getData();
         mBoardThread = data.getQueryParameter(KidsBbs.PARAM_N_THREAD);
         
-        Resources resources = getResources();
+        final Resources resources = getResources();
         mTitle = resources.getString(R.string.title_thread);
         
         updateTitle();
@@ -65,7 +65,7 @@ public class KidsBbsThread extends KidsBbsAList {
     	mUnreadCount = getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
     			KidsBbsProvider.SELECTION_UNREAD + " AND " +
     			KidsBbsProvider.KEYA_THREAD + "='" + mBoardThread + "'");
-    	int count = getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
+    	final int count = getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
     			KidsBbsProvider.KEYA_THREAD + "='" + mBoardThread + "'");
     	setTitleCommon(mTitle, mUnreadCount, count);
     }
@@ -76,8 +76,8 @@ public class KidsBbsThread extends KidsBbsAList {
     }
     
     protected void showItem(int _index) {
-    	Cursor c = getItem(_index);
-    	int seq = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
+    	final Cursor c = getItem(_index);
+    	final int seq = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
 		showItemCommon(this, KidsBbsView.class, KidsBbs.URI_INTENT_VIEW,
 				"&" + KidsBbs.PARAM_N_SEQ + "=" + seq);
     }
@@ -87,20 +87,20 @@ public class KidsBbsThread extends KidsBbsAList {
     }
     
     protected void toggleAllRead() {
-    	AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    	final AlertDialog.Builder builder = new AlertDialog.Builder(this);
     	builder.setTitle(R.string.confirm_text);
     	builder.setMessage(R.string.toggle_all_read_message);
     	builder.setPositiveButton(android.R.string.ok,
     			new DialogInterface.OnClickListener() {
     		public void onClick(DialogInterface _dialog, int _which) {
-    			String where =
+    			final String where =
     				KidsBbsProvider.KEYA_THREAD + "='" + mBoardThread +
     				"' AND " + KidsBbsProvider.KEYA_READ +
     				(mUnreadCount == 0 ? "!=0" : "=0");
-    			ContentValues values = new ContentValues();
+    			final ContentValues values = new ContentValues();
     			values.put(KidsBbsProvider.KEYA_READ,
     					mUnreadCount > 0 ? 1 : 0);
-    			int nChanged = mResolver.update(getUriList(), values,
+    			final int nChanged = mResolver.update(getUriList(), values,
     					where, null);
     			if (nChanged > 0) {
     	    		KidsBbs.updateBoardCount(mResolver, mTabname);

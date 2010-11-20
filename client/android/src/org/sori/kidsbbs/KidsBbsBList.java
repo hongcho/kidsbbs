@@ -92,7 +92,7 @@ public class KidsBbsBList extends ListActivity {
 		mTitleBase = getResources().getString(R.string.title_blist);
 		mStatusView = (TextView)findViewById(R.id.status);
 		
-		Resources resources = getResources();
+		final Resources resources = getResources();
 		mUpdateText = resources.getString(R.string.update_text);
 		mUpdateErrorText = resources.getString(R.string.update_error_text);
 		
@@ -131,24 +131,22 @@ public class KidsBbsBList extends ListActivity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu _menu) {
 		super.onCreateOptionsMenu(_menu);
-
-		MenuItem itemSelect = _menu.add(0, MENU_SELECT, Menu.NONE,
-				R.string.menu_select);
-		itemSelect.setIcon(getResources().getIdentifier(
+		
+		MenuItem item;
+		item = _menu.add(0, MENU_SELECT, Menu.NONE, R.string.menu_select);
+		item.setIcon(getResources().getIdentifier(
 				"android:drawable/ic_menu_add", null, null));
-		itemSelect.setShortcut('0', 's');
+		item.setShortcut('0', 's');
 
-		MenuItem itemUpdate = _menu.add(0, MENU_REFRESH, Menu.NONE,
-				R.string.menu_refresh);
-		itemUpdate.setIcon(getResources().getIdentifier(
+		item = _menu.add(0, MENU_REFRESH, Menu.NONE, R.string.menu_refresh);
+		item.setIcon(getResources().getIdentifier(
 				"android:drawable/ic_menu_refresh", null, null));
-		itemUpdate.setShortcut('1', 'r');
+		item.setShortcut('1', 'r');
 
-		MenuItem itemPreferences = _menu.add(0, MENU_PREFERENCES, Menu.NONE,
+		item = _menu.add(0, MENU_PREFERENCES, Menu.NONE,
 				R.string.menu_preferences);
-		itemPreferences.setIcon(android.R.drawable.ic_menu_preferences);
-		itemPreferences.setShortcut('2', 'p');
-
+		item.setIcon(android.R.drawable.ic_menu_preferences);
+		item.setShortcut('2', 'p');
 		return true;
 	}
 
@@ -205,12 +203,12 @@ public class KidsBbsBList extends ListActivity {
 
 		@Override
 		protected Cursor doInBackground(Void... _args) {
-			final String orderby =
+			final String ORDERBY =
 				KidsBbsProvider.ORDER_BY_COUNT_DESC + "," +
 				KidsBbsProvider.ORDER_BY_TITLE;
 			return KidsBbsBList.this.managedQuery(
 					KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
-					KidsBbsProvider.SELECTION_STATE_ACTIVE, null, orderby);
+					KidsBbsProvider.SELECTION_STATE_ACTIVE, null, ORDERBY);
 		}
 
 		@Override
@@ -237,13 +235,13 @@ public class KidsBbsBList extends ListActivity {
 	}
 
 	private void showItem(int _index) {
-		Cursor c = (Cursor)mAdapter.getItem(_index);
-		String tabname = c.getString(BoardsAdapter.COLUMN_TABNAME);
-		String title = c.getString(BoardsAdapter.COLUMN_TITLE);
-		Uri data = Uri.parse(KidsBbs.URI_INTENT_TLIST +
+		final Cursor c = (Cursor)mAdapter.getItem(_index);
+		final String tabname = c.getString(BoardsAdapter.COLUMN_TABNAME);
+		final String title = c.getString(BoardsAdapter.COLUMN_TITLE);
+		final Uri data = Uri.parse(KidsBbs.URI_INTENT_TLIST +
 				KidsBbs.PARAM_N_TABNAME + "=" + tabname +
 				"&" + KidsBbs.PARAM_N_TITLE + "=" + title);
-		Intent intent = new Intent(this, KidsBbsTList.class);
+		final Intent intent = new Intent(this, KidsBbsTList.class);
 		intent.setData(data);
 		startActivity(intent);
 	}
@@ -257,10 +255,10 @@ public class KidsBbsBList extends ListActivity {
 		final String ORDERBY = KidsBbsProvider.ORDER_BY_STATE_DESC + "," +
 			KidsBbsProvider.ORDER_BY_TITLE;
 		String[] titles = null;
-		Cursor c = mResolver.query(KidsBbsProvider.CONTENT_URI_BOARDS,
+		final Cursor c = mResolver.query(KidsBbsProvider.CONTENT_URI_BOARDS,
 				FIELDS, null, null, ORDERBY);
 		if (c != null) {
-			int size = c.getCount();
+			final int size = c.getCount();
 			if (size > 0) {
 				mTabnames = new String[size];
 				titles = new String[size];
@@ -283,7 +281,7 @@ public class KidsBbsBList extends ListActivity {
 			c.close();
 		}
 		if (titles != null) {
-			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			final AlertDialog.Builder builder = new AlertDialog.Builder(this);
 			builder.setTitle(R.string.board_selection_title);
 			builder.setMultiChoiceItems(titles, mSelectedNew,
 					new DialogInterface.OnMultiChoiceClickListener() {
@@ -414,13 +412,13 @@ public class KidsBbsBList extends ListActivity {
 			mInflater = (LayoutInflater)mContext.getSystemService(
 					Context.LAYOUT_INFLATER_SERVICE);
 			
-			Resources resources = mContext.getResources();
+			final Resources resources = mContext.getResources();
 			mBgRead = resources.getDrawable(
 					R.drawable.list_item_background_read);
 			mBgUnread = resources.getDrawable(
 					R.drawable.list_item_background_unread);
 			
-			Theme theme = _context.getTheme();
+			final Theme theme = _context.getTheme();
 			TypedArray array;
 			array = theme.obtainStyledAttributes(
 					new int[] { android.R.attr.textColorPrimary });
@@ -440,13 +438,13 @@ public class KidsBbsBList extends ListActivity {
 
 		@Override
 		public void bindView(View _v, Context _context, Cursor _c) {
-			KidsBbsBItem itemView = (KidsBbsBItem)_v;
+			final KidsBbsBItem itemView = (KidsBbsBItem)_v;
 			itemView.mId = _c.getLong(COLUMN_ID);
 			itemView.mTabname = _c.getString(COLUMN_TABNAME);
 			itemView.mTitle = _c.getString(COLUMN_TITLE);
 			itemView.mCount = _c.getInt(COLUMN_COUNT);
 			
-			ViewHolder holder = (ViewHolder)itemView.getTag();
+			final ViewHolder holder = (ViewHolder)itemView.getTag();
 			holder.title.setText(itemView.mTitle);
 			holder.count.setText(Integer.toString(itemView.mCount));
 			if (itemView.mCount > 0) {
@@ -466,9 +464,9 @@ public class KidsBbsBList extends ListActivity {
 
 		@Override
 		public View newView(Context _context, Cursor _c, ViewGroup _parent) {
-			View v = mInflater.inflate(R.layout.board_list_item, _parent,
-					false);
-			ViewHolder holder = new ViewHolder();
+			final View v = mInflater.inflate(R.layout.board_list_item,
+					_parent, false);
+			final ViewHolder holder = new ViewHolder();
 			holder.item = v.findViewById(R.id.item);
 			holder.title = (TextView)v.findViewById(R.id.title);
 			holder.count = (TextView)v.findViewById(R.id.count);
@@ -480,6 +478,11 @@ public class KidsBbsBList extends ListActivity {
 		protected void onContentChanged() {
 			super.onContentChanged();
 			updateTitle();
+		}
+		
+		@Override
+		public CharSequence convertToString(Cursor _c) {
+			return _c == null ? "" : _c.getString(COLUMN_TITLE); 
 		}
 	}
 }
