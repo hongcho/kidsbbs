@@ -219,9 +219,9 @@ public class KidsBbsView extends Activity {
 					KidsBbs.PARAM_N_TABNAME + "=" + mTabname +
 					"&" + KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle +
 					"&" + KidsBbs.PARAM_N_THREAD + "=" + mThread);
-			Intent i = new Intent(this, KidsBbsThread.class);
-			i.setData(data);
-			startActivity(i);
+			Intent intent = new Intent(this, KidsBbsThread.class);
+			intent.setData(data);
+			startActivity(intent);
 		}
 	}
 
@@ -231,9 +231,9 @@ public class KidsBbsView extends Activity {
 					KidsBbs.PARAM_N_TABNAME + "=" + mTabname +
 					"&" + KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle +
 					"&" + KidsBbs.PARAM_N_USER + "=" + mUser);
-			Intent i = new Intent(this, KidsBbsUser.class);
-			i.setData(data);
-			startActivity(i);
+			Intent intent = new Intent(this, KidsBbsUser.class);
+			intent.setData(data);
+			startActivity(intent);
 		}
 	}
 

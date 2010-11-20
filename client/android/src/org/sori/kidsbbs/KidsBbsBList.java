@@ -243,9 +243,9 @@ public class KidsBbsBList extends ListActivity {
 		Uri data = Uri.parse(KidsBbs.URI_INTENT_TLIST +
 				KidsBbs.PARAM_N_TABNAME + "=" + tabname +
 				"&" + KidsBbs.PARAM_N_TITLE + "=" + title);
-		Intent i = new Intent(this, KidsBbsTList.class);
-		i.setData(data);
-		startActivity(i);
+		Intent intent = new Intent(this, KidsBbsTList.class);
+		intent.setData(data);
+		startActivity(intent);
 	}
 	
 	private void selectBoards() {
@@ -303,7 +303,8 @@ public class KidsBbsBList extends ListActivity {
 						++nUpdated;
 						ContentValues values = new ContentValues();
 						values.put(KidsBbsProvider.KEYB_STATE,
-								mSelectedNew[i] ? KidsBbsProvider.STATE_INIT :
+								mSelectedNew[i] ?
+									KidsBbsProvider.STATE_SELECTED :
 									KidsBbsProvider.STATE_PAUSED);
 						mResolver.update(KidsBbsProvider.CONTENT_URI_BOARDS,
 								values, KidsBbsProvider.SELECTION_TABNAME,
