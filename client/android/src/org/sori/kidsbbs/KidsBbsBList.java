@@ -53,6 +53,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.CursorAdapter;
+import android.widget.FilterQueryProvider;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -393,7 +394,8 @@ public class KidsBbsBList extends ListActivity {
 		KidsBbsProvider.KEYB_TITLE,
 		KidsBbsProvider.KEYB_COUNT,
 	};
-	private class BoardsAdapter extends CursorAdapter {
+	private class BoardsAdapter extends CursorAdapter
+			implements FilterQueryProvider {
 		public static final int COLUMN_ID = 0;
 		public static final int COLUMN_TABNAME = 1;
 		public static final int COLUMN_TITLE = 2;
@@ -428,6 +430,8 @@ public class KidsBbsBList extends ListActivity {
 					new int[] { android.R.attr.textColorSecondary });
 			mTextColorSecondary = resources.getColorStateList(
 					array.getResourceId(0, 0));
+			
+			setFilterQueryProvider(this);
 		}
 
 		private class ViewHolder {
@@ -480,9 +484,16 @@ public class KidsBbsBList extends ListActivity {
 			updateTitle();
 		}
 		
-		@Override
-		public CharSequence convertToString(Cursor _c) {
-			return _c == null ? "" : _c.getString(COLUMN_TITLE); 
+		public Cursor runQuery(CharSequence _constraint) {
+			final String WHERE =
+				KidsBbsProvider.SELECTION_STATE_ACTIVE + " AND " +
+				KidsBbsProvider.KEYB_TITLE + " LIKE '%" + _constraint + "%'";
+			final String ORDERBY =
+				KidsBbsProvider.ORDER_BY_COUNT_DESC + "," +
+				KidsBbsProvider.ORDER_BY_TITLE;
+			return KidsBbsBList.this.managedQuery(
+					KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS, WHERE,
+					null, ORDERBY);
 		}
 	}
 }

@@ -55,6 +55,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.CursorAdapter;
+import android.widget.FilterQueryProvider;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -421,7 +422,8 @@ public abstract class KidsBbsAList extends ListActivity
 		KidsBbsProvider.KEYA_BODY,
 		KidsBbsProvider.KEYA_READ,
 	};
-	protected class ArticlesAdapter extends CursorAdapter {
+	protected class ArticlesAdapter extends CursorAdapter
+			implements FilterQueryProvider {
 		public static final int COLUMN_ID = 0;
 		public static final int COLUMN_SEQ = 1;
 		public static final int COLUMN_USER = 2;
@@ -461,6 +463,8 @@ public abstract class KidsBbsAList extends ListActivity
 					new int[] { android.R.attr.textColorSecondary });
 			mTextColorSecondary = resources.getColorStateList(
 					array.getResourceId(0, 0));
+			
+			setFilterQueryProvider(this);
 		}
 
 		private class ViewHolder {
@@ -544,10 +548,21 @@ public abstract class KidsBbsAList extends ListActivity
 			return v;
 		}
 		
-		@Override
-		public CharSequence convertToString(Cursor _c) {
-			return _c == null ? "" :
-				_c.getString(COLUMN_TITLE) + " " + _c.getString(COLUMN_USER); 
+		public Cursor runQuery(CharSequence _constraint) {
+			String where = mWhere;
+			if (where == null) {
+				where = "";
+			} else {
+				where += " AND ";
+			}
+			where += "(" +
+				KidsBbsProvider.KEYA_TITLE + " LIKE '%" + _constraint + "%' OR " +
+				KidsBbsProvider.KEYA_USER + " LIKE '%" + _constraint + "%')";
+			if (mHideRead) {
+				where += " AND " + mFields[ArticlesAdapter.COLUMN_READ] + "=0";
+			}
+			return KidsBbsAList.this.managedQuery(
+					mUri, mFields, where, null, null);
 		}
 	}
 }
