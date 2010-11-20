@@ -129,7 +129,7 @@ public class KidsBbsProvider extends ContentProvider {
 	public boolean onCreate() {
 		mResolver = getContext().getContentResolver();
 		
-		DBHelper dbHelper = new DBHelper(getContext(), DB_NAME, null,
+		final DBHelper dbHelper = new DBHelper(getContext(), DB_NAME, null,
 				DB_VERSION);
 		mDB = dbHelper.getWritableDatabase();
 		return mDB != null;
@@ -152,14 +152,13 @@ public class KidsBbsProvider extends ContentProvider {
 	@Override
 	public Cursor query(Uri _uri, String[] _projection, String _selection,
 			String[] _selectionArgs, String _sortOrder) {
-		String table = getTableName(_uri);
+		final String table = getTableName(_uri);
 		if (table == null) {
 			throw new IllegalArgumentException(
 					"query: Unsupported URI: " + _uri);
 		}
-		SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
+		final SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
 		String orderby = ORDER_BY_SEQ_DESC;
-		String groupby = null;
 		int type = sUriMatcher.match(_uri);
 		switch (type) {
 		case TYPE_LIST:
@@ -178,8 +177,8 @@ public class KidsBbsProvider extends ContentProvider {
 			orderby = _sortOrder;
 		}
 
-		Cursor c = qb.query(mDB, _projection, _selection, _selectionArgs, groupby,
-				null, orderby);
+		final Cursor c = qb.query(mDB, _projection, _selection, _selectionArgs,
+				null, null, orderby);
 		if (c != null) {
 			// Register the context's ContentResolver to be notified
 			// if the cursor result set changes.
@@ -190,14 +189,14 @@ public class KidsBbsProvider extends ContentProvider {
 
 	@Override
 	public Uri insert(Uri _uri, ContentValues _values) {
-		String table = getTableName(_uri);
+		final String table = getTableName(_uri);
 		if (table == null) {
 			throw new IllegalArgumentException(
 					"insert: Unsupported URI: " + _uri);
 		}
-		long row = mDB.insert(table, null, _values);
+		final long row = mDB.insert(table, null, _values);
 		if (row > 0) {
-			Uri uri = ContentUris.withAppendedId(_uri, row);
+			final Uri uri = ContentUris.withAppendedId(_uri, row);
 			mResolver.notifyChange(uri, null);
 			return uri;
 		}
@@ -206,12 +205,12 @@ public class KidsBbsProvider extends ContentProvider {
 
 	@Override
 	public int delete(Uri _uri, String _selection, String[] _selectionArgs) {
-		String table = getTableName(_uri);
+		final String table = getTableName(_uri);
 		if (table == null) {
 			throw new IllegalArgumentException(
 					"delete: Unsupported URI: " + _uri);
 		}
-		int count = mDB.delete(table, _selection, _selectionArgs);
+		final int count = mDB.delete(table, _selection, _selectionArgs);
 		mResolver.notifyChange(_uri, null);
 		return count;
 	}
@@ -219,19 +218,20 @@ public class KidsBbsProvider extends ContentProvider {
 	@Override
 	public int update(Uri _uri, ContentValues _values, String _selection,
 			String[] _selectionArgs) {
-		String table = getTableName(_uri);
+		final String table = getTableName(_uri);
 		if (table == null) {
 			throw new IllegalArgumentException(
 					"update: Unsupported URI: " + _uri);
 		}
-		int count = mDB.update(table, _values, _selection, _selectionArgs);
+		final int count = mDB.update(table, _values, _selection,
+				_selectionArgs);
 		mResolver.notifyChange(_uri, null);
 		return count;
 	}
 
 	private String getTableName(Uri _uri) {
-		int type = sUriMatcher.match(_uri);
-		List<String> segments = _uri.getPathSegments();
+		final int type = sUriMatcher.match(_uri);
+		final List<String> segments = _uri.getPathSegments();
 		switch (type) {
 		case TYPE_LIST:
 			if (segments.size() == 2) {
@@ -261,23 +261,23 @@ public class KidsBbsProvider extends ContentProvider {
 			KEYA_CNT_FIELD,
 		};
 		int count = 0;
-		SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
+		final SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
 		qb.setTables(_tabname);
-		Cursor c1 = qb.query(_db, FIELDS1,
+		final Cursor c = qb.query(_db, FIELDS1,
 				SELECTION_UNREAD, null, null, null, null);
-		if (c1 != null) {
-			if (c1.getCount() > 0) {
-				c1.moveToFirst();
-				count = c1.getInt(0);
+		if (c != null) {
+			if (c.getCount() > 0) {
+				c.moveToFirst();
+				count = c.getInt(0);
 			}
-			c1.close();
+			c.close();
 		}
 		return count;
 	}
 	
 	private static final int setMainUnreadCount(SQLiteDatabase _db,
 			String _tabname, int count) {
-		ContentValues values = new ContentValues();
+		final ContentValues values = new ContentValues();
 		values.put(KEYB_COUNT, count);
 		return _db.update(DB_TABLE, values, SELECTION_TABNAME,
 				new String[] {_tabname});
@@ -335,23 +335,24 @@ public class KidsBbsProvider extends ContentProvider {
 			createMainTable(_db);
 			
 			// Board table...
-			String[] tabnames = mResources.getStringArray(
+			final String[] tabnames = mResources.getStringArray(
 					R.array.board_table_names);
-			String[] typeNames = mResources.getStringArray(
+			final String[] typeNames = mResources.getStringArray(
 					R.array.board_type_names);
-			String[] nameMapKeys = mResources.getStringArray(
+			final String[] nameMapKeys = mResources.getStringArray(
 					R.array.board_name_map_in);
-			String[] nameMapValues = mResources.getStringArray(
+			final String[] nameMapValues = mResources.getStringArray(
 					R.array.board_name_map_out);
-			String[] defaultMapKeys = mResources.getStringArray(
+			final String[] defaultMapKeys = mResources.getStringArray(
 					R.array.default_board_tables);
 			
-			HashMap<String, String> nameMap = new HashMap<String, String>();
+			final HashMap<String, String> nameMap =
+				new HashMap<String, String>();
 			for (int i = 0; i < nameMapKeys.length; ++i) {
 				nameMap.put(nameMapKeys[i], nameMapValues[i]);
 			}
 			
-			HashMap<String, Boolean> updateMap =
+			final HashMap<String, Boolean> updateMap =
 				new HashMap<String, Boolean>();
 			for (int i = 0; i < tabnames.length; ++i) {
 				updateMap.put(tabnames[i], false);
@@ -362,16 +363,16 @@ public class KidsBbsProvider extends ContentProvider {
 			
 			// Populate...
 			for (int i = 0; i < tabnames.length; ++i) {
-				String[] p = BoardInfo.parseTabname(tabnames[i]);
-				int type = Integer.parseInt(p[0]);
-				String name = p[1];
+				final String[] p = BoardInfo.parseTabname(tabnames[i]);
+				final int type = Integer.parseInt(p[0]);
+				final String name = p[1];
 				String title;
 				if (type > 0 && type < typeNames.length) {
 					title = typeNames[type] + " ";
 				} else {
 					title = "";
 				}
-				String mapped = nameMap.get(name);
+				final String mapped = nameMap.get(name);
 				if (mapped != null) {
 					title += mapped;
 				} else {
@@ -391,15 +392,16 @@ public class KidsBbsProvider extends ContentProvider {
 			Log.w(TAG, "Upgrading database from version " + _old + " to " +
 					_new + ", which may destroy all old data");
 			
-			SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
+			final SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
 			qb.setTables(DB_TABLE);
 			try {
-				Cursor c = qb.query(_db, FIELDS, null, null, null, null, null);
+				final Cursor c = qb.query(_db, FIELDS, null, null, null, null,
+						null);
 				if (c != null) {
 					if (c.getCount() > 0) {
 						c.moveToFirst();
 						do {
-							String tabname = c.getString(0);
+							final String tabname = c.getString(0);
 							upgradeArticleDB(_db, tabname, _old);
 						} while (c.moveToNext());
 					}
@@ -438,15 +440,16 @@ public class KidsBbsProvider extends ContentProvider {
 				final String[] FIELDS = {
 					KEYB_TABNAME,
 				};   
-				SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
+				final SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
 				qb.setTables(DB_TABLE);
-				Cursor c = qb.query(_db, FIELDS, null, null, null, null, null);
+				final Cursor c = qb.query(_db, FIELDS, null, null, null, null,
+						null);
 				if (c != null) {
 					if (c.getCount() > 0) {
 						c.moveToFirst();
 						do {
-							String tabname = c.getString(0);
-							int unreadCount = getUnreadCount(_db, tabname);
+							final String tabname = c.getString(0);
+							final int unreadCount = getUnreadCount(_db, tabname);
 							if (unreadCount > 0) {
 								setMainUnreadCount(_db, tabname, unreadCount);
 							}
@@ -459,7 +462,7 @@ public class KidsBbsProvider extends ContentProvider {
 		
 		private void addBoard(SQLiteDatabase _db, BoardInfo _info,
 				int _state) {
-			ContentValues values = new ContentValues();
+			final ContentValues values = new ContentValues();
 			values.put(KEYB_TABNAME, _info.getTabname());
 			values.put(KEYB_TITLE, _info.getTitle());
 			values.put(KEYB_STATE, _state);

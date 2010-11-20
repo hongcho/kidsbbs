@@ -73,7 +73,7 @@ public class KidsBbsView extends Activity {
 		super.onCreate(_state);
 		setContentView(R.layout.board_view);
 
-		Uri data = getIntent().getData();
+		final Uri data = getIntent().getData();
 		mTabname = data.getQueryParameter(KidsBbs.PARAM_N_TABNAME);
 		mBoardTitle = data.getQueryParameter(KidsBbs.PARAM_N_TITLE);
 		mSeq = Integer.parseInt(data.getQueryParameter(
@@ -118,17 +118,17 @@ public class KidsBbsView extends Activity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu _menu) {
 		super.onCreateOptionsMenu(_menu);
-
-		MenuItem itemUpdate = _menu.add(0, MENU_REFRESH, Menu.NONE,
-				R.string.menu_refresh);
-		itemUpdate.setIcon(getResources().getIdentifier(
+		
+		MenuItem item;
+		item = _menu.add(0, MENU_REFRESH, Menu.NONE, R.string.menu_refresh);
+		item.setIcon(getResources().getIdentifier(
 				"android:drawable/ic_menu_refresh", null, null));
-		itemUpdate.setShortcut('0', 'r');
+		item.setShortcut('0', 'r');
 
-		MenuItem itemPreferences = _menu.add(0, MENU_PREFERENCES, Menu.NONE,
+		item = _menu.add(0, MENU_PREFERENCES, Menu.NONE,
 				R.string.menu_preferences);
-		itemPreferences.setIcon(android.R.drawable.ic_menu_preferences);
-		itemUpdate.setShortcut('1', 'p');
+		item.setIcon(android.R.drawable.ic_menu_preferences);
+		item.setShortcut('1', 'p');
 		return true;
 	}
 
@@ -215,11 +215,11 @@ public class KidsBbsView extends Activity {
 
 	private void startThreadView() {
 		if (mThread != null) {
-			Uri data = Uri.parse(KidsBbs.URI_INTENT_THREAD +
+			final Uri data = Uri.parse(KidsBbs.URI_INTENT_THREAD +
 					KidsBbs.PARAM_N_TABNAME + "=" + mTabname +
 					"&" + KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle +
 					"&" + KidsBbs.PARAM_N_THREAD + "=" + mThread);
-			Intent intent = new Intent(this, KidsBbsThread.class);
+			final Intent intent = new Intent(this, KidsBbsThread.class);
 			intent.setData(data);
 			startActivity(intent);
 		}
@@ -227,11 +227,11 @@ public class KidsBbsView extends Activity {
 
 	private void startUserView() {
 		if (mUser != null) {
-			Uri data = Uri.parse(KidsBbs.URI_INTENT_USER +
+			final Uri data = Uri.parse(KidsBbs.URI_INTENT_USER +
 					KidsBbs.PARAM_N_TABNAME + "=" + mTabname +
 					"&" + KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle +
 					"&" + KidsBbs.PARAM_N_USER + "=" + mUser);
-			Intent intent = new Intent(this, KidsBbsUser.class);
+			final Intent intent = new Intent(this, KidsBbsUser.class);
 			intent.setData(data);
 			startActivity(intent);
 		}
@@ -249,7 +249,7 @@ public class KidsBbsView extends Activity {
 
 	// Saving state for rotation changes...
 	public Object onRetainNonConfigurationInstance() {
-		SavedStates save = new SavedStates();
+		final SavedStates save = new SavedStates();
 		save.seq = mSeq;
 		save.user = mUser;
 		save.author = mAuthor;
@@ -261,7 +261,8 @@ public class KidsBbsView extends Activity {
 	}
 
 	private void initializeStates() {
-		SavedStates save = (SavedStates)getLastNonConfigurationInstance();
+		final SavedStates save =
+			(SavedStates)getLastNonConfigurationInstance();
 		if (save == null) {
 			refreshView();
 		} else {
@@ -279,9 +280,9 @@ public class KidsBbsView extends Activity {
 	private class ArticleUpdatedReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
-			String tabname = _intent.getStringExtra(
+			final String tabname = _intent.getStringExtra(
 					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME);
-			int seq = _intent.getIntExtra(
+			final int seq = _intent.getIntExtra(
 					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_SEQ, -1);
 			if (mTabname != null && tabname != null &&
 					tabname.equals(mTabname) && seq == mSeq) {

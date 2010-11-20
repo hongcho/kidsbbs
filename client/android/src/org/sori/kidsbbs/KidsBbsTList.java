@@ -40,7 +40,7 @@ public class KidsBbsTList extends KidsBbsAList {
     public void onCreate(Bundle _state) {
         super.onCreate(_state);
         
-        Resources resources = getResources();
+        final Resources resources = getResources();
         mTitle = resources.getString(R.string.title_tlist);
         
         updateTitle();
@@ -58,7 +58,7 @@ public class KidsBbsTList extends KidsBbsAList {
     protected void updateTitle() {
     	mUnreadCount = getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
     			KidsBbsProvider.SELECTION_UNREAD);
-    	int count = getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
+    	final int count = getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
     			null);
     	setTitleCommon(mTitle, mUnreadCount, count);
     }
@@ -69,19 +69,19 @@ public class KidsBbsTList extends KidsBbsAList {
     }
     
     protected void showItem(int _index) {
-    	Cursor c = getItem(_index);
-    	int count = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_CNT));
+    	final Cursor c = getItem(_index);
+    	final int count = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_CNT));
 		String base;
 		String extra;
 		Class<?> target;
 		if (count > 1) {
-			String thread = c.getString(c.getColumnIndex(
+			final String thread = c.getString(c.getColumnIndex(
 					KidsBbsProvider.KEYA_THREAD));
 			base = KidsBbs.URI_INTENT_THREAD;
 			extra = "&" + KidsBbs.PARAM_N_THREAD + "=" + thread;
 			target = KidsBbsThread.class;
 		} else {
-			int seq = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
+			final int seq = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
 			base = KidsBbs.URI_INTENT_VIEW;
 			extra = "&" + KidsBbs.PARAM_N_SEQ + "=" + seq;
 			target = KidsBbsView.class;
@@ -90,16 +90,16 @@ public class KidsBbsTList extends KidsBbsAList {
     }
     
     protected void toggleRead(int _index) {
-    	Cursor c = getItem(_index);
-    	int count = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_CNT));
-		boolean read = c.getInt(ArticlesAdapter.COLUMN_READ) != 0;
+    	final Cursor c = getItem(_index);
+    	final int count = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_CNT));
+		final boolean read = c.getInt(ArticlesAdapter.COLUMN_READ) != 0;
     	int nChanged;
     	if (count > 1) {
-    		String thread = c.getString(c.getColumnIndex(
+    		final String thread = c.getString(c.getColumnIndex(
     				KidsBbsProvider.KEYA_THREAD));
-    		String where = KidsBbsProvider.KEYA_THREAD + "='" + thread +
+    		final String where = KidsBbsProvider.KEYA_THREAD + "='" + thread +
     			"' AND " + KidsBbsProvider.KEYA_READ + (read ? "!=0" : "=0");
-    		ContentValues values = new ContentValues();
+    		final ContentValues values = new ContentValues();
     		values.put(KidsBbsProvider.KEYA_READ, read ? 0 : 1);
     		nChanged = mResolver.update(getUriList(), values, where, null);
     	} else {
@@ -112,18 +112,18 @@ public class KidsBbsTList extends KidsBbsAList {
     }
     
     protected void toggleAllRead() {
-    	AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    	final AlertDialog.Builder builder = new AlertDialog.Builder(this);
     	builder.setTitle(R.string.confirm_text);
     	builder.setMessage(R.string.toggle_all_read_message);
     	builder.setPositiveButton(android.R.string.ok,
     			new DialogInterface.OnClickListener() {
     		public void onClick(DialogInterface _dialog, int _which) {
-    			String where = KidsBbsProvider.KEYA_READ +
+    			final String where = KidsBbsProvider.KEYA_READ +
     				(mUnreadCount == 0 ? "!=0" : "=0");
-    			ContentValues values = new ContentValues();
+    			final ContentValues values = new ContentValues();
     			values.put(KidsBbsProvider.KEYA_READ,
     					mUnreadCount > 0 ? 1 : 0);
-    			int nChanged = mResolver.update(getUriList(), values,
+    			final int nChanged = mResolver.update(getUriList(), values,
     					where, null);
     			if (nChanged > 0) {
     	    		KidsBbs.updateBoardCount(mResolver, mTabname);

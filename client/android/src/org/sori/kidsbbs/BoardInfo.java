@@ -44,7 +44,7 @@ public class BoardInfo {
 	}
 	
 	public static final String[] parseTabname(String _tabname) {
-		String[] parsed = _tabname.split("_");
+		final String[] parsed = _tabname.split("_");
 		parsed[0] = parsed[0].substring(1);
 		return parsed;
 	}
@@ -54,7 +54,7 @@ public class BoardInfo {
 		mTitle = _title;
 		mUnreadCount = 0;
 
-		String[] parsed = parseTabname(mTabname);
+		final String[] parsed = parseTabname(mTabname);
 		mType = Integer.parseInt(parsed[0]);
 		mBoard = parsed[1];
 	}
