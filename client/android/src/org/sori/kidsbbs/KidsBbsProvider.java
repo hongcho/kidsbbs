@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import android.content.ContentProvider;
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
@@ -84,9 +85,7 @@ public class KidsBbsProvider extends ContentProvider {
 	
 	// Board states
 	public static final int STATE_PAUSED = 0; // no table or not updating
-	public static final int STATE_INIT = 1; // table is created, not updated
-	public static final int STATE_UPDATED = 2; // update is done
-	public static final int STATE_IN_PROGRESS = 0x80;
+	public static final int STATE_SELECTED = 1; // selected for updates
 	
 	// Article table
 	public static final String KEYA_SEQ = "seq";
@@ -123,9 +122,13 @@ public class KidsBbsProvider extends ContentProvider {
 	public static final String ORDER_BY_STATE_ASC = KEYB_STATE + " ASC";
 	public static final String ORDER_BY_STATE_DESC = KEYB_STATE + " DESC";
 	public static final String ORDER_BY_TITLE = "LOWER(" + KEYB_TITLE + ")";
+	
+	ContentResolver mResolver;
 
 	@Override
 	public boolean onCreate() {
+		mResolver = getContext().getContentResolver();
+		
 		DBHelper dbHelper = new DBHelper(getContext(), DB_NAME, null,
 				DB_VERSION);
 		mDB = dbHelper.getWritableDatabase();
@@ -180,7 +183,7 @@ public class KidsBbsProvider extends ContentProvider {
 		if (c != null) {
 			// Register the context's ContentResolver to be notified
 			// if the cursor result set changes.
-			c.setNotificationUri(getContext().getContentResolver(), _uri);
+			c.setNotificationUri(mResolver, _uri);
 		}
 		return c;
 	}
@@ -195,7 +198,7 @@ public class KidsBbsProvider extends ContentProvider {
 		long row = mDB.insert(table, null, _values);
 		if (row > 0) {
 			Uri uri = ContentUris.withAppendedId(_uri, row);
-			getContext().getContentResolver().notifyChange(uri, null);
+			mResolver.notifyChange(uri, null);
 			return uri;
 		}
 		throw new SQLException("insert: Failed to insert row into " + _uri);
@@ -209,7 +212,7 @@ public class KidsBbsProvider extends ContentProvider {
 					"delete: Unsupported URI: " + _uri);
 		}
 		int count = mDB.delete(table, _selection, _selectionArgs);
-		getContext().getContentResolver().notifyChange(_uri, null);
+		mResolver.notifyChange(_uri, null);
 		return count;
 	}
 
@@ -222,7 +225,7 @@ public class KidsBbsProvider extends ContentProvider {
 					"update: Unsupported URI: " + _uri);
 		}
 		int count = mDB.update(table, _values, _selection, _selectionArgs);
-		getContext().getContentResolver().notifyChange(_uri, null);
+		mResolver.notifyChange(_uri, null);
 		return count;
 	}
 
@@ -376,7 +379,7 @@ public class KidsBbsProvider extends ContentProvider {
 				}
 				addBoard(_db, new BoardInfo(tabnames[i], title),
 						updateMap.get(tabnames[i]) ?
-							STATE_INIT : STATE_PAUSED);
+							STATE_SELECTED : STATE_PAUSED);
 			}
 		}
 

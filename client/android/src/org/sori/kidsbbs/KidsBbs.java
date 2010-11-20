@@ -75,6 +75,7 @@ public class KidsBbs extends Activity {
 
 	private static final String URL_BASE = "http://sori.org/kids/kids.php?_o=1&";
 	public static final String URL_BLIST = URL_BASE; 
+	public static final String URL_PLIST = URL_BASE + "m=plist&";
 	public static final String URL_LIST = URL_BASE + "m=list&";
 	public static final String URL_TLIST = URL_BASE + "m=tlist&";
 	public static final String URL_THREAD = URL_BASE + "m=thread&";
@@ -116,8 +117,9 @@ public class KidsBbs extends Activity {
 	
 	public static final int NOTIFICATION_NEW_ARTICLE = 0;
 
+	private static final int CONN_TIMEOUT = 30 * 1000; // 30 seconds
 	private static final int MAX_DAYS = 30;
-	public static final int MIN_ARTICLES = 15;
+	public static final int MIN_ARTICLES = 10;
 	public static final int MAX_ARTICLES = 1000;
 	public static final String KST_DIFF = "'-9 hours'";
 	public static final String MAX_TIME = "'-" + MAX_DAYS + " days'";
@@ -263,17 +265,17 @@ public class KidsBbs extends Activity {
 		}
 	}
 	
-	public static final ArrayList<ArticleInfo> getArticles(String _base,
-			String _board, int _type, int _start) throws Exception {
+	public static final ArrayList<ArticleInfo> getArticles(String _board,
+			int _type, int _start) throws Exception {
 		ArrayList<ArticleInfo> articles = new ArrayList<ArticleInfo>();
 		String tabname = BoardInfo.buildTabname(_board, _type);
-		String urlString = _base +
+		String urlString = URL_PLIST +
 			PARAM_N_BOARD + "=" + _board +
 			"&" + PARAM_N_TYPE + "=" + _type +
-			"&" + PARAM_N_START + "=" + _start;
+			"&" + PARAM_N_SEQ + "=" + _start;
 		HttpClient client = new DefaultHttpClient();
 		client.getParams().setParameter(
-				HttpConnectionParams.CONNECTION_TIMEOUT, 30*1000);
+				HttpConnectionParams.CONNECTION_TIMEOUT, CONN_TIMEOUT);
 		HttpGet get = new HttpGet(urlString);
 		HttpResponse response = client.execute(get);
 		HttpEntity entity = response.getEntity();
@@ -309,6 +311,72 @@ public class KidsBbs extends Activity {
 			}
 		}
 		return articles;
+	}
+	
+	public static final int getArticlesLastSeq(String _board, int _type) {
+		String tabname = BoardInfo.buildTabname(_board, _type);
+		String urlString = URL_LIST +
+			PARAM_N_BOARD + "=" + _board +
+			"&" + PARAM_N_TYPE + "=" + _type +
+			"&" + PARAM_N_START + "=0" +
+			"&" + PARAM_N_COUNT + "=1";
+		HttpClient client = new DefaultHttpClient();
+		client.getParams().setParameter(
+				HttpConnectionParams.CONNECTION_TIMEOUT, CONN_TIMEOUT);
+		HttpGet get = new HttpGet(urlString);
+		try {
+			HttpResponse response = client.execute(get);
+			HttpEntity entity = response.getEntity();
+			if (entity == null) {
+				// ???
+			} else if (response.getStatusLine().getStatusCode() ==
+					HttpStatus.SC_OK) {
+				InputStream is = entity.getContent();
+				DocumentBuilder db =
+					DocumentBuilderFactory.newInstance().newDocumentBuilder();
+	
+				// Parse the article list.
+				Document dom = db.parse(is);
+				Element docEle = dom.getDocumentElement();
+				NodeList nl;
+	
+				nl = docEle.getElementsByTagName("ITEMS");
+				if (nl == null || nl.getLength() <= 0) {
+					throw new KidsParseException("ParseException: ITEMS");
+				}
+				Element items = (Element)nl.item(0);
+	
+				// Get a board item
+				nl = items.getElementsByTagName("ITEM");
+				if (nl != null && nl.getLength() > 0) {
+					ArticleInfo info = parseArticle(tabname,
+							(Element)nl.item(0));
+					if (info != null) {
+						return info.getSeq();
+					}
+				}
+			}
+		} catch (Exception e) {}
+		return 0;
+	}
+	
+	public static final int getBoardLastSeq(ContentResolver _cr,
+			String _tabname) {
+		final String[] FIELDS = {
+			KidsBbsProvider.KEYA_SEQ,
+		};
+		int seq = 0;
+		Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
+		Cursor c = _cr.query(uri, FIELDS, null, null,
+				KidsBbsProvider.ORDER_BY_SEQ_DESC);
+		if (c != null) {
+			if (c.getCount() > 0) {
+				c.moveToFirst();
+				seq = c.getInt(0);
+			}
+			c.close();
+		}
+		return seq;
 	}
 
 	public static final String getBoardTitle(ContentResolver _cr,
@@ -466,8 +534,7 @@ public class KidsBbs extends Activity {
 	}
 
 	public static final void announceUpdateError(Context _context) {
-		Intent intent = new Intent(UPDATE_ERROR);
-		_context.sendBroadcast(intent);
+		_context.sendBroadcast(new Intent(UPDATE_ERROR));
 	}
 	
 	public static final void announceBoardUpdated(Context _context,
