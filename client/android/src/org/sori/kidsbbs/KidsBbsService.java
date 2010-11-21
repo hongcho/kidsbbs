@@ -71,8 +71,7 @@ public class KidsBbsService extends Service
 	private NotificationManager mNotificationManager;
 	private Notification mNewArticlesNotification;
 	private boolean mNotificationOn = true;
-	private int mNotificationDefaults =
-		Notification.DEFAULT_LIGHTS | Notification.FLAG_SHOW_LIGHTS |
+	private int mNotificationDefaults = Notification.DEFAULT_LIGHTS |
 		Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE;
 	private String mNotificationTitleString;
 	private String mNotificationMessage;
@@ -96,11 +95,9 @@ public class KidsBbsService extends Service
 			mNotificationOn = _prefs.getBoolean(_key, true);
 		} else if (_key.equals(Preferences.PREF_NOTIFICATION_LIGHTS)) {
 			if (_prefs.getBoolean(_key, true)) {
-				mNotificationDefaults |=
-					Notification.DEFAULT_LIGHTS | Notification.FLAG_SHOW_LIGHTS;
+				mNotificationDefaults |= Notification.DEFAULT_LIGHTS;
 			} else {
-				mNotificationDefaults &=
-					~(Notification.DEFAULT_LIGHTS | Notification.FLAG_SHOW_LIGHTS);
+				mNotificationDefaults &= ~Notification.DEFAULT_LIGHTS;
 			}
 		} else if (_key.equals(Preferences.PREF_NOTIFICATION_SOUND)) {
 			if (_prefs.getBoolean(_key, true)) {
@@ -166,8 +163,7 @@ public class KidsBbsService extends Service
     			Preferences.PREF_NOTIFICATION, true);
     	mNotificationDefaults = 0;
     	if (prefs.getBoolean(Preferences.PREF_NOTIFICATION_LIGHTS, true)) {
-    		mNotificationDefaults |=
-    			Notification.DEFAULT_LIGHTS | Notification.FLAG_SHOW_LIGHTS;
+    		mNotificationDefaults |= Notification.DEFAULT_LIGHTS;
     	}
     	if (prefs.getBoolean(Preferences.PREF_NOTIFICATION_SOUND, true)) {
     		mNotificationDefaults |= Notification.DEFAULT_SOUND;
@@ -395,6 +391,13 @@ public class KidsBbsService extends Service
 				title + " (" + _count + ")";
 			mNewArticlesNotification.when = System.currentTimeMillis();
 			mNewArticlesNotification.defaults = mNotificationDefaults;
+			if ((mNotificationDefaults & Notification.DEFAULT_LIGHTS) != 0) {
+				mNewArticlesNotification.flags |=
+					Notification.FLAG_SHOW_LIGHTS;
+			} else {
+				mNewArticlesNotification.flags &=
+					~Notification.FLAG_SHOW_LIGHTS;
+			}
 			mNewArticlesNotification.number = KidsBbs.getTotalUnreadCount(
 					mResolver);
 			mNewArticlesNotification.setLatestEventInfo(
