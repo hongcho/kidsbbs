@@ -26,42 +26,28 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ######################################################################
-# kidsql_job.pl
+# kidsql_job_wrapper.pl
 # == History
-# 2010-09-20 Created
+# 2010-11-26 Created (the script was not exiting correctly for some reason)
 ######################################################################
 
 use strict;
-use lib '/home/soriorg/bin';
-use KidSql;
 
-my $TAG = 'kidsql_job';
+my $TAG = 'kidsql_job_wrapper';
+my $CMD = 'kidsql_job.pl';
+my $CMD_FULL = $ENV{HOME}.'/bin/'.$CMD;
 select((select(STDOUT), $|=1)[0]);
 select((select(STDERR), $|=1)[0]);
 
-#print('kidsql_job skipped: ', scalar(localtime), "\n"),exit(0);
+# kill all previous childs first.
+print(STDERR $TAG, " killall -9 $CMD:", `killall -9 $CMD`, "\n");
 
-print($TAG, ' started: ', scalar(localtime), "\n");
-
-my $bl = KidSql::GetBoardList();
-if (!defined($bl)) {
-    print("$TAG failed to get the board list from KIDS\n");
-    $bl = KidSql::GetBoardListFromDB();
-    defined($bl) or die("$TAG failed to get the board list from DB\n");
+my $pid = fork();
+defined($pid) or die("$TAG cannot fork: $!\n");
+if ($pid) {
+    # Parent
+    exit(0);
+} else {
+    # Child
+    exec($CMD_FULL) or die("$TAG cannot exec $CMD_FULL: $!\n");
 }
-
-foreach my $tab (sort({lc($a) cmp lc($b)} keys(%$bl))) {
-    my ($t, $b);
-    if ($tab =~ /^(\d+)_(.+)$/o) {
-	$t = $1;
-	$b = $2;
-    } else {
-	die("$TAG something seriously wrong: $tab...");
-    }
-    print("$TAG updating $tab...");
-    #sleep(1);
-    KidSql::UpdateBoardDB($b, $t);
-}
-
-print($TAG, ' ended: ', scalar(localtime), "\n");
-exit(0);
