@@ -105,8 +105,8 @@ public class KidsBbsUser extends KidsBbsAList {
     			if (nChanged > 0) {
     	    		KidsBbs.updateBoardCount(mResolver, mTabname);
     				refreshList();
-    				}
-    			}
+				}
+			}
     	});
     	builder.setNegativeButton(android.R.string.cancel, null);
     	builder.create().show();
