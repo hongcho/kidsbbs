@@ -178,6 +178,12 @@ public abstract class KidsBbsAList extends ListActivity
 		super.onDestroy();
 		unregisterReceivers();
 	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		updateTitle();
+	}
 
 	@Override
 	protected void onListItemClick(ListView _l, View _v, int _position,
@@ -388,17 +394,34 @@ public abstract class KidsBbsAList extends ListActivity
 		}
 	}
 	
-	private ArticleUpdatedReceiver mReceiverUpdated;
+	private class BoardUpdatedReceiver extends BroadcastReceiver {
+		@Override
+		public void onReceive(Context _context, Intent _intent) {
+			final String tabname = _intent.getStringExtra(
+					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME);
+			if (mTabname != null && tabname != null &&
+					mTabname.equals(tabname)) {
+				updateTitle();
+			}
+		}
+	}
+	
+	private ArticleUpdatedReceiver mReceiverArticleUpdated;
+	private BoardUpdatedReceiver mReceiverBoardUpdated;
 	
 	private void registerReceivers() {
 		IntentFilter filter;
-		mReceiverUpdated = new ArticleUpdatedReceiver();
+		mReceiverArticleUpdated = new ArticleUpdatedReceiver();
 		filter = new IntentFilter(KidsBbs.ARTICLE_UPDATED);
-		registerReceiver(mReceiverUpdated, filter);
+		registerReceiver(mReceiverArticleUpdated, filter);
+		mReceiverBoardUpdated = new BoardUpdatedReceiver();
+		filter = new IntentFilter(KidsBbs.BOARD_UPDATED);
+		registerReceiver(mReceiverBoardUpdated, filter);
 	}
 	
 	private void unregisterReceivers() {
-		unregisterReceiver(mReceiverUpdated);
+		unregisterReceiver(mReceiverArticleUpdated);
+		unregisterReceiver(mReceiverBoardUpdated);
 	}
 	
 	protected static final String[] FIELDS_TLIST = {
