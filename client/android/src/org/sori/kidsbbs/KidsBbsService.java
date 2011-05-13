@@ -1,4 +1,4 @@
-// Copyright (c) 2010, Younghong "Hong" Cho <hongcho@sori.org>.
+// Copyright (c) 2010-2011, Younghong "Hong" Cho <hongcho@sori.org>.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -147,6 +147,7 @@ public class KidsBbsService extends Service
 				mNotificationTitleString,
 				System.currentTimeMillis());
 		mNewArticlesNotification.flags |= Notification.FLAG_AUTO_CANCEL;
+		mNewArticlesNotification.flags |= Notification.FLAG_ONLY_ALERT_ONCE;
 		mNotificationDefaults |= mNewArticlesNotification.defaults;
 		
 		mAlarms = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
