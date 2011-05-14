@@ -242,23 +242,26 @@ public class KidsBbsService extends Service
 			if (tabState == KidsBbsProvider.STATE_PAUSED) {
 				return 0;
 			}
-			Log.i(TAG, _tabname + ": (" + tabState + ") updating...");
 			
 			int error = 0;
 			int count = 0;
 			final String[] parsed = BoardInfo.parseTabname(_tabname);
 			final String board = parsed[1];
 			final int type = Integer.parseInt(parsed[0]);
+			final Uri uri = Uri.parse(
+					KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
+
+			// Where to begin
+			int start_server =
+				KidsBbs.getArticlesLastSeq(board, type) - KidsBbs.MAX_ARTICLES;
 			int start = KidsBbs.getBoardLastSeq(mResolver, _tabname) - 10;
-			if (start <= 0) {
-				start = KidsBbs.getArticlesLastSeq(board, type) -
-					KidsBbs.MAX_ARTICLES;
+			if (start <= 0 || start < start_server) {
+				start = start_server;
 				if (start < 0) {
 					start = 0;
 				}
 			}
-			final Uri uri = Uri.parse(
-					KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
+			Log.i(TAG, _tabname + ": (" + tabState + ") updating from " + start);
 			
 			boolean fDone = false;
 			while (!fDone) {
@@ -360,6 +363,7 @@ public class KidsBbsService extends Service
 				}
 				start = ((ArticleInfo)articles.get(articles.size() - 1))
 					.getSeq() + 1;
+				Log.d(TAG, _tabname + ": next from " + start);
 			}
 			final int trimmed = trimBoardTable(_tabname);
 			Log.i(TAG, _tabname + ": trimed " + trimmed + " articles");
