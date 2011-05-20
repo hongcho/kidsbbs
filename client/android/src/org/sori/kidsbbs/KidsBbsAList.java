@@ -1,4 +1,4 @@
-// Copyright (c) 2010, Younghong "Hong" Cho <hongcho@sori.org>.
+// Copyright (c) 2010-2011, Younghong "Hong" Cho <hongcho@sori.org>.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,10 +28,13 @@ package org.sori.kidsbbs;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -92,6 +95,9 @@ public abstract class KidsBbsAList extends ListActivity
 
 	private boolean mHideRead;
 
+	private String mTitle;
+	private int mUnreadCount;
+	
 	// First call setQueryBase(), and all refreshListCommon().
 	abstract protected void refreshList();
 
@@ -121,12 +127,16 @@ public abstract class KidsBbsAList extends ListActivity
 				_where);
 	}
 	
-	protected final void setTitleCommon(String _title, int _unread,
-			int _total) {
-		setTitle("[" + mBoardTitle + "] " + _title +
-				" (" + _unread + "/" + _total + ")");
+	protected final void setTitle(String _title) {
+		mTitle = _title;
 	}
-
+	
+	protected final void updateTitleCommon(int _unread, int _total) {
+		mUnreadCount = _unread;
+		setTitle("[" + mBoardTitle + "] " + mTitle +
+				" (" + mUnreadCount + "/" + _total + ")");
+	}
+	
 	protected final Cursor getItem(int _index) {
 		return (Cursor)getListView().getItemAtPosition(_index);
 	}
@@ -162,6 +172,21 @@ public abstract class KidsBbsAList extends ListActivity
 		prefs.registerOnSharedPreferenceChangeListener(this);
 	}
 	
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		unregisterReceivers();
+		
+		mAdapter.changeCursor(null);
+		mAdapter = null;
+	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		updateTitle();
+	}
+	
 	public void onSharedPreferenceChanged(SharedPreferences _prefs,
 			String _key) {
 		if (_key.equals(Preferences.PREF_HIDE_READ)) {
@@ -171,18 +196,6 @@ public abstract class KidsBbsAList extends ListActivity
 				refreshList();
 			}
 		}
-	}
-	
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		unregisterReceivers();
-	}
-	
-	@Override
-	protected void onResume() {
-		super.onResume();
-		updateTitle();
 	}
 
 	@Override
@@ -344,6 +357,33 @@ public abstract class KidsBbsAList extends ListActivity
 			return 1;
 		}
 		return 0;
+	}
+	
+	protected void toggleAllReadCommon(final String _w) {
+    	final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    	builder.setTitle(R.string.confirm_text);
+    	builder.setMessage(R.string.toggle_all_read_message);
+    	builder.setPositiveButton(android.R.string.ok,
+    			new DialogInterface.OnClickListener() {
+    		public void onClick(DialogInterface _dialog, int _which) {
+    			final Cursor c = getItem(0);
+    			final int seq = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
+    			final String where = _w +
+    				KidsBbsProvider.KEYA_SEQ + "<=" + seq + " AND " +
+    				KidsBbsProvider.KEYA_READ + (mUnreadCount == 0 ? "!=0" : "=0");
+    			final ContentValues values = new ContentValues();
+    			values.put(KidsBbsProvider.KEYA_READ,
+    					mUnreadCount > 0 ? 1 : 0);
+    			final int nChanged = mResolver.update(getUriList(), values,
+    					where, null);
+    			if (nChanged > 0) {
+    	    		KidsBbs.updateBoardCount(mResolver, mTabname);
+    				refreshList();
+				}
+			}
+    	});
+    	builder.setNegativeButton(android.R.string.cancel, null);
+    	builder.create().show();
 	}
     
     protected void showPreference() {

@@ -1,4 +1,4 @@
-// Copyright (c) 2010, Younghong "Hong" Cho <hongcho@sori.org>.
+// Copyright (c) 2010-2011, Younghong "Hong" Cho <hongcho@sori.org>.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -114,6 +114,9 @@ public class KidsBbsBList extends ListActivity {
 	protected void onDestroy() {
 		super.onDestroy();
 		unregisterReceivers();
+		
+		mAdapter.changeCursor(null);
+		mAdapter = null;
 	}
 	
 	@Override
@@ -190,11 +193,6 @@ public class KidsBbsBList extends ListActivity {
 		return false;
 	}
 
-	private boolean isUpdating() {
-		return mLastUpdate != null &&
-			!mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED);
-	}
-
 	private class UpdateTask extends AsyncTask<Void, Void, Cursor> {
 		@Override
 		protected void onPreExecute() {
@@ -226,6 +224,11 @@ public class KidsBbsBList extends ListActivity {
 
 	private void updateTitle() {
 		setTitle(mTitleBase + " (" + mAdapter.getCount() + ")");
+	}
+
+	private boolean isUpdating() {
+		return mLastUpdate != null &&
+			!mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED);
 	}
 
 	private void refreshList() {

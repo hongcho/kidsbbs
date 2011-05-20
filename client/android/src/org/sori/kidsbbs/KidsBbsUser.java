@@ -1,4 +1,4 @@
-// Copyright (c) 2010, Younghong "Hong" Cho <hongcho@sori.org>.
+// Copyright (c) 2010-2011, Younghong "Hong" Cho <hongcho@sori.org>.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -25,18 +25,12 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
-import android.app.AlertDialog;
-import android.content.ContentValues;
-import android.content.DialogInterface;
-import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 
 public class KidsBbsUser extends KidsBbsAList {
 	private String mBoardUser;
-	private String mTitle;
-	private int mUnreadCount;
 	
     @Override
     public void onCreate(Bundle _state) {
@@ -45,12 +39,11 @@ public class KidsBbsUser extends KidsBbsAList {
         final Uri data = getIntent().getData();
         mBoardUser = data.getQueryParameter(KidsBbs.PARAM_N_USER);
         
-        final Resources resources = getResources();
-        mTitle = resources.getString(R.string.title_user);
-        
-        updateTitle();
+        setTitle(getResources().getString(R.string.title_user));
         setQueryBase(KidsBbsProvider.CONTENT_URISTR_LIST, FIELDS_LIST,
         		KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "'");
+        
+        updateTitle();
         
         registerForContextMenu(getListView());
         
@@ -62,12 +55,12 @@ public class KidsBbsUser extends KidsBbsAList {
     }
     
     protected void updateTitle() {
-    	mUnreadCount = getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
-    			KidsBbsProvider.SELECTION_UNREAD + " AND " +
-    			KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "'");
-    	final int count =  getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
-    			KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "'");
-    	setTitleCommon(mTitle, mUnreadCount, count);
+    	updateTitleCommon(
+    			getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
+    	    			KidsBbsProvider.SELECTION_UNREAD + " AND " +
+    	    			KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "'"),
+    	    	getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
+    	    			KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "'"));
     }
     
     protected boolean matchingBroadcast(int _seq, String _user,
@@ -87,28 +80,7 @@ public class KidsBbsUser extends KidsBbsAList {
     }
     
     protected void toggleAllRead() {
-    	final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    	builder.setTitle(R.string.confirm_text);
-    	builder.setMessage(R.string.toggle_all_read_message);
-    	builder.setPositiveButton(android.R.string.ok,
-    			new DialogInterface.OnClickListener() {
-    		public void onClick(DialogInterface _dialog, int _which) {
-    			final String where =
-    				KidsBbsProvider.KEYA_USER + "='" + mBoardUser +
-    				"' AND " + KidsBbsProvider.KEYA_READ +
-    				(mUnreadCount == 0 ? "!=0" : "=0");
-    			final ContentValues values = new ContentValues();
-    			values.put(KidsBbsProvider.KEYA_READ,
-    					mUnreadCount > 0 ? 1 : 0);
-    			final int nChanged = mResolver.update(getUriList(), values,
-    					where, null);
-    			if (nChanged > 0) {
-    	    		KidsBbs.updateBoardCount(mResolver, mTabname);
-    				refreshList();
-				}
-			}
-    	});
-    	builder.setNegativeButton(android.R.string.cancel, null);
-    	builder.create().show();
+    	toggleAllReadCommon(
+    			KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "' AND ");
     }
 }
