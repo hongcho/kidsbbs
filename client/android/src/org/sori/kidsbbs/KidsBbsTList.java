@@ -35,7 +35,7 @@ public class KidsBbsTList extends KidsBbsAList {
     public void onCreate(Bundle _state) {
         super.onCreate(_state);
         
-        setTitle(getResources().getString(R.string.title_tlist));
+        setTitleCommon(getResources().getString(R.string.title_tlist));
         setQueryBase(KidsBbsProvider.CONTENT_URISTR_TLIST, FIELDS_TLIST, null);
         
         updateTitle();

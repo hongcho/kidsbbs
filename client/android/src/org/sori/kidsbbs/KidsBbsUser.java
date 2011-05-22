@@ -39,7 +39,7 @@ public class KidsBbsUser extends KidsBbsAList {
         final Uri data = getIntent().getData();
         mBoardUser = data.getQueryParameter(KidsBbs.PARAM_N_USER);
         
-        setTitle(getResources().getString(R.string.title_user));
+        setTitleCommon(getResources().getString(R.string.title_user));
         setQueryBase(KidsBbsProvider.CONTENT_URISTR_LIST, FIELDS_LIST,
         		KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "'");
         

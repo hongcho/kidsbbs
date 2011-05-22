@@ -39,7 +39,7 @@ public class KidsBbsThread extends KidsBbsAList {
         final Uri data = getIntent().getData();
         mBoardThread = data.getQueryParameter(KidsBbs.PARAM_N_THREAD);
         
-        setTitle(getResources().getString(R.string.title_thread));
+        setTitleCommon(getResources().getString(R.string.title_thread));
         setQueryBase(KidsBbsProvider.CONTENT_URISTR_LIST, FIELDS_LIST,
         		KidsBbsProvider.KEYA_THREAD + "='" + mBoardThread + "'");
         
