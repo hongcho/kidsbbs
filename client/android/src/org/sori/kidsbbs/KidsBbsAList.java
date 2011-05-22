@@ -127,7 +127,7 @@ public abstract class KidsBbsAList extends ListActivity
 				_where);
 	}
 	
-	protected final void setTitle(String _title) {
+	protected final void setTitleCommon(String _title) {
 		mTitle = _title;
 	}
 	
@@ -154,8 +154,7 @@ public abstract class KidsBbsAList extends ListActivity
 		
 		mResolver = getContentResolver();
 		
-		final Resources resources = getResources();
-		mUpdateText = resources.getString(R.string.update_text);
+		mUpdateText = getResources().getString(R.string.update_text);
 
 		mStatusView = (TextView)findViewById(R.id.status);
 		mStatusView.setVisibility(View.GONE);

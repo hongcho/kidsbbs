@@ -117,9 +117,9 @@ public class KidsBbs extends Activity {
 	public static final int NOTIFICATION_NEW_ARTICLE = 0;
 
 	private static final int CONN_TIMEOUT = 30 * 1000; // 30 seconds
-	private static final int MAX_DAYS = 14;
+	private static final int MAX_DAYS = 7;
 	public static final int MIN_ARTICLES = 10;
-	public static final int MAX_ARTICLES = 500;
+	public static final int MAX_ARTICLES = 300;
 	public static final String KST_DIFF = "'-9 hours'";
 	public static final String MAX_TIME = "'-" + MAX_DAYS + " days'";
 	
