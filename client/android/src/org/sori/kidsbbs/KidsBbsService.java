@@ -253,7 +253,7 @@ public class KidsBbsService extends Service
 
 			// Where to begin
 			int start_server =
-				KidsBbs.getArticlesLastSeq(board, type) - KidsBbs.MAX_ARTICLES;
+				KidsBbs.getArticlesLastSeq(board, type) - KidsBbs.MAX_FIRST_ARTICLES;
 			int start = KidsBbs.getBoardLastSeq(mResolver, _tabname) - 10;
 			if (start <= 0 || start < start_server) {
 				start = start_server;
