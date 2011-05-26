@@ -252,10 +252,9 @@ public class KidsBbsService extends Service
 					KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
 
 			// Where to begin
-			int start_first =
-				KidsBbs.getArticlesLastSeq(board, type) - KidsBbs.MAX_FIRST_ARTICLES;
-			int start_max =
-				start_first + KidsBbs.MAX_FIRST_ARTICLES - KidsBbs.MAX_ARTICLES;
+			final int latest = KidsBbs.getArticlesLastSeq(board, type);
+			final int start_first = latest - KidsBbs.MAX_FIRST_ARTICLES;
+			final int start_max = latest - KidsBbs.MAX_ARTICLES;
 			int start = KidsBbs.getBoardLastSeq(mResolver, _tabname) - 10;
 			if (start <= 0) {
 				start = start_first;
