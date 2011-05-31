@@ -297,8 +297,7 @@ public abstract class KidsBbsAList extends ListActivity
 				}
 				where += mFields[ArticlesAdapter.COLUMN_READ] + "=0";
 			}
-			return KidsBbsAList.this.managedQuery(mUri, mFields,
-					where, null, null);
+			return mResolver.query(mUri, mFields, where, null, null);
 		}
 		
 		@Override
@@ -623,8 +622,7 @@ public abstract class KidsBbsAList extends ListActivity
 			if (mHideRead) {
 				where += " AND " + mFields[ArticlesAdapter.COLUMN_READ] + "=0";
 			}
-			return KidsBbsAList.this.managedQuery(
-					mUri, mFields, where, null, null);
+			return mResolver.query(mUri, mFields, where, null, null);
 		}
 	}
 }

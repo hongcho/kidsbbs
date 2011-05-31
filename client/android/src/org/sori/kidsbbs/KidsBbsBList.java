@@ -205,7 +205,7 @@ public class KidsBbsBList extends ListActivity {
 			final String ORDERBY =
 				KidsBbsProvider.ORDER_BY_COUNT_DESC + "," +
 				KidsBbsProvider.ORDER_BY_TITLE;
-			return KidsBbsBList.this.managedQuery(
+			return mResolver.query(
 					KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
 					KidsBbsProvider.SELECTION_STATE_ACTIVE, null, ORDERBY);
 		}
@@ -494,7 +494,7 @@ public class KidsBbsBList extends ListActivity {
 			final String ORDERBY =
 				KidsBbsProvider.ORDER_BY_COUNT_DESC + "," +
 				KidsBbsProvider.ORDER_BY_TITLE;
-			return KidsBbsBList.this.managedQuery(
+			return mResolver.query(
 					KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS, WHERE,
 					null, ORDERBY);
 		}
