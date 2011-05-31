@@ -159,8 +159,7 @@ public class KidsBbsView extends Activity {
 				KidsBbsProvider.KEYA_THREAD,
 				KidsBbsProvider.KEYA_BODY,
 			};
-			return KidsBbsView.this.managedQuery(mUri, FIELDS,
-					mWhere, null, null);
+			return mResolver.query(mUri, FIELDS, mWhere, null, null);
 		}
 
 		@Override
