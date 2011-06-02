@@ -27,15 +27,15 @@ package org.sori.sshtest;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.OutputStream;
 
 import ch.ethz.ssh2.ChannelCondition;
 import ch.ethz.ssh2.Connection;
 import ch.ethz.ssh2.Session;
 
 public class KidsConnection {
-	private static final int BUF_SIZE = 8192;
-	private static final int TIMEOUT = 2 * 1000;
+	private static final int BUF_SIZE = 512;
+	private static final int TIMEOUT = 1000;	// in milliseconds
 	private static final int WIDTH = 80;
 	private static final int HEIGHT = 24;
 	
@@ -43,17 +43,14 @@ public class KidsConnection {
 	private static final String STR_KIDS = "kids";
 	private static final String STR_VT100 = "vt100";
 	
-	private String mUser;
-	private String mPass;
-	
 	private Connection mConn = null;
 	private Session mSess = null;
 	private InputStream mStdout;
 	private InputStream mStderr;
+	private OutputStream mStdin;
 	
 	private VT220Screen mScreen;
 	private byte[] mBuf = new byte[BUF_SIZE];
-	private int mBufLen = 0;
 	
 	private static final int S_NOTCONNECTED = 0;
 	private static final int S_CONNECTED = 1;
@@ -80,10 +77,7 @@ public class KidsConnection {
 		public EOFException() { super("EOF"); }
 	}
 	
-	public void open(String _user, String _pass) throws IOException {
-		mUser = _user;
-		mPass = _pass;
-		
+	public void open() throws IOException {
 		mConn = new Connection(STR_HOST);
 		mConn.connect();
 		if (!mConn.authenticateWithNone(STR_KIDS)) {
@@ -97,6 +91,7 @@ public class KidsConnection {
 		
 		mStdout = mSess.getStdout();
 		mStderr = mSess.getStderr();
+		mStdin = mSess.getStdin();
 		
 		mState = S_CONNECTED;
 	}
@@ -111,7 +106,7 @@ public class KidsConnection {
 		mState = S_NOTCONNECTED;
 	}
 	
-	private void read() throws IOException {
+	private int read(byte[] _buf, int _size) throws IOException {
 		// Check for conditions.
 		if (mStdout.available() == 0 && mStderr.available() == 0) {
 			int conditions = mSess.waitForCondition(
@@ -131,27 +126,70 @@ public class KidsConnection {
 		}
 		
 		// Read from the streams.
-		while (mStderr.available() > 0 && mBufLen < BUF_SIZE) {
-			mBufLen += mStderr.read(mBuf, mBufLen, BUF_SIZE - mBufLen);
+		int len = 0;
+		if (true) {
+			// Ignore stderr.
+			while (mStderr.available() > 0) {
+				mStderr.read(_buf, 0, _size);
+			}
+		} else {
+			while (mStderr.available() > 0 && len <= _size) {
+				len += mStderr.read(_buf, len, _size - len);
+			}
 		}
-		while (mStdout.available() > 0 && mBufLen <= BUF_SIZE) {
-			mBufLen += mStdout.read(mBuf, mBufLen, BUF_SIZE - mBufLen);
+		while (mStdout.available() > 0 && len <= _size) {
+			len += mStdout.read(_buf, len, _size - len);
 		}
+		return len;
 	}
 	
 	public String dump() throws IOException {
 		return mScreen.dump();
 	}
 	
+	public String dumpLine(int _y) throws IOException {
+		return mScreen.dumpLine(_y);
+	}
+	
+	public String dumpCurrentLine() throws IOException {
+		return dumpLine(mScreen.getY());
+	}
+	
+	public String getLine(int _y, String _charset) throws IOException {
+		return new String(mScreen.getLine(_y),
+				0, mScreen.getWidth(), _charset); 
+	}
+	
+	public String getCurrentLine(String _charset) throws IOException {
+		return getLine(mScreen.getY(), _charset); 
+	}
+	
+	public int getInputBuf(byte[] _buf) {
+		return mScreen.getInputBuf(_buf);
+	}
+	
+	public String getInputString(String _charset) throws IOException {
+		byte[] buf = new byte[BUF_SIZE];
+		int len = getInputBuf(buf);
+		return new String(buf, 0, len, _charset);
+	}
+	
 	public void process() throws IOException {
 		try {
-			read();
-			if (mBufLen > 0) {
-				mScreen.process(mBuf, mBufLen);
-				mBufLen = 0;
+			int len = read(mBuf, BUF_SIZE);
+			if (len > 0) {
+				mScreen.process(mBuf, len);
 			}
 		} catch (IOException e) {
 			throw e;
 		}
 	}
+	
+	public void write(byte[] _buf) throws IOException {
+		mStdin.write(_buf);
+		mStdin.flush();
+	}
+	
+	public int getX() { return mScreen.getX(); }
+	public int getY() { return mScreen.getY(); }
 }
