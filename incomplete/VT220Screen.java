@@ -35,12 +35,13 @@ public class VT220Screen {
 	private static final String TAG = "VT220Screen";
 	
 	private static final String EUC_KR = "EUC-KR";
-	private static final int BUF_SIZE = 1024;
+	private static final int BUF_SIZE = 100;
+	private static final int ESCBUF_SIZE = 40;
 	
 	private final Pattern[] PATTERNS = {
-		Pattern.compile("\\[(\\d+)$"),
-		Pattern.compile("\\[(\\d+);(\\d+)$"),
-		Pattern.compile("\\[([012])$"),
+		Pattern.compile("^\\[(\\d+)$"),
+		Pattern.compile("^\\[(\\d+);(\\d+)$"),
+		Pattern.compile("^\\[([012])$"),
 	};
 	
 	private int mWidth = 80;
@@ -53,7 +54,7 @@ public class VT220Screen {
 	private byte[] mBlankLine;
 	
 	private int mEscState = 0;
-	private byte[] mEscBuf = new byte[10];
+	private byte[] mEscBuf = new byte[ESCBUF_SIZE];
 	private int mEscBufLen = 0;
 	
 	// Circular buffer.
@@ -64,6 +65,9 @@ public class VT220Screen {
 	public int getWidth() { return mWidth; }
 	public int getHeight() { return mHeight; }
 	
+	public int getX() { return mX; }
+	public int getY() { return mY; }
+	
 	public VT220Screen(int _width, int _height) {
 		mWidth = _width;
 		mHeight = _height;
@@ -71,11 +75,12 @@ public class VT220Screen {
 		mScrBuf = new byte[mHeight][mWidth];
 		mBlankLine = new byte[mWidth];
 		for (int i = 0; i < mWidth; ++i) {
-			if (i % 10 == 9) {
-				mBlankLine[i] = ':';
-			} else {
-				mBlankLine[i] = '.';
-			}
+			//if (i % 10 == 9) {
+			//	mBlankLine[i] = ':';
+			//} else {
+			//	mBlankLine[i] = '.';
+			//}
+			mBlankLine[i] = ' ';
 		}
 		
 		clear();
@@ -105,7 +110,7 @@ public class VT220Screen {
 					++mY;
 					continue L_MAIN;
 				case 27:	// ESC
-					mEscBuf[mEscBufLen++] = v;
+					mEscBufLen = 0;
 					mEscState = 1;
 					continue L_MAIN;
 				case 8:	// BS
@@ -126,95 +131,126 @@ public class VT220Screen {
 				case '[':
 					mEscBuf[mEscBufLen++] = v;
 					mEscState = 2;
-					continue L_MAIN;
-				case '(':
-				case ')':
-					mEscBuf[mEscBufLen++] = v;
-					mEscState = 3;
-					continue L_MAIN;
-				case '/':
-					mEscBuf[mEscBufLen++] = v;
-					mEscState = 4;
-					continue L_MAIN;
+					break;
+				case '(': case ')': case '*': case '+': case ' ':
 				case '#':
 					mEscBuf[mEscBufLen++] = v;
-					mEscState = 5;
-					continue L_MAIN;
+					mEscState = 3;
+					break;
 				case 'D':
-					scrollDown(1);
+					++mY;
+					mEscState = 0;
 					break;
 				case 'M':
-					scrollUp(1);
+					--mY;
+					mEscState = 0;
+					break;
+				case 'E':
+					++mY; mX = 0;
+					mEscState = 0;
 					break;
 				default:
-					mEscBufLen = 0;
 					mEscState = 0;
-					continue L_MAIN;
-				}
-				break;
-			case 2:	// ESC [
-				if (('A' <= v && v <= 'Z') || ('a' <= v && v <= 'z')) {
-    				switch (v) {
-    				case 'A': case 'B': case 'C': case 'D':
-    					n = 1;
-    					m = PATTERNS[0].matcher(
-    							new String(mEscBuf, 0, mEscBufLen));
-    					if (m.find()) {
-    						n = Integer.parseInt(m.group(0));
-    					}
-    					switch (v) {
-    					case 'A': mY -= n; break;
-    					case 'B': mY += n; break;
-    					case 'C': mX += n; break;
-    					case 'D': mX -= n; break;
-    					}
-    					break;
-    				case 'H': case 'f':
-    					x = 1; y = 1;
-    					m = PATTERNS[1].matcher(
-    							new String(mEscBuf, 0, mEscBufLen));
-    					if (m.find()) {
-    						x = Integer.parseInt(m.group(0));
-    						y = Integer.parseInt(m.group(1));
-    					}
-    					mX = x - 1;
-    					mY = y - 1;
-    					break;
-    				case 'K': case 'J':
-    					n = 0;
-    					m = PATTERNS[2].matcher(
-    							new String(mEscBuf, 0, mEscBufLen));
-    					if (m.find()) {
-    						n = Integer.parseInt(m.group(0));
-    					}
-    					switch (v) {
-    					case 'K':
-    						switch (n) {
-    						case 0: clearLine(mY, mX, mWidth - mX); break;
-    						case 1: clearLine(mY, 0, mX + 1); break;
-    						case 2: clearLine(mY, 0, mWidth); break;
-    						}
-    						break;
-    					case 'J':
-    						switch (n) {
-    						case 0: clearLines(mY, mHeight - mY); break;
-    						case 1: clearLines(0, mY + 1); break;
-    						case 2: clear(); break;
-    						}
-    						break;
-    					}
-    				}
-    				mEscBufLen = 0;
-    				mEscState = 0;
-				} else {
-					mEscBuf[mEscBufLen++] = v;
+					break;
 				}
 				continue L_MAIN;
-			case 3:	// ESC ( or ESC )
-			case 4:	// ESC /
-			case 5:	// ESC #
+			case 2:	// ESC [
+				switch (v) {
+				case 'A': case 'B': case 'C': case 'D':
+					n = 1;
+					m = PATTERNS[0].matcher(
+							new String(mEscBuf, 0, mEscBufLen));
+					if (m.find()) {
+						n = Integer.parseInt(m.group(1));
+					}
+					// They all stop at the borders.  No scrolling.
+					switch (v) {
+					case 'A':
+						mY -= n;
+						if (mY < 0) {
+							mY = 0;
+						}
+						break;
+					case 'B':
+						mY += n;
+						if (mY >= mHeight) {
+							mY = mHeight - 1;
+						}
+						break;
+					case 'C':
+						mX += n;
+						if (mX < 0) {
+							mX = 0;
+						}
+						break;
+					case 'D':
+						mX -= n;
+						if (mX >= mWidth) {
+							mX = mWidth - 1;
+						}
+						break;
+					}
+					mEscState = 0;
+					break;
+				case 'H': case 'f':
+					x = 1; y = 1;
+					m = PATTERNS[1].matcher(
+							new String(mEscBuf, 0, mEscBufLen));
+					if (m.find()) {
+						x = Integer.parseInt(m.group(2));
+						y = Integer.parseInt(m.group(1));
+					}
+					mX = x - 1;
+					mY = y - 1;
+					mEscState = 0;
+					break;
+				case 'K': case 'J':
+					n = 0;
+					m = PATTERNS[2].matcher(
+							new String(mEscBuf, 0, mEscBufLen));
+					if (m.find()) {
+						n = Integer.parseInt(m.group(1));
+					}
+					switch (v) {
+					case 'K':
+						switch (n) {
+						case 0: clearLine(mY, mX, mWidth - mX); break;
+						case 1: clearLine(mY, 0, mX + 1); break;
+						case 2: clearLine(mY, 0, mWidth); break;
+						}
+						break;
+					case 'J':
+						switch (n) {
+						case 0: clearLines(mY, mHeight - mY); break;
+						case 1: clearLines(0, mY + 1); break;
+						case 2: clear(); break;
+						}
+						break;
+					}
+					mEscState = 0;
+					break;
+				case 'L':	// insert lines
+				case 'M':	// delete lines
+				case '@':	// insert blanks (no cursor change)
+				case 'P':	// delete characters
+				case 'X':	// erase characters (no shifting)
+				case 'r':	// set scroll margin
+				case 'p': case 'h': case 'l': case 'g': //case 'm':
+				case 'q': case 'i': case 'c': case 'n': case 'R':
+				case 'y':
+					// Ignored
+					mEscState = 0;
+					break;
+				case 'm':
+					mEscState = 0;
+					break;
+				default:
+					mEscBuf[mEscBufLen++] = v;
+					break;
+				}
+				continue L_MAIN;
+			case 3:
 				// Consume a byte.
-				mEscBufLen = 0;
 				mEscState = 0;
 				continue L_MAIN;
 			default:
@@ -232,30 +268,35 @@ public class VT220Screen {
 				mInputBufRd = (mInputBufRd + 1) % BUF_SIZE;
 			}
 		}
-	}
+		
+		// Keep X, Y in check
+		adjustX();
+		adjustY();
+}
 	
-	public int getInputBuf(byte[] _buf, int _size) {
+	public int getInputBuf(byte[] _buf) {
+		int size = _buf.length;
 		if (mInputBufRd == mInputBufWr) {
 			return 0;
 		} else if (mInputBufRd < mInputBufWr) {
 			int len = mInputBufWr - mInputBufRd;
-			if (len > _size) {
-				len = _size;
+			if (len > size) {
+				len = size;
 			}
 			System.arraycopy(mInputBuf, mInputBufRd, _buf, 0, len);
 			return len;
 		} else {
 			int len0 = BUF_SIZE - mInputBufRd;
-			if (len0 > _size) {
-				len0 = _size;
+			if (len0 > size) {
+				len0 = size;
 			}
 			if (len0 > 0) {
 				System.arraycopy(mInputBuf, mInputBufRd, _buf, 0, len0);
-				_size -= len0;
+				size -= len0;
 			}
 			int len1 = mInputBufWr;
-			if (len1 > _size) {
-				len1 = _size;
+			if (len1 > size) {
+				len1 = size;
 			}
 			if (len1 > 0) {
 				System.arraycopy(mInputBuf, 0, _buf, len0, len1);
@@ -271,12 +312,13 @@ public class VT220Screen {
 		return mScrBuf[_y];
 	}
 	public String dumpLine(int _y) throws IOException {
-		return new String(mScrBuf[_y], 0, mWidth, EUC_KR);
+		return String.format("%02d", _y) + ": " +
+			new String(mScrBuf[_y], 0, mWidth, EUC_KR) + "\n";
 	}
 	public String dump() throws IOException {
 		String d = "";
 		for (int i = 0; i < mHeight; ++i) {
-			d += String.format("%02d", i) + ": " + dumpLine(i) + "\n";
+			d += dumpLine(i);
 		}
 		return d;
 	}
@@ -297,12 +339,24 @@ public class VT220Screen {
 	}
 	
 	private void scrollUp(int _n) {
-		System.arraycopy(mScrBuf, _n, mScrBuf, 0, mHeight - _n);
-		clearLines(mHeight - _n, _n);
+		if (_n >= mHeight) {
+			clear();
+		} else if (_n > 0) {
+			for (int i = 0; i < mHeight - _n; ++i) {
+				System.arraycopy(mScrBuf[i + _n], 0, mScrBuf[i], 0, mWidth);
+			}
+			clearLines(mHeight - _n, _n);
+		}
 	}
 	private void scrollDown(int _n) {
-		System.arraycopy(mScrBuf, 0, mScrBuf, _n, mHeight - _n);
-		clearLines(0, _n);
+		if (_n >= mHeight) {
+			clear();
+		} else if (_n > 0) {
+			for (int i = mHeight - _n - 1; i >= 0; --i) {
+				System.arraycopy(mScrBuf[i], 0, mScrBuf[i + _n], 0, mWidth);
+			}
+			clearLines(0, _n);
+		}
 	}
 	
 	private void adjustX() {

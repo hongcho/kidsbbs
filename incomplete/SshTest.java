@@ -1,6 +1,8 @@
 package org.sori.sshtest;
 
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import android.app.Activity;
 import android.os.AsyncTask;
@@ -25,11 +27,9 @@ public class SshTest extends Activity {
         mLastUpdate.execute();
     }
     
-    private class SshTask extends AsyncTask<Void,String,Void> {
+    private class SshTask extends AsyncTask<Void,Integer,Void> {
     	private KidsConnection mConn = new KidsConnection();
 		
-		private static final String STR_GUEST = "guest";
-    	
     	@Override
     	protected void onPreExecute() {
     		mTextView.setText("");
@@ -37,15 +37,89 @@ public class SshTest extends Activity {
 
 		@Override
 		protected Void doInBackground(Void... arg0) {
+			final String S_EUCKR = "EUC-KR";
+			final String S_USER = "hongcho\n";
+			final String S_PASS = "xxxxxxxx\n";
+			
+			final Pattern[] PATTERNS = {
+				Pattern.compile("\\(User  Id\\):"),
+				Pattern.compile("\\(Password\\):"),
+				Pattern.compile("\\(y or n\\)\\[y\\]$"),
+				Pattern.compile("\\((\\d+)%\\) CTRL"),
+				Pattern.compile(" :"),
+			};
+			Matcher m;
+			
+			int state = 0;
 			try {
-				mConn.open(STR_GUEST, STR_GUEST);
+				mConn.open();
 				while (true) {
 					try {
 						mConn.process();
+					} catch (KidsConnection.TimeoutException e) {
+						publishProgress(state);
+						switch (state) {
+						case 0:
+							m = PATTERNS[0].matcher(
+									mConn.getCurrentLine(S_EUCKR));
+							if (m.find()) {
+								mConn.write(S_USER.getBytes());
+								state = 1;
+							}
+							break;
+						case 1:
+							m = PATTERNS[1].matcher(
+									mConn.getCurrentLine(S_EUCKR));
+							if (m.find()) {
+								mConn.write(S_PASS.getBytes());
+								state = 2;
+							}
+							break;
+						case 2:
+							m = PATTERNS[2].matcher(
+									mConn.getInputString(S_EUCKR));
+							if (m.find()) {
+								mConn.write("n\n".getBytes());
+							}
+							state = 999;//3;
+							break;
+						case 3:
+							m = PATTERNS[3].matcher(
+									mConn.getCurrentLine(S_EUCKR));
+							if (m.find()) {
+								int n = Integer.parseInt(m.group(1));
+								if (n >= 100) {
+									mConn.write("q".getBytes());
+									state = 4;
+								} else {
+									mConn.write(" ".getBytes());
+								}
+							}
+							break;
+						case 4:
+							m = PATTERNS[4].matcher(
+									mConn.getCurrentLine(S_EUCKR));
+							if (m.find()) {
+								mConn.write("b\n".getBytes());
+								state = 5;
+							}
+							break;
+						case 5:
+							m = PATTERNS[5].matcher(
+									mConn.getCurrentLine(S_EUCKR));
+							if (m.find()) {
+								mConn.write("s\n".getBytes());
+								//mConn.write("Stanford\n".getBytes());
+								//mConn.write("r\n".getBytes());
+								state = 6;
+							}
+							break;
+						default:
+							throw e;
+						}
 					} catch (KidsConnection.EOFException e) {
 						break;
 					}
-					publishProgress();
 				}
 			} catch (IOException e) {
 	    		Log.e(TAG, "IOException", e);
@@ -55,12 +129,17 @@ public class SshTest extends Activity {
 		}
     	
 		@Override
-		protected void onProgressUpdate(String... _args) {
-			String t;
+		protected void onProgressUpdate(Integer... _args) {
+			String t = "";
 			try {
-				t = mConn.dump();
+				//t += (String)mTextView.getText();
+				//t += "==================================\n";
+				t += mConn.dump();
+				t += "====== " + _args[0] + " [" +
+					mConn.getX() + ":" + mConn.getY() + "] ======\n";
+				t += mConn.dumpCurrentLine();
 			} catch (IOException e) {
-				t = (String)mTextView.getText();
+				t += (String)mTextView.getText();
 				t += "\n[[[dump failed]]]";
 			}
 			mTextView.setText(t);
@@ -69,7 +148,7 @@ public class SshTest extends Activity {
 		@Override
 		protected void onPostExecute(Void _result) {
 			String t = (String)mTextView.getText();
-			mTextView.setText(t + "\n[[[DONE]]]");
+			mTextView.setText(t + "[[[DONE]]]");
 		}
     }
 }
