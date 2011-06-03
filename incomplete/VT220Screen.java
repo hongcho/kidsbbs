@@ -38,11 +38,13 @@ public class VT220Screen {
 	private static final int BUF_SIZE = 100;
 	private static final int ESCBUF_SIZE = 40;
 	
-	private final Pattern[] PATTERNS = {
-		Pattern.compile("^\\[(\\d+)$"),
-		Pattern.compile("^\\[(\\d+);(\\d+)$"),
-		Pattern.compile("^\\[([012])$"),
-	};
+	// Escape (mostly CSI) parameter patterns
+	private final Pattern P_ARG_SINGLE =
+		Pattern.compile("^\\[(\\d+)$");
+	private final Pattern P_ARG_DOUBLE =
+		Pattern.compile("^\\[(\\d+);(\\d+)$");
+	private final Pattern P_ARG_012 =
+		Pattern.compile("^\\[([012])$");
 	
 	private int mWidth = 80;
 	private int mHeight = 24;
@@ -158,7 +160,7 @@ public class VT220Screen {
 				switch (v) {
 				case 'A': case 'B': case 'C': case 'D':
 					n = 1;
-					m = PATTERNS[0].matcher(
+					m = P_ARG_SINGLE.matcher(
 							new String(mEscBuf, 0, mEscBufLen));
 					if (m.find()) {
 						n = Integer.parseInt(m.group(1));
@@ -194,7 +196,7 @@ public class VT220Screen {
 					break;
 				case 'H': case 'f':
 					x = 1; y = 1;
-					m = PATTERNS[1].matcher(
+					m = P_ARG_DOUBLE.matcher(
 							new String(mEscBuf, 0, mEscBufLen));
 					if (m.find()) {
 						x = Integer.parseInt(m.group(2));
@@ -206,7 +208,7 @@ public class VT220Screen {
 					break;
 				case 'K': case 'J':
 					n = 0;
-					m = PATTERNS[2].matcher(
+					m = P_ARG_012.matcher(
 							new String(mEscBuf, 0, mEscBufLen));
 					if (m.find()) {
 						n = Integer.parseInt(m.group(1));

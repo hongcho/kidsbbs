@@ -28,29 +28,246 @@ public class SshTest extends Activity {
     }
     
     private class SshTask extends AsyncTask<Void,Integer,Void> {
-    	private KidsConnection mConn = new KidsConnection();
+		private static final String S_EUCKR = "EUC-KR";
+		private static final String S_USER = "guest";
+		private static final String S_PASS = "guest";
 		
-    	@Override
-    	protected void onPreExecute() {
-    		mTextView.setText("");
+		// Kids BBS states
+		private static final int ST_USER = 0;
+		private static final int ST_PASSWORD = 1;
+		private static final int ST_CLOSE_OTHERS = 2;
+		private static final int ST_GUEST_NAME = 3;
+		private static final int ST_GUEST_LANG = 4;
+		private static final int ST_GUEST_TERM = 5;
+		
+		private static final int ST_LOGIN_NOTICE = 9;
+		private static final int ST_MENU_KIDS = 10;
+		private static final int ST_MENU_BBS = 11;
+		private static final int ST_MENU_WRITER = 12;
+		private static final int ST_MENU_SQUARE = 13;
+		
+		private static final int ST_LIST_BBS = 20;
+		private static final int ST_VIEW_BBS = 21;
+		private static final int ST_WRITE_BBS = 22;
+		private static final int ST_DELETE_BBS = 23;
+		
+		private static final int ST_QUIT = 255;
+		private static final int ST_INVALID = -1; 
+		
+		private static final int ST_LIST_BBS_1 = 100;	// temp
+		private static final int ST_MENU_BBS_1 = 101;	// temp
+		
+		// Patterns for prompts.
+		private final Pattern P_USER =
+			Pattern.compile("\\(User  Id\\):");
+		private final Pattern P_PASSWORD =
+			Pattern.compile("\\(Password\\):");
+		private final Pattern P_GUEST_NAME =
+			Pattern.compile("^I Am ");
+		private final Pattern P_GUEST_LANG =
+			Pattern.compile(" < Y / n > : ");
+		private final Pattern P_GUEST_TERM =
+			Pattern.compile("\\.\\.\\.\\):");
+		private final Pattern P_CLOSE_OTHERS =
+			Pattern.compile("\\(y or n\\)\\[y\\]");
+		private final Pattern P_LESS_STATUS =
+			Pattern.compile("^\\((\\d+)%\\) CTRL");
+		private final Pattern P_MUTT_STATUS =
+			Pattern.compile(" -- \\((\\d+)%|(all|end)\\)\\s*$");
+		private final Pattern P_MENU_PROMPT =
+			Pattern.compile("^\\* ");
+		private final Pattern P_LIST_PROMPT =
+			Pattern.compile("^>");
+		
+    	private KidsConnection mConn = new KidsConnection();
+    	
+    	private int handleLogin(int _state) throws IOException {
+			switch (_state) {
+			case ST_USER: return handleUser(_state);
+			case ST_PASSWORD: return handlePassword(_state);
+			case ST_CLOSE_OTHERS: return handleCloseOthers(_state);
+			case ST_GUEST_NAME: return handleGuestName(_state);
+			case ST_GUEST_LANG: return handleGuestLang(_state);
+			case ST_GUEST_TERM: return handleGuestTerm(_state);
+			default:
+				throw new IOException("Login: unknown state " + _state);
+			}
+    	}
+    	private int handleUser(int _state) throws IOException {
+			String s = mConn.getCurrentLine(S_EUCKR);
+			Matcher m = P_USER.matcher(s);
+			if (m.find()) {
+				mConn.write(S_USER.getBytes());
+				mConn.write("\n".getBytes());
+				if (S_USER.equals("guest")) {
+					return ST_GUEST_NAME;
+				} else {
+					return ST_PASSWORD;
+				}
+			}
+			return _state;
+    	}
+    	private int handlePassword(int _state) throws IOException {
+			String s = mConn.getCurrentLine(S_EUCKR);
+			Matcher m = P_PASSWORD.matcher(s);
+			if (m.find()) {
+				mConn.write(S_PASS.getBytes());
+				mConn.write("\n".getBytes());
+				return ST_CLOSE_OTHERS;
+			}
+			return _state;
+    	}
+    	private int handleCloseOthers(int _state) throws IOException {
+			String s = mConn.getInputString(S_EUCKR);
+			Matcher m = P_CLOSE_OTHERS.matcher(s);
+			if (m.find()) {
+				mConn.write("n\n".getBytes());
+				return ST_LOGIN_NOTICE;
+			} else {
+				throw new IOException("CloseOthers: unexpected prompt");
+			}
+    	}
+    	private int handleGuestName(int _state) throws IOException {
+    		String s = mConn.getCurrentLine(S_EUCKR);
+			Matcher m = P_GUEST_NAME.matcher(s);
+			if (m.find()) {
+				mConn.write("guest\n".getBytes());
+				return ST_GUEST_LANG;
+			} else {
+				throw new IOException("GuestName: unexpected prompt");
+			}
+    	}
+    	private int handleGuestLang(int _state) throws IOException {
+    		String s = mConn.getCurrentLine(S_EUCKR);
+			Matcher m = P_GUEST_LANG.matcher(s);
+			if (m.find()) {
+				mConn.write("Y\n".getBytes());
+				return ST_GUEST_TERM;
+			} else {
+				throw new IOException("GuestLang: unexpected prompt");
+			}
+    	}
+    	private int handleGuestTerm(int _state) throws IOException {
+    		String s = mConn.getCurrentLine(S_EUCKR);
+			Matcher m = P_GUEST_TERM.matcher(s);
+			if (m.find()) {
+				mConn.write("vt100\n".getBytes());
+				return ST_LOGIN_NOTICE;
+			} else {
+				throw new IOException("GuestTerm: unexpected prompt");
+			}
+    	}
+    	private int handleArticle(int _state, int _next) throws IOException {
+    		String s;
+    		Matcher m;
+    		int n;
+			s = mConn.getCurrentLine(S_EUCKR);
+			m = P_LESS_STATUS.matcher(s);
+			if (m.find()) {
+				n = Integer.parseInt(m.group(1));
+				if (n >= 100) {
+					mConn.write("q".getBytes());
+					return _next;
+				} else {
+					mConn.write(" ".getBytes());
+				}
+				return _state;
+			}
+			m = P_MUTT_STATUS.matcher(s);
+			if (m.find()) {
+				try {
+					n = Integer.parseInt(m.group(1));
+				} catch (NumberFormatException e1) {
+					n = -1;
+				}
+				if (n < 0) {
+					mConn.write("q".getBytes());
+					return _next;
+				} else {
+					mConn.write(" ".getBytes());
+				}
+				return _state;
+			}
+			return _state;
+    	}
+    	private int handleMenuKids(int _state, int _next) throws IOException {
+			String s = mConn.getCurrentLine(S_EUCKR);
+			Matcher m = P_MENU_PROMPT.matcher(s);
+			if (m.find()) {
+				switch (_next) {
+				case ST_MENU_BBS:
+					mConn.write("b\n".getBytes());
+					return _next;
+				case ST_MENU_WRITER:
+					mConn.write("w\n".getBytes());
+					return _next;
+				case ST_MENU_SQUARE:
+					mConn.write("s\n".getBytes());
+					return _next;
+				case ST_QUIT:
+					mConn.write("q\ny".getBytes());
+					return _next;
+				default:
+					throw new IOException("MenuKids: unknown next state: " + _next);
+				}
+			}
+			return _state;
+    	}
+    	private int handleMenuBbs(int _state, int _next, String _board)
+    			throws IOException {
+			String s = mConn.getCurrentLine(S_EUCKR);
+			Matcher m = P_MENU_PROMPT.matcher(s);
+			if (m.find()) {
+				switch (_next) {
+				case ST_LIST_BBS:
+					mConn.write("s\n".getBytes());
+					mConn.write(_board.getBytes());
+					mConn.write("\nr\n".getBytes());
+					return _next;
+				case ST_MENU_BBS:
+				case ST_MENU_BBS_1:
+					mConn.write("p".getBytes());
+					return _next;
+				case ST_QUIT:
+					mConn.write("q\ny".getBytes());
+					return _next;
+				default:
+					throw new IOException("MenuBbs: unknown next state: " + _next);
+				}
+			}
+			return _state;
+    	}
+    	private int handleListBbs(int _state, int _next, String _pos)
+    			throws IOException {
+			String s = mConn.getCurrentLine(S_EUCKR);
+			Matcher m = P_LIST_PROMPT.matcher(s);
+			if (m.find()) {
+				switch (_next) {
+				case ST_VIEW_BBS:
+					mConn.write(_pos.getBytes());
+					mConn.write("\n ".getBytes());
+					return _next;
+				case ST_DELETE_BBS:
+					mConn.write(_pos.getBytes());
+					mConn.write("\nd".getBytes());
+					return _next;
+				case ST_WRITE_BBS:
+					mConn.write("w".getBytes());
+					return _next;
+				case ST_MENU_BBS:
+				case ST_MENU_BBS_1:
+					mConn.write("q".getBytes());
+					return _next;
+				default:
+					throw new IOException("ListBbs: unknown next state: " + _next);
+				}
+			}
+			return _state;
     	}
 
 		@Override
 		protected Void doInBackground(Void... arg0) {
-			final String S_EUCKR = "EUC-KR";
-			final String S_USER = "hongcho\n";
-			final String S_PASS = "xxxxxxxx\n";
-			
-			final Pattern[] PATTERNS = {
-				Pattern.compile("\\(User  Id\\):"),
-				Pattern.compile("\\(Password\\):"),
-				Pattern.compile("\\(y or n\\)\\[y\\]$"),
-				Pattern.compile("\\((\\d+)%\\) CTRL"),
-				Pattern.compile(" :"),
-			};
-			Matcher m;
-			
-			int state = 0;
+			int state = ST_USER;
 			try {
 				mConn.open();
 				while (true) {
@@ -59,61 +276,41 @@ public class SshTest extends Activity {
 					} catch (KidsConnection.TimeoutException e) {
 						publishProgress(state);
 						switch (state) {
-						case 0:
-							m = PATTERNS[0].matcher(
-									mConn.getCurrentLine(S_EUCKR));
-							if (m.find()) {
-								mConn.write(S_USER.getBytes());
-								state = 1;
-							}
+						case ST_USER:
+						case ST_PASSWORD:
+						case ST_CLOSE_OTHERS:
+						case ST_GUEST_NAME:
+						case ST_GUEST_LANG:
+						case ST_GUEST_TERM:
+							state = handleLogin(state);
 							break;
-						case 1:
-							m = PATTERNS[1].matcher(
-									mConn.getCurrentLine(S_EUCKR));
-							if (m.find()) {
-								mConn.write(S_PASS.getBytes());
-								state = 2;
-							}
+						case ST_LOGIN_NOTICE:
+							state = handleArticle(state, ST_MENU_KIDS);
 							break;
-						case 2:
-							m = PATTERNS[2].matcher(
-									mConn.getInputString(S_EUCKR));
-							if (m.find()) {
-								mConn.write("n\n".getBytes());
-							}
-							state = 999;//3;
+						case ST_MENU_KIDS:
+							state = handleMenuKids(state, ST_MENU_BBS);
 							break;
-						case 3:
-							m = PATTERNS[3].matcher(
-									mConn.getCurrentLine(S_EUCKR));
-							if (m.find()) {
-								int n = Integer.parseInt(m.group(1));
-								if (n >= 100) {
-									mConn.write("q".getBytes());
-									state = 4;
-								} else {
-									mConn.write(" ".getBytes());
-								}
-							}
+						case ST_MENU_BBS:
+							state = handleMenuBbs(state, ST_LIST_BBS, "Stanford");
 							break;
-						case 4:
-							m = PATTERNS[4].matcher(
-									mConn.getCurrentLine(S_EUCKR));
-							if (m.find()) {
-								mConn.write("b\n".getBytes());
-								state = 5;
-							}
+						case ST_LIST_BBS:
+							state = handleListBbs(state, ST_VIEW_BBS, "1000");
 							break;
-						case 5:
-							m = PATTERNS[5].matcher(
-									mConn.getCurrentLine(S_EUCKR));
-							if (m.find()) {
-								mConn.write("s\n".getBytes());
-								//mConn.write("Stanford\n".getBytes());
-								//mConn.write("r\n".getBytes());
-								state = 6;
-							}
+						case ST_VIEW_BBS:
+							state = handleArticle(state, ST_LIST_BBS_1);
 							break;
+							
+						case ST_LIST_BBS_1:
+							state = handleListBbs(state, ST_MENU_BBS_1, null);
+							break;
+						case ST_MENU_BBS_1:
+							state = handleMenuBbs(state, ST_QUIT, null);
+							break;
+							
+						case ST_QUIT:
+							// Wait until EOF.
+							break;
+						case ST_INVALID:
 						default:
 							throw e;
 						}
@@ -124,9 +321,15 @@ public class SshTest extends Activity {
 			} catch (IOException e) {
 	    		Log.e(TAG, "IOException", e);
 			}
+			publishProgress(state);
 			mConn.close();
 			return null;
 		}
+		
+    	@Override
+    	protected void onPreExecute() {
+    		mTextView.setText("");
+    	}
     	
 		@Override
 		protected void onProgressUpdate(Integer... _args) {
@@ -136,7 +339,7 @@ public class SshTest extends Activity {
 				//t += "==================================\n";
 				t += mConn.dump();
 				t += "====== " + _args[0] + " [" +
-					mConn.getX() + ":" + mConn.getY() + "] ======\n";
+					mConn.getY() + ":" + mConn.getX() + "] ======\n";
 				t += mConn.dumpCurrentLine();
 			} catch (IOException e) {
 				t += (String)mTextView.getText();
