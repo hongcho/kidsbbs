@@ -35,7 +35,7 @@ import ch.ethz.ssh2.Session;
 
 public class KidsConnection {
 	private static final int BUF_SIZE = 512;
-	private static final int TIMEOUT = 1000;	// in milliseconds
+	private static final int TIMEOUT = 500;	// in milliseconds
 	private static final int WIDTH = 80;
 	private static final int HEIGHT = 24;
 	
@@ -51,13 +51,6 @@ public class KidsConnection {
 	
 	private VT220Screen mScreen;
 	private byte[] mBuf = new byte[BUF_SIZE];
-	
-	private static final int S_NOTCONNECTED = 0;
-	private static final int S_CONNECTED = 1;
-	private static final int S_LIST = 10;
-	private static final int S_POST = 11;
-	private int mState = S_NOTCONNECTED;
-	private String mStateArg = "";
 	
 	protected void finalize() throws Throwable {
 		close();
@@ -92,8 +85,6 @@ public class KidsConnection {
 		mStdout = mSess.getStdout();
 		mStderr = mSess.getStderr();
 		mStdin = mSess.getStdin();
-		
-		mState = S_CONNECTED;
 	}
 	
 	public void close() {
@@ -103,7 +94,6 @@ public class KidsConnection {
 		if (mConn != null) {
 			mConn.close();
 		}
-		mState = S_NOTCONNECTED;
 	}
 	
 	private int read(byte[] _buf, int _size) throws IOException {
@@ -125,19 +115,14 @@ public class KidsConnection {
 			}
 		}
 		
+		// Ignore stderr.
+		while (mStderr.available() > 0) {
+			mStderr.read(_buf, 0, _size);
+		}
+		
 		// Read from the streams.
 		int len = 0;
-		if (true) {
-			// Ignore stderr.
-			while (mStderr.available() > 0) {
-				mStderr.read(_buf, 0, _size);
-			}
-		} else {
-			while (mStderr.available() > 0 && len <= _size) {
-				len += mStderr.read(_buf, len, _size - len);
-			}
-		}
-		while (mStdout.available() > 0 && len <= _size) {
+		while (mStdout.available() > 0 && len < _size) {
 			len += mStdout.read(_buf, len, _size - len);
 		}
 		return len;
