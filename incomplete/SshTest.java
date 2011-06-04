@@ -5,6 +5,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import android.app.Activity;
+import android.content.res.Resources;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,12 +17,19 @@ public class SshTest extends Activity {
 	private TextView mTextView;
 	private SshTask mLastUpdate = null;
 	
+	private String mPostTitle;
+	private String mPostBody;
+	
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         
         mTextView = (TextView)findViewById(R.id.text);
+        
+		final Resources resources = getResources();
+		mPostTitle = resources.getString(R.string.post_title);
+		mPostBody = resources.getString(R.string.post_body);
         
         mLastUpdate = new SshTask();
         mLastUpdate.execute();
@@ -36,9 +44,7 @@ public class SshTest extends Activity {
 		private static final int ST_USER = 0;
 		private static final int ST_PASSWORD = 1;
 		private static final int ST_CLOSE_OTHERS = 2;
-		private static final int ST_GUEST_NAME = 3;
-		private static final int ST_GUEST_LANG = 4;
-		private static final int ST_GUEST_TERM = 5;
+		private static final int ST_GUEST_LOGIN = 3;
 		
 		private static final int ST_LOGIN_NOTICE = 9;
 		private static final int ST_MENU_KIDS = 10;
@@ -48,10 +54,13 @@ public class SshTest extends Activity {
 		
 		private static final int ST_LIST_BBS = 20;
 		private static final int ST_VIEW_BBS = 21;
-		private static final int ST_WRITE_BBS = 22;
-		private static final int ST_DELETE_BBS = 23;
+		private static final int ST_DELETE_BBS = 22;
 		
-		private static final int ST_QUIT = 255;
+		private static final int ST_WRITE_BBS = 30;
+		private static final int ST_WRITE_BBS_BODY = 31;
+		private static final int ST_WRITE_BBS_END = 32;
+		
+		private static final int ST_QUIT = 99;
 		private static final int ST_INVALID = -1; 
 		
 		private static final int ST_LIST_BBS_1 = 100;	// temp
@@ -64,10 +73,6 @@ public class SshTest extends Activity {
 			Pattern.compile("\\(Password\\):");
 		private final Pattern P_GUEST_NAME =
 			Pattern.compile("^I Am ");
-		private final Pattern P_GUEST_LANG =
-			Pattern.compile(" < Y / n > : ");
-		private final Pattern P_GUEST_TERM =
-			Pattern.compile("\\.\\.\\.\\):");
 		private final Pattern P_CLOSE_OTHERS =
 			Pattern.compile("\\(y or n\\)\\[y\\]");
 		private final Pattern P_LESS_STATUS =
@@ -78,6 +83,14 @@ public class SshTest extends Activity {
 			Pattern.compile("^\\* ");
 		private final Pattern P_LIST_PROMPT =
 			Pattern.compile("^>");
+		private final Pattern P_WRITE_TITLE =
+			Pattern.compile(": ");
+		private final Pattern P_WRITE_FOOTER_S =
+			Pattern.compile("\\[ New file \\]");
+		private final Pattern P_WRITE_FOOTER_VI =
+			Pattern.compile("\\[NEW FILE\\]");
+		private final Pattern P_WRITE_SIG =
+			Pattern.compile(" <Y, n> ");
 		
     	private KidsConnection mConn = new KidsConnection();
     	
@@ -86,9 +99,7 @@ public class SshTest extends Activity {
 			case ST_USER: return handleUser(_state);
 			case ST_PASSWORD: return handlePassword(_state);
 			case ST_CLOSE_OTHERS: return handleCloseOthers(_state);
-			case ST_GUEST_NAME: return handleGuestName(_state);
-			case ST_GUEST_LANG: return handleGuestLang(_state);
-			case ST_GUEST_TERM: return handleGuestTerm(_state);
+			case ST_GUEST_LOGIN: return handleGuestLogin(_state);
 			default:
 				throw new IOException("Login: unknown state " + _state);
 			}
@@ -100,7 +111,7 @@ public class SshTest extends Activity {
 				mConn.write(S_USER.getBytes());
 				mConn.write("\n".getBytes());
 				if (S_USER.equals("guest")) {
-					return ST_GUEST_NAME;
+					return ST_GUEST_LOGIN;
 				} else {
 					return ST_PASSWORD;
 				}
@@ -118,45 +129,26 @@ public class SshTest extends Activity {
 			return _state;
     	}
     	private int handleCloseOthers(int _state) throws IOException {
-			String s = mConn.getInputString(S_EUCKR);
+			String s = mConn.getLine(mConn.getY() - 1,S_EUCKR);
 			Matcher m = P_CLOSE_OTHERS.matcher(s);
 			if (m.find()) {
 				mConn.write("n\n".getBytes());
 				return ST_LOGIN_NOTICE;
 			} else {
-				throw new IOException("CloseOthers: unexpected prompt");
+				throw new IOException("CloseOthers: unexpected prompt: " + s);
 			}
     	}
-    	private int handleGuestName(int _state) throws IOException {
+    	private int handleGuestLogin(int _state) throws IOException {
     		String s = mConn.getCurrentLine(S_EUCKR);
 			Matcher m = P_GUEST_NAME.matcher(s);
 			if (m.find()) {
-				mConn.write("guest\n".getBytes());
-				return ST_GUEST_LANG;
-			} else {
-				throw new IOException("GuestName: unexpected prompt");
-			}
-    	}
-    	private int handleGuestLang(int _state) throws IOException {
-    		String s = mConn.getCurrentLine(S_EUCKR);
-			Matcher m = P_GUEST_LANG.matcher(s);
-			if (m.find()) {
-				mConn.write("Y\n".getBytes());
-				return ST_GUEST_TERM;
-			} else {
-				throw new IOException("GuestLang: unexpected prompt");
-			}
-    	}
-    	private int handleGuestTerm(int _state) throws IOException {
-    		String s = mConn.getCurrentLine(S_EUCKR);
-			Matcher m = P_GUEST_TERM.matcher(s);
-			if (m.find()) {
-				mConn.write("vt100\n".getBytes());
+				mConn.write("guest\nY\nvt100\n".getBytes());
 				return ST_LOGIN_NOTICE;
 			} else {
-				throw new IOException("GuestTerm: unexpected prompt");
+				throw new IOException("GuestLogin: unexpected prompt");
 			}
     	}
+    	
     	private int handleArticle(int _state, int _next) throws IOException {
     		String s;
     		Matcher m;
@@ -190,6 +182,56 @@ public class SshTest extends Activity {
 			}
 			return _state;
     	}
+    	
+    	private int handleWriteBbs(int _state, int _next) throws IOException {
+			switch (_state) {
+			case ST_WRITE_BBS: return handleWriteBbsTitle(_state);
+			case ST_WRITE_BBS_BODY: return handleWriteBbsBody(_state);
+			case ST_WRITE_BBS_END: return handleWriteBbsEnd(_state, _next);
+			default:
+				throw new IOException("WriteBbs: unknown state " + _state);
+			}
+    	}
+    	private int handleWriteBbsTitle(int _state) throws IOException {
+			String s = mConn.getCurrentLine(S_EUCKR);
+			Matcher m = P_WRITE_TITLE.matcher(s);
+			if (m.find()) {
+				mConn.write(mPostTitle.getBytes(S_EUCKR));
+				mConn.write("\n".getBytes());
+				return ST_WRITE_BBS_BODY;
+			}
+			return _state;
+    	}
+    	private int handleWriteBbsBody(int _state) throws IOException {
+			String s = mConn.getLine(mConn.getHeight() - 1, S_EUCKR);
+			Matcher m;
+			m = P_WRITE_FOOTER_S.matcher(s);
+			if (m.find()) {
+				mConn.write(mPostBody.getBytes(S_EUCKR));
+				//mConn.write("\030".getBytes());	// Ctrl-X
+				return ST_WRITE_BBS_END;
+			}
+			m = P_WRITE_FOOTER_VI.matcher(s);
+			if (m.find()) {
+				mConn.write("i".getBytes());	// insert
+				mConn.write(mPostBody.getBytes(S_EUCKR));
+				mConn.write("\033ZZ".getBytes());	// ESC ZZ
+				return ST_WRITE_BBS_END;
+			}
+			return _state;
+    	}
+    	private int handleWriteBbsEnd(int _state, int _next) throws IOException {
+			String s = mConn.getLine(0, S_EUCKR);
+			Matcher m = P_WRITE_SIG.matcher(s);
+			if (m.find()) {
+				mConn.write("n\n".getBytes());	// signature?
+				mConn.write("n\n".getBytes());	// save?
+				mConn.write("\n".getBytes());	// return.
+				return _next;
+			}
+			return _state;
+    	}
+    	
     	private int handleMenuKids(int _state, int _next) throws IOException {
 			String s = mConn.getCurrentLine(S_EUCKR);
 			Matcher m = P_MENU_PROMPT.matcher(s);
@@ -279,9 +321,7 @@ public class SshTest extends Activity {
 						case ST_USER:
 						case ST_PASSWORD:
 						case ST_CLOSE_OTHERS:
-						case ST_GUEST_NAME:
-						case ST_GUEST_LANG:
-						case ST_GUEST_TERM:
+						case ST_GUEST_LOGIN:
 							state = handleLogin(state);
 							break;
 						case ST_LOGIN_NOTICE:
@@ -294,10 +334,16 @@ public class SshTest extends Activity {
 							state = handleMenuBbs(state, ST_LIST_BBS, "Stanford");
 							break;
 						case ST_LIST_BBS:
-							state = handleListBbs(state, ST_VIEW_BBS, "1000");
+							//state = handleListBbs(state, ST_VIEW_BBS, "1000");
+							state = handleListBbs(state, ST_WRITE_BBS, null);
 							break;
 						case ST_VIEW_BBS:
 							state = handleArticle(state, ST_LIST_BBS_1);
+							break;
+						case ST_WRITE_BBS:
+						case ST_WRITE_BBS_BODY:
+						case ST_WRITE_BBS_END:
+							state = handleWriteBbs(state, ST_LIST_BBS_1);
 							break;
 							
 						case ST_LIST_BBS_1:

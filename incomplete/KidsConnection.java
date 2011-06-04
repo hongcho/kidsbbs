@@ -175,6 +175,8 @@ public class KidsConnection {
 		mStdin.flush();
 	}
 	
+	public int getWidth() { return mScreen.getWidth(); }
+	public int getHeight() { return mScreen.getHeight(); }
 	public int getX() { return mScreen.getX(); }
 	public int getY() { return mScreen.getY(); }
 }
