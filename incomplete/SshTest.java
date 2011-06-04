@@ -17,6 +17,8 @@ public class SshTest extends Activity {
 	private TextView mTextView;
 	private SshTask mLastUpdate = null;
 	
+	private String mUsername;
+	private String mPassword;
 	private String mPostTitle;
 	private String mPostBody;
 	
@@ -27,9 +29,11 @@ public class SshTest extends Activity {
         
         mTextView = (TextView)findViewById(R.id.text);
         
-		final Resources resources = getResources();
-		mPostTitle = resources.getString(R.string.post_title);
-		mPostBody = resources.getString(R.string.post_body);
+        final Resources resources = getResources();
+        mUsername = resources.getString(R.string.username);
+        mPassword = resources.getString(R.string.password);
+        mPostTitle = resources.getString(R.string.post_title);
+        mPostBody = resources.getString(R.string.post_body);
         
         mLastUpdate = new SshTask();
         mLastUpdate.execute();
@@ -37,8 +41,6 @@ public class SshTest extends Activity {
     
     private class SshTask extends AsyncTask<Void,Integer,Void> {
 		private static final String S_EUCKR = "EUC-KR";
-		private static final String S_USER = "guest";
-		private static final String S_PASS = "guest";
 		
 		// Kids BBS states
 		private static final int ST_USER = 0;
@@ -108,9 +110,9 @@ public class SshTest extends Activity {
 			String s = mConn.getCurrentLine(S_EUCKR);
 			Matcher m = P_USER.matcher(s);
 			if (m.find()) {
-				mConn.write(S_USER.getBytes());
+				mConn.write(mUsername.getBytes());
 				mConn.write("\n".getBytes());
-				if (S_USER.equals("guest")) {
+				if (mUsername.equals("guest")) {
 					return ST_GUEST_LOGIN;
 				} else {
 					return ST_PASSWORD;
@@ -122,7 +124,7 @@ public class SshTest extends Activity {
 			String s = mConn.getCurrentLine(S_EUCKR);
 			Matcher m = P_PASSWORD.matcher(s);
 			if (m.find()) {
-				mConn.write(S_PASS.getBytes());
+				mConn.write(mPassword.getBytes());
 				mConn.write("\n".getBytes());
 				return ST_CLOSE_OTHERS;
 			}
@@ -142,7 +144,8 @@ public class SshTest extends Activity {
     		String s = mConn.getCurrentLine(S_EUCKR);
 			Matcher m = P_GUEST_NAME.matcher(s);
 			if (m.find()) {
-				mConn.write("guest\nY\nvt100\n".getBytes());
+				mConn.write(mUsername.getBytes());
+				mConn.write("\nY\nvt100\n".getBytes());
 				return ST_LOGIN_NOTICE;
 			} else {
 				throw new IOException("GuestLogin: unexpected prompt");
