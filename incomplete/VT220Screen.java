@@ -35,7 +35,7 @@ public class VT220Screen {
 	private static final String TAG = "VT220Screen";
 	
 	private static final String EUC_KR = "EUC-KR";
-	private static final int BUF_SIZE = 100;
+	private static final int BUF_SIZE = 40;
 	private static final int ESCBUF_SIZE = 40;
 	
 	// Escape (mostly CSI) parameter patterns
