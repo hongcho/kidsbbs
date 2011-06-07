@@ -27,7 +27,7 @@ package org.sori.sshtest;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 
 import ch.ethz.ssh2.ChannelCondition;
 import ch.ethz.ssh2.Connection;
@@ -47,7 +47,7 @@ public class KidsConnection {
 	private Session mSess = null;
 	private InputStream mStdout;
 	private InputStream mStderr;
-	private OutputStream mStdin;
+	private OutputStreamWriter mStdin;
 	
 	private VT220Screen mScreen;
 	private byte[] mBuf = new byte[BUF_SIZE];
@@ -84,7 +84,7 @@ public class KidsConnection {
 		
 		mStdout = mSess.getStdout();
 		mStderr = mSess.getStderr();
-		mStdin = mSess.getStdin();
+		mStdin = new OutputStreamWriter(mSess.getStdin(), "EUC-KR");
 	}
 	
 	public void close() {
@@ -170,9 +170,12 @@ public class KidsConnection {
 		}
 	}
 	
-	public void write(byte[] _buf) throws IOException {
-		mStdin.write(_buf);
+	public void write(String _s, int _off, int _len) throws IOException {
+		mStdin.write(_s, _off, _len);
 		mStdin.flush();
+	}
+	public void write(String _s) throws IOException {
+		write(_s, 0, _s.length());
 	}
 	
 	public int getWidth() { return mScreen.getWidth(); }

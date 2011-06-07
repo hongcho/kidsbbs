@@ -94,6 +94,11 @@ public class SshTest extends Activity {
 		private final Pattern P_WRITE_SIG =
 			Pattern.compile(" <Y, n> ");
 		
+		private static final String PS_WRITE_REG =
+			"(?<=\\n)\\n";
+		private static final String PS_WRITE_REP =
+			"\r\n";
+		
     	private KidsConnection mConn = new KidsConnection();
     	
     	private int handleLogin(int _state) throws IOException {
@@ -110,8 +115,7 @@ public class SshTest extends Activity {
 			String s = mConn.getCurrentLine(S_EUCKR);
 			Matcher m = P_USER.matcher(s);
 			if (m.find()) {
-				mConn.write(mUsername.getBytes());
-				mConn.write("\n".getBytes());
+				mConn.write(mUsername + "\n");
 				if (mUsername.equals("guest")) {
 					return ST_GUEST_LOGIN;
 				} else {
@@ -124,8 +128,7 @@ public class SshTest extends Activity {
 			String s = mConn.getCurrentLine(S_EUCKR);
 			Matcher m = P_PASSWORD.matcher(s);
 			if (m.find()) {
-				mConn.write(mPassword.getBytes());
-				mConn.write("\n".getBytes());
+				mConn.write(mPassword + "\n");
 				return ST_CLOSE_OTHERS;
 			}
 			return _state;
@@ -134,18 +137,28 @@ public class SshTest extends Activity {
 			String s = mConn.getLine(mConn.getY() - 1,S_EUCKR);
 			Matcher m = P_CLOSE_OTHERS.matcher(s);
 			if (m.find()) {
-				mConn.write("n\n".getBytes());
+				mConn.write("n\n");
 				return ST_LOGIN_NOTICE;
-			} else {
-				throw new IOException("CloseOthers: unexpected prompt: " + s);
 			}
+			// Check if there were no other logins.
+			s = mConn.getCurrentLine(S_EUCKR);
+			m = P_LESS_STATUS.matcher(s);
+			if (m.find()) {
+				return ST_LOGIN_NOTICE;
+			}
+			m = P_MUTT_STATUS.matcher(s);
+			if (m.find()) {
+				return ST_LOGIN_NOTICE;
+			}
+			return _state;
     	}
     	private int handleGuestLogin(int _state) throws IOException {
     		String s = mConn.getCurrentLine(S_EUCKR);
 			Matcher m = P_GUEST_NAME.matcher(s);
 			if (m.find()) {
-				mConn.write(mUsername.getBytes());
-				mConn.write("\nY\nvt100\n".getBytes());
+				mConn.write(mUsername + "\n");
+				mConn.write("Y\n");
+				mConn.write("vt100\n");
 				return ST_LOGIN_NOTICE;
 			} else {
 				throw new IOException("GuestLogin: unexpected prompt");
@@ -153,43 +166,42 @@ public class SshTest extends Activity {
     	}
     	
     	private int handleArticle(int _state, int _next) throws IOException {
-    		String s;
-    		Matcher m;
-    		int n;
-			s = mConn.getCurrentLine(S_EUCKR);
-			m = P_LESS_STATUS.matcher(s);
+			String s = mConn.getCurrentLine(S_EUCKR);
+			Matcher m = P_LESS_STATUS.matcher(s);
 			if (m.find()) {
-				n = Integer.parseInt(m.group(1));
+				int n = Integer.parseInt(m.group(1));
 				if (n >= 100) {
-					mConn.write("q".getBytes());
+					mConn.write("q");
 					return _next;
 				} else {
-					mConn.write(" ".getBytes());
+					mConn.write(" ");
 				}
 				return _state;
 			}
 			m = P_MUTT_STATUS.matcher(s);
 			if (m.find()) {
+	    		int n;
 				try {
 					n = Integer.parseInt(m.group(1));
 				} catch (NumberFormatException e1) {
 					n = -1;
 				}
 				if (n < 0) {
-					mConn.write("q".getBytes());
+					mConn.write("q");
 					return _next;
 				} else {
-					mConn.write(" ".getBytes());
+					mConn.write(" ");
 				}
 				return _state;
 			}
 			return _state;
     	}
     	
-    	private int handleWriteBbs(int _state, int _next) throws IOException {
+    	private int handleWriteBbs(int _state, int _next, String _body)
+    			throws IOException {
 			switch (_state) {
 			case ST_WRITE_BBS: return handleWriteBbsTitle(_state);
-			case ST_WRITE_BBS_BODY: return handleWriteBbsBody(_state);
+			case ST_WRITE_BBS_BODY: return handleWriteBbsBody(_state, _body);
 			case ST_WRITE_BBS_END: return handleWriteBbsEnd(_state, _next);
 			default:
 				throw new IOException("WriteBbs: unknown state " + _state);
@@ -199,26 +211,25 @@ public class SshTest extends Activity {
 			String s = mConn.getCurrentLine(S_EUCKR);
 			Matcher m = P_WRITE_TITLE.matcher(s);
 			if (m.find()) {
-				mConn.write(mPostTitle.getBytes(S_EUCKR));
-				mConn.write("\n".getBytes());
+				mConn.write(mPostTitle + "\n");
 				return ST_WRITE_BBS_BODY;
 			}
 			return _state;
     	}
-    	private int handleWriteBbsBody(int _state) throws IOException {
+    	private int handleWriteBbsBody(int _state, String _body)
+    			throws IOException {
 			String s = mConn.getLine(mConn.getHeight() - 1, S_EUCKR);
-			Matcher m;
-			m = P_WRITE_FOOTER_S.matcher(s);
+			Matcher m = P_WRITE_FOOTER_S.matcher(s);
 			if (m.find()) {
-				mConn.write(mPostBody.getBytes(S_EUCKR));
-				//mConn.write("\030".getBytes());	// Ctrl-X
+				mConn.write(_body.replaceAll(PS_WRITE_REG, PS_WRITE_REP));
+				mConn.write("\030");	// Ctrl-X
 				return ST_WRITE_BBS_END;
 			}
 			m = P_WRITE_FOOTER_VI.matcher(s);
 			if (m.find()) {
-				mConn.write("i".getBytes());	// insert
-				mConn.write(mPostBody.getBytes(S_EUCKR));
-				mConn.write("\033ZZ".getBytes());	// ESC ZZ
+				mConn.write("i");	// insert
+				mConn.write(_body);
+				mConn.write("\033ZZ");	// ESC ZZ
 				return ST_WRITE_BBS_END;
 			}
 			return _state;
@@ -227,9 +238,9 @@ public class SshTest extends Activity {
 			String s = mConn.getLine(0, S_EUCKR);
 			Matcher m = P_WRITE_SIG.matcher(s);
 			if (m.find()) {
-				mConn.write("n\n".getBytes());	// signature?
-				mConn.write("n\n".getBytes());	// save?
-				mConn.write("\n".getBytes());	// return.
+				mConn.write("n\n");	// signature?
+				mConn.write("y\n");	// save?
+				mConn.write("\n");	// return.
 				return _next;
 			}
 			return _state;
@@ -241,16 +252,16 @@ public class SshTest extends Activity {
 			if (m.find()) {
 				switch (_next) {
 				case ST_MENU_BBS:
-					mConn.write("b\n".getBytes());
+					mConn.write("b\n");
 					return _next;
 				case ST_MENU_WRITER:
-					mConn.write("w\n".getBytes());
+					mConn.write("w\n");
 					return _next;
 				case ST_MENU_SQUARE:
-					mConn.write("s\n".getBytes());
+					mConn.write("s\n");
 					return _next;
 				case ST_QUIT:
-					mConn.write("q\ny".getBytes());
+					mConn.write("q\ny");
 					return _next;
 				default:
 					throw new IOException("MenuKids: unknown next state: " + _next);
@@ -265,16 +276,16 @@ public class SshTest extends Activity {
 			if (m.find()) {
 				switch (_next) {
 				case ST_LIST_BBS:
-					mConn.write("s\n".getBytes());
-					mConn.write(_board.getBytes());
-					mConn.write("\nr\n".getBytes());
+					mConn.write("s\n");
+					mConn.write(_board + "\n");
+					mConn.write("r\n");
 					return _next;
 				case ST_MENU_BBS:
 				case ST_MENU_BBS_1:
-					mConn.write("p".getBytes());
+					mConn.write("p");
 					return _next;
 				case ST_QUIT:
-					mConn.write("q\ny".getBytes());
+					mConn.write("q\ny");
 					return _next;
 				default:
 					throw new IOException("MenuBbs: unknown next state: " + _next);
@@ -289,19 +300,17 @@ public class SshTest extends Activity {
 			if (m.find()) {
 				switch (_next) {
 				case ST_VIEW_BBS:
-					mConn.write(_pos.getBytes());
-					mConn.write("\n ".getBytes());
+					mConn.write(_pos + "\n ");
 					return _next;
 				case ST_DELETE_BBS:
-					mConn.write(_pos.getBytes());
-					mConn.write("\nd".getBytes());
+					mConn.write(_pos + "\nd");
 					return _next;
 				case ST_WRITE_BBS:
-					mConn.write("w".getBytes());
+					mConn.write("w");
 					return _next;
 				case ST_MENU_BBS:
 				case ST_MENU_BBS_1:
-					mConn.write("q".getBytes());
+					mConn.write("q");
 					return _next;
 				default:
 					throw new IOException("ListBbs: unknown next state: " + _next);
@@ -346,7 +355,7 @@ public class SshTest extends Activity {
 						case ST_WRITE_BBS:
 						case ST_WRITE_BBS_BODY:
 						case ST_WRITE_BBS_END:
-							state = handleWriteBbs(state, ST_LIST_BBS_1);
+							state = handleWriteBbs(state, ST_LIST_BBS_1, mPostBody);
 							break;
 							
 						case ST_LIST_BBS_1:
@@ -384,8 +393,6 @@ public class SshTest extends Activity {
 		protected void onProgressUpdate(Integer... _args) {
 			String t = "";
 			try {
-				//t += (String)mTextView.getText();
-				//t += "==================================\n";
 				t += mConn.dump();
 				t += "====== " + _args[0] + " [" +
 					mConn.getY() + ":" + mConn.getX() + "] ======\n";
