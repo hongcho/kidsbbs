@@ -1,4 +1,4 @@
-// Copyright (c) 2010, Younghong "Hong" Cho <hongcho@sori.org>.
+// Copyright (c) 2010-2011, Younghong "Hong" Cho <hongcho@sori.org>.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,7 @@ public class ArticleInfo {
 	public final String getTabname() { return mTabname; }
 	public final int getSeq() { return mSeq; }
 	public final String getAuthor() { return mAuthor; }
-	public final String getUser() { return mUser; } 
+	public final String getUser() { return mUser; }
 	public final String getTitle() { return mTitle; }
 	public final String getThread() { return mThread; }
 	public final String getBody() { return mBody; }
@@ -63,7 +63,7 @@ public class ArticleInfo {
 		mDateString = _dateString;
 		mBody = _body;
 	}
-	
+
 	@Override
 	public String toString() {
 		return mTitle + " " + mAuthor + " " + mBody;

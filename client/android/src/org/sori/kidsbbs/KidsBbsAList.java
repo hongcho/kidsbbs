@@ -63,7 +63,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 public abstract class KidsBbsAList extends ListActivity
-				implements OnSharedPreferenceChangeListener {
+		implements OnSharedPreferenceChangeListener {
 	protected static final int MENU_REFRESH = Menu.FIRST;
 	protected static final int MENU_SHOW = Menu.FIRST + 1;
 	protected static final int MENU_PREFERENCES = Menu.FIRST + 2;
@@ -71,7 +71,7 @@ public abstract class KidsBbsAList extends ListActivity
 	protected static final int MENU_TOGGLE_ALL_READ = Menu.FIRST + 4;
 
 	protected ContentResolver mResolver;
-	
+
 	private static final String KEY_SELECTED_ITEM = "KEY_SELECTED_ITEM";
 
 	private ArticlesAdapter mAdapter;
@@ -84,20 +84,20 @@ public abstract class KidsBbsAList extends ListActivity
 
 	private String mBoardTitle;
 	protected String mTabname;
-	
+
 	private String mUpdateText;
 
 	private TextView mStatusView;
-	
+
 	private ContextMenu mContextMenu;
-	
+
 	private UpdateTask mLastUpdate;
 
 	private boolean mHideRead;
 
 	private String mTitle;
 	private int mUnreadCount;
-	
+
 	// First call setQueryBase(), and all refreshListCommon().
 	abstract protected void refreshList();
 
@@ -106,11 +106,12 @@ public abstract class KidsBbsAList extends ListActivity
 
 	// Call showItemCommon() with custom parameters.
 	abstract protected void showItem(int _index);
-	
+
 	// Marking articles read.
 	abstract protected void toggleRead(int _index);
+
 	abstract protected void toggleAllRead();
-	
+
 	// A matching broadcast?
 	abstract protected boolean matchingBroadcast(int _seq, String _user,
 			String _thread);
@@ -118,50 +119,50 @@ public abstract class KidsBbsAList extends ListActivity
 	protected final String getBoardTitle() {
 		return mBoardTitle;
 	}
+
 	protected final Uri getUriList() {
 		return mUriList;
 	}
-	
+
 	protected final int getCount(String _uriBase, String _where) {
-		return KidsBbs.getTableCount(mResolver, _uriBase, mTabname,
-				_where);
+		return KidsBbs.getTableCount(mResolver, _uriBase, mTabname, _where);
 	}
-	
+
 	protected final void setTitleCommon(String _title) {
 		mTitle = _title;
 	}
-	
+
 	protected final void updateTitleCommon(int _unread, int _total) {
 		mUnreadCount = _unread;
-		setTitle("[" + mBoardTitle + "] " + mTitle +
-				" (" + mUnreadCount + "/" + _total + ")");
+		setTitle("[" + mBoardTitle + "] " + mTitle + " (" + mUnreadCount + "/"
+				+ _total + ")");
 	}
-	
+
 	protected final Cursor getItem(int _index) {
-		return (Cursor)getListView().getItemAtPosition(_index);
+		return (Cursor) getListView().getItemAtPosition(_index);
 	}
 
 	@Override
 	public void onCreate(Bundle _state) {
 		super.onCreate(_state);
 		setContentView(R.layout.article_list);
-		
+
 		final Uri data = getIntent().getData();
 		mTabname = data.getQueryParameter(KidsBbs.PARAM_N_TABNAME);
 		mBoardTitle = data.getQueryParameter(KidsBbs.PARAM_N_TITLE);
-		
+
 		mUriList = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + mTabname);
-		
+
 		mResolver = getContentResolver();
-		
+
 		mUpdateText = getResources().getString(R.string.update_text);
 
-		mStatusView = (TextView)findViewById(R.id.status);
+		mStatusView = (TextView) findViewById(R.id.status);
 		mStatusView.setVisibility(View.GONE);
 
 		mAdapter = new ArticlesAdapter(this);
 		setListAdapter(mAdapter);
-		
+
 		registerReceivers();
 
 		final SharedPreferences prefs =
@@ -170,24 +171,23 @@ public abstract class KidsBbsAList extends ListActivity
 		mHideRead = prefs.getBoolean(Preferences.PREF_HIDE_READ, false);
 		prefs.registerOnSharedPreferenceChangeListener(this);
 	}
-	
+
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
 		unregisterReceivers();
-		
+
 		mAdapter.changeCursor(null);
 		mAdapter = null;
 	}
-	
+
 	@Override
 	protected void onResume() {
 		super.onResume();
 		updateTitle();
 	}
-	
-	public void onSharedPreferenceChanged(SharedPreferences _prefs,
-			String _key) {
+
+	public void onSharedPreferenceChanged(SharedPreferences _prefs, String _key) {
 		if (_key.equals(Preferences.PREF_HIDE_READ)) {
 			boolean hideRead = _prefs.getBoolean(_key, false);
 			if (hideRead != mHideRead) {
@@ -198,8 +198,7 @@ public abstract class KidsBbsAList extends ListActivity
 	}
 
 	@Override
-	protected void onListItemClick(ListView _l, View _v, int _position,
-			long _id) {
+	protected void onListItemClick(ListView _l, View _v, int _position, long _id) {
 		super.onListItemClick(_l, _v, _position, _id);
 		showItem(_position);
 	}
@@ -207,7 +206,7 @@ public abstract class KidsBbsAList extends ListActivity
 	@Override
 	public boolean onCreateOptionsMenu(Menu _menu) {
 		super.onCreateOptionsMenu(_menu);
-		
+
 		MenuItem item;
 		item = _menu.add(0, MENU_REFRESH, Menu.NONE, R.string.menu_refresh);
 		item.setIcon(getResources().getIdentifier(
@@ -243,7 +242,7 @@ public abstract class KidsBbsAList extends ListActivity
 		}
 		return false;
 	}
-	
+
 	protected final void setContextMenuTitle(String _title) {
 		if (mContextMenu != null) {
 			mContextMenu.setHeaderTitle(_title);
@@ -256,8 +255,7 @@ public abstract class KidsBbsAList extends ListActivity
 		super.onCreateOptionsMenu(_menu);
 
 		mContextMenu = _menu;
-		setContextMenuTitle(getResources().getString(
-				R.string.alist_cm_header));
+		setContextMenuTitle(getResources().getString(R.string.alist_cm_header));
 		mContextMenu.add(0, MENU_SHOW, Menu.NONE, R.string.read_text);
 		mContextMenu.add(1, MENU_TOGGLE_READ, Menu.NONE,
 				R.string.toggle_read_text);
@@ -268,17 +266,16 @@ public abstract class KidsBbsAList extends ListActivity
 		super.onContextItemSelected(_item);
 		switch (_item.getItemId()) {
 		case MENU_SHOW:
-			showItem(((AdapterView.AdapterContextMenuInfo)
-					_item.getMenuInfo()).position);
+			showItem(((AdapterView.AdapterContextMenuInfo) _item.getMenuInfo()).position);
 			return true;
 		case MENU_TOGGLE_READ:
-			toggleRead(((AdapterView.AdapterContextMenuInfo)
-					_item.getMenuInfo()).position);
+			toggleRead(((AdapterView.AdapterContextMenuInfo) _item
+					.getMenuInfo()).position);
 			return true;
 		}
 		return false;
 	}
-	
+
 	private class UpdateTask extends AsyncTask<Void, Void, Cursor> {
 		@Override
 		protected void onPreExecute() {
@@ -299,7 +296,7 @@ public abstract class KidsBbsAList extends ListActivity
 			}
 			return mResolver.query(mUri, mFields, where, null, null);
 		}
-		
+
 		@Override
 		protected void onPostExecute(Cursor _c) {
 			mStatusView.setVisibility(View.GONE);
@@ -311,12 +308,12 @@ public abstract class KidsBbsAList extends ListActivity
 			updateTitle();
 		}
 	}
-	
+
 	private boolean isUpdating() {
-		return mLastUpdate != null &&
-			!mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED);
+		return mLastUpdate != null
+				&& !mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED);
 	}
-	
+
 	protected final void refreshListCommon() {
 		if (mUri != null && !isUpdating()) {
 			mLastUpdate = new UpdateTask();
@@ -333,60 +330,61 @@ public abstract class KidsBbsAList extends ListActivity
 
 	protected final void showItemCommon(Context _from, Class<?> _to,
 			String _base, String _extra) {
-		final String uriString = _base +
-			KidsBbs.PARAM_N_TABNAME + "=" + mTabname +
-			"&" + KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle +
-			_extra;
+		final String uriString = _base + KidsBbs.PARAM_N_TABNAME + "="
+				+ mTabname + "&" + KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle
+				+ _extra;
 		final Intent intent = new Intent(_from, _to);
 		intent.setData(Uri.parse(uriString));
 		startActivity(intent);
 	}
-	
+
 	protected int toggleReadOne(Cursor _c) {
 		final boolean read = _c.getInt(ArticlesAdapter.COLUMN_READ) != 0;
-    	final int seq = _c.getInt(_c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
-    	final String user = _c.getString(_c.getColumnIndex(
-    			KidsBbsProvider.KEYA_USER));
-    	final String thread = _c.getString(_c.getColumnIndex(
-    			KidsBbsProvider.KEYA_THREAD));
-    	if (KidsBbs.updateArticleRead(mResolver, mTabname, seq, !read)) {
-			KidsBbs.announceArticleUpdated(KidsBbsAList.this, mTabname,
-					seq, user, thread);
+		final int seq = _c.getInt(_c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
+		final String user = _c.getString(_c
+				.getColumnIndex(KidsBbsProvider.KEYA_USER));
+		final String thread = _c.getString(_c
+				.getColumnIndex(KidsBbsProvider.KEYA_THREAD));
+		if (KidsBbs.updateArticleRead(mResolver, mTabname, seq, !read)) {
+			KidsBbs.announceArticleUpdated(KidsBbsAList.this, mTabname, seq,
+					user, thread);
 			return 1;
 		}
 		return 0;
 	}
-	
+
 	protected void toggleAllReadCommon(final String _w) {
-    	final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    	builder.setTitle(R.string.confirm_text);
-    	builder.setMessage(R.string.toggle_all_read_message);
-    	builder.setPositiveButton(android.R.string.ok,
-    			new DialogInterface.OnClickListener() {
-    		public void onClick(DialogInterface _dialog, int _which) {
-    			final Cursor c = getItem(0);
-    			final int seq = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
-    			final String where = _w +
-    				KidsBbsProvider.KEYA_SEQ + "<=" + seq + " AND " +
-    				KidsBbsProvider.KEYA_READ + (mUnreadCount == 0 ? "!=0" : "=0");
-    			final ContentValues values = new ContentValues();
-    			values.put(KidsBbsProvider.KEYA_READ,
-    					mUnreadCount > 0 ? 1 : 0);
-    			final int nChanged = mResolver.update(getUriList(), values,
-    					where, null);
-    			if (nChanged > 0) {
-    	    		KidsBbs.updateBoardCount(mResolver, mTabname);
-    				refreshList();
-				}
-			}
-    	});
-    	builder.setNegativeButton(android.R.string.cancel, null);
-    	builder.create().show();
+		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle(R.string.confirm_text);
+		builder.setMessage(R.string.toggle_all_read_message);
+		builder.setPositiveButton(android.R.string.ok,
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface _dialog, int _which) {
+						final Cursor c = getItem(0);
+						final int seq = c.getInt(c
+								.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
+						final String where = _w + KidsBbsProvider.KEYA_SEQ
+								+ "<=" + seq + " AND "
+								+ KidsBbsProvider.KEYA_READ
+								+ (mUnreadCount == 0 ? "!=0" : "=0");
+						final ContentValues values = new ContentValues();
+						values.put(KidsBbsProvider.KEYA_READ,
+								mUnreadCount > 0 ? 1 : 0);
+						final int nChanged = mResolver.update(getUriList(),
+								values, where, null);
+						if (nChanged > 0) {
+							KidsBbs.updateBoardCount(mResolver, mTabname);
+							refreshList();
+						}
+					}
+				});
+		builder.setNegativeButton(android.R.string.cancel, null);
+		builder.create().show();
 	}
-    
-    protected void showPreference() {
+
+	protected void showPreference() {
 		startActivity(new Intent(this, Preferences.class));
-    }
+	}
 
 	@Override
 	public void onSaveInstanceState(Bundle _state) {
@@ -401,11 +399,11 @@ public abstract class KidsBbsAList extends ListActivity
 		mSavedItemPosition = _state.getInt(KEY_SELECTED_ITEM, -1);
 		restoreListPosition();
 	}
-	
+
 	private void saveListPosition() {
 		mSavedItemPosition = getSelectedItemPosition();
 	}
-	
+
 	private void restoreListPosition() {
 		setSelection(mSavedItemPosition);
 	}
@@ -413,40 +411,39 @@ public abstract class KidsBbsAList extends ListActivity
 	protected final void initializeStates() {
 		refreshList();
 	}
-	
+
 	private class ArticleUpdatedReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
-			final String tabname = _intent.getStringExtra(
-					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME);
-			final int seq = _intent.getIntExtra(
-					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_SEQ, -1);
-			final String user = _intent.getStringExtra(
-					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_USER);
-			final String thread = _intent.getStringExtra(
-					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_THREAD);
-			if (mTabname != null && tabname != null &&
-					matchingBroadcast(seq, user, thread)) {
+			final String tabname = _intent.getStringExtra(KidsBbs.PARAM_BASE
+					+ KidsBbsProvider.KEYB_TABNAME);
+			final int seq = _intent.getIntExtra(KidsBbs.PARAM_BASE
+					+ KidsBbsProvider.KEYA_SEQ, -1);
+			final String user = _intent.getStringExtra(KidsBbs.PARAM_BASE
+					+ KidsBbsProvider.KEYA_USER);
+			final String thread = _intent.getStringExtra(KidsBbs.PARAM_BASE
+					+ KidsBbsProvider.KEYA_THREAD);
+			if (mTabname != null && tabname != null
+					&& matchingBroadcast(seq, user, thread)) {
 				updateTitle();
 			}
 		}
 	}
-	
+
 	private class BoardUpdatedReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
-			final String tabname = _intent.getStringExtra(
-					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME);
-			if (mTabname != null && tabname != null &&
-					mTabname.equals(tabname)) {
+			final String tabname = _intent.getStringExtra(KidsBbs.PARAM_BASE
+					+ KidsBbsProvider.KEYB_TABNAME);
+			if (mTabname != null && tabname != null && mTabname.equals(tabname)) {
 				updateTitle();
 			}
 		}
 	}
-	
+
 	private ArticleUpdatedReceiver mReceiverArticleUpdated;
 	private BoardUpdatedReceiver mReceiverBoardUpdated;
-	
+
 	private void registerReceivers() {
 		IntentFilter filter;
 		mReceiverArticleUpdated = new ArticleUpdatedReceiver();
@@ -456,12 +453,12 @@ public abstract class KidsBbsAList extends ListActivity
 		filter = new IntentFilter(KidsBbs.BOARD_UPDATED);
 		registerReceiver(mReceiverBoardUpdated, filter);
 	}
-	
+
 	private void unregisterReceivers() {
 		unregisterReceiver(mReceiverArticleUpdated);
 		unregisterReceiver(mReceiverBoardUpdated);
 	}
-	
+
 	protected static final String[] FIELDS_TLIST = {
 		KidsBbsProvider.KEY_ID,
 		KidsBbsProvider.KEYA_SEQ,
@@ -483,8 +480,9 @@ public abstract class KidsBbsAList extends ListActivity
 		KidsBbsProvider.KEYA_BODY,
 		KidsBbsProvider.KEYA_READ,
 	};
-	protected class ArticlesAdapter extends CursorAdapter
-			implements FilterQueryProvider {
+
+	protected class ArticlesAdapter extends CursorAdapter implements
+			FilterQueryProvider {
 		public static final int COLUMN_ID = 0;
 		public static final int COLUMN_SEQ = 1;
 		public static final int COLUMN_USER = 2;
@@ -494,7 +492,7 @@ public abstract class KidsBbsAList extends ListActivity
 		public static final int COLUMN_BODY = 6;
 		public static final int COLUMN_READ = 7;
 		public static final int COLUMN_COUNT = 8;
-		
+
 		private Context mContext;
 		private LayoutInflater mInflater;
 		private Drawable mBgRead;
@@ -505,15 +503,15 @@ public abstract class KidsBbsAList extends ListActivity
 		public ArticlesAdapter(Context _context) {
 			super(_context, null, true);
 			mContext = _context;
-			mInflater = (LayoutInflater)mContext.getSystemService(
+			mInflater = (LayoutInflater) mContext.getSystemService(
 					Context.LAYOUT_INFLATER_SERVICE);
-			
+
 			final Resources resources = mContext.getResources();
 			mBgRead = resources.getDrawable(
 					R.drawable.list_item_background_read);
 			mBgUnread = resources.getDrawable(
 					R.drawable.list_item_background_unread);
-			
+
 			final Theme theme = _context.getTheme();
 			TypedArray array;
 			array = theme.obtainStyledAttributes(
@@ -524,7 +522,7 @@ public abstract class KidsBbsAList extends ListActivity
 					new int[] { android.R.attr.textColorSecondary });
 			mTextColorSecondary = resources.getColorStateList(
 					array.getResourceId(0, 0));
-			
+
 			setFilterQueryProvider(this);
 		}
 
@@ -538,11 +536,11 @@ public abstract class KidsBbsAList extends ListActivity
 
 		@Override
 		public void bindView(View _v, Context _context, Cursor _c) {
-			final Pattern PATTERN = Pattern.compile("^Re:\\s*",
-					Pattern.CASE_INSENSITIVE);
+			final Pattern PATTERN =
+				Pattern.compile("^Re:\\s*", Pattern.CASE_INSENSITIVE);
 			final String REPLACEMENT = "";
-			
-			final KidsBbsAItem itemView = (KidsBbsAItem)_v;
+
+			final KidsBbsAItem itemView = (KidsBbsAItem) _v;
 			itemView.mId = _c.getLong(COLUMN_ID);
 			itemView.mSeq = _c.getInt(COLUMN_SEQ);
 			itemView.mUser = _c.getString(COLUMN_USER);
@@ -556,7 +554,7 @@ public abstract class KidsBbsAList extends ListActivity
 			} else {
 				itemView.mCount = 1;
 			}
-			
+
 			String user = itemView.mUser;
 			if (itemView.mCount > 1) {
 				final int cnt = itemView.mCount - 1;
@@ -570,8 +568,8 @@ public abstract class KidsBbsAList extends ListActivity
 				final Matcher m = PATTERN.matcher(itemView.mTitle);
 				itemView.mTitle = m.replaceFirst(REPLACEMENT);
 			}
-			
-			final ViewHolder holder = (ViewHolder)itemView.getTag();
+
+			final ViewHolder holder = (ViewHolder) itemView.getTag();
 			holder.title.setText(itemView.mTitle);
 			holder.date.setText(itemView.mDate);
 			holder.username.setText(user);
@@ -601,14 +599,14 @@ public abstract class KidsBbsAList extends ListActivity
 					_parent, false);
 			final ViewHolder holder = new ViewHolder();
 			holder.item = v.findViewById(R.id.item);
-			holder.title = (TextView)v.findViewById(R.id.title);
-			holder.date = (TextView)v.findViewById(R.id.date);
-			holder.username = (TextView)v.findViewById(R.id.username);
-			holder.summary = (TextView)v.findViewById(R.id.summary);
+			holder.title = (TextView) v.findViewById(R.id.title);
+			holder.date = (TextView) v.findViewById(R.id.date);
+			holder.username = (TextView) v.findViewById(R.id.username);
+			holder.summary = (TextView) v.findViewById(R.id.summary);
 			v.setTag(holder);
 			return v;
 		}
-		
+
 		public Cursor runQuery(CharSequence _constraint) {
 			String where = mWhere;
 			if (where == null) {
@@ -616,9 +614,9 @@ public abstract class KidsBbsAList extends ListActivity
 			} else {
 				where += " AND ";
 			}
-			where += "(" +
-				KidsBbsProvider.KEYA_TITLE + " LIKE '%" + _constraint + "%' OR " +
-				KidsBbsProvider.KEYA_USER + " LIKE '%" + _constraint + "%')";
+			where += "(" + KidsBbsProvider.KEYA_TITLE + " LIKE '%"
+					+ _constraint + "%' OR " + KidsBbsProvider.KEYA_USER
+					+ " LIKE '%" + _constraint + "%')";
 			if (mHideRead) {
 				where += " AND " + mFields[ArticlesAdapter.COLUMN_READ] + "=0";
 			}

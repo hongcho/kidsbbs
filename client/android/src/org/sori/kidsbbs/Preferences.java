@@ -1,4 +1,4 @@
-// Copyright (c) 2010, Younghong "Hong" Cho <hongcho@sori.org>.
+// Copyright (c) 2010-2011, Younghong "Hong" Cho <hongcho@sori.org>.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,18 +41,15 @@ public class Preferences extends PreferenceActivity {
 	public static final String PREF_UPDATE_FREQ = "PREF_UPDATE_FREQ";
 	public static final String PREF_HIDE_READ = "PREF_HIDE_READ";
 	public static final String PREF_NOTIFICATION = "PREF_NOTIFICATION";
-	public static final String PREF_NOTIFICATION_LIGHTS =
-		"PREF_NOTIFICATION_LIGHTS";
-	public static final String PREF_NOTIFICATION_SOUND =
-		"PREF_NOTIFICATION_SOUND";
-	public static final String PREF_NOTIFICATION_VIBRATE =
-		"PREF_NOTIFICATION_VIBRATE";
+	public static final String PREF_NOTIFICATION_LIGHTS = "PREF_NOTIFICATION_LIGHTS";
+	public static final String PREF_NOTIFICATION_SOUND = "PREF_NOTIFICATION_SOUND";
+	public static final String PREF_NOTIFICATION_VIBRATE = "PREF_NOTIFICATION_VIBRATE";
 	public static final String PREF_ABOUT_KIDSBBS = "PREF_ABOUT_KIDSBBS";
 	public static final String PREF_ABOUT_APP = "PREF_ABOUT_APP";
-	
+
 	private static final int ABOUT_APP_ID = 0;
 	private static final int ABOUT_KIDSBBS_ID = 1;
-	
+
 	private LayoutInflater mInflater;
 
 	private SharedPreferences mPrefs;
@@ -62,6 +59,7 @@ public class Preferences extends PreferenceActivity {
 	private Preference mPrefNotificationVibrate;
 
 	private static String DEFAULT_UPDATE_FREQ = null;
+
 	public static final String getDefaultUpdateFreq(Context _context) {
 		if (DEFAULT_UPDATE_FREQ == null) {
 			DEFAULT_UPDATE_FREQ = _context.getResources().getString(
@@ -69,36 +67,36 @@ public class Preferences extends PreferenceActivity {
 		}
 		return DEFAULT_UPDATE_FREQ;
 	}
-	
+
 	private void notificationEnable(boolean _on) {
 		mPrefNotificationLights.setEnabled(_on);
 		mPrefNotificationSound.setEnabled(_on);
 		mPrefNotificationVibrate.setEnabled(_on);
 	}
-	
+
 	@Override
 	public void onCreate(Bundle _state) {
 		super.onCreate(_state);
 		addPreferencesFromResource(R.xml.userpreferences);
-		
+
 		mInflater = LayoutInflater.from(this);
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(
-    				getApplicationContext());
+				getApplicationContext());
 		mPrefNotification = findPreference(PREF_NOTIFICATION);
 		mPrefNotificationLights = findPreference(PREF_NOTIFICATION_LIGHTS);
 		mPrefNotificationSound = findPreference(PREF_NOTIFICATION_SOUND);
 		mPrefNotificationVibrate = findPreference(PREF_NOTIFICATION_VIBRATE);
-		
+
 		mPrefNotification.setOnPreferenceClickListener(
 				new Preference.OnPreferenceClickListener() {
 					public boolean onPreferenceClick(Preference _preference) {
-						notificationEnable(mPrefs.getBoolean(
-								PREF_NOTIFICATION, true));
+						notificationEnable(mPrefs.getBoolean(PREF_NOTIFICATION,
+								true));
 						return true;
 					}
 				});
-		
+
 		findPreference(PREF_ABOUT_KIDSBBS).setOnPreferenceClickListener(
 				new Preference.OnPreferenceClickListener() {
 					public boolean onPreferenceClick(Preference _preference) {
@@ -106,7 +104,7 @@ public class Preferences extends PreferenceActivity {
 						return true;
 					}
 				});
-		
+
 		findPreference(PREF_ABOUT_APP).setOnPreferenceClickListener(
 				new Preference.OnPreferenceClickListener() {
 					public boolean onPreferenceClick(Preference _preference) {
@@ -114,25 +112,25 @@ public class Preferences extends PreferenceActivity {
 						return true;
 					}
 				});
-		
+
 		notificationEnable(mPrefs.getBoolean(PREF_NOTIFICATION, true));
 	}
-	
+
 	private Dialog createAboutDialog(int _id_title, int _id_text) {
 		final String text = getResources().getString(_id_text);
 		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setTitle(_id_title);
 		final View v = mInflater.inflate(R.layout.about_dialog, null);
 		builder.setView(v);
-		final TextView tv = (TextView)v.findViewById(R.id.about_text);
+		final TextView tv = (TextView) v.findViewById(R.id.about_text);
 		tv.setText(text);
 		builder.setPositiveButton(android.R.string.ok, null);
 		return builder.create();
 	}
-	
+
 	@Override
 	protected Dialog onCreateDialog(int _id) {
-		switch(_id) {
+		switch (_id) {
 		case ABOUT_KIDSBBS_ID:
 			return createAboutDialog(R.string.about_kidsbbs_title,
 					R.string.about_kidsbbs_text);
