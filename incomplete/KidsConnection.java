@@ -35,41 +35,49 @@ import ch.ethz.ssh2.Session;
 
 public class KidsConnection {
 	private static final int BUF_SIZE = 512;
-	private static final int TIMEOUT = 500;	// in milliseconds
+	private static final int TIMEOUT = 500; // in milliseconds
 	private static final int WIDTH = 80;
 	private static final int HEIGHT = 24;
-	
+
 	private static final String STR_HOST = "203.231.233.47";
 	private static final String STR_KIDS = "kids";
 	private static final String STR_VT100 = "vt100";
-	
+
 	private Connection mConn = null;
 	private Session mSess = null;
 	private InputStream mStdout;
 	private InputStream mStderr;
 	private OutputStreamWriter mStdin;
-	
+
 	private VT220Screen mScreen;
 	private byte[] mBuf = new byte[BUF_SIZE];
-	
+
 	protected void finalize() throws Throwable {
 		close();
 	}
-	
+
 	// Custom exceptions
 	@SuppressWarnings("serial")
 	public class TimeoutException extends IOException {
-		public TimeoutException() { super("Timeout"); }
+		public TimeoutException() {
+			super("Timeout");
+		}
 	}
+
 	@SuppressWarnings("serial")
 	public class AuthenticationException extends IOException {
-		public AuthenticationException() { super("Authentication failed"); }
+		public AuthenticationException() {
+			super("Authentication failed");
+		}
 	}
+
 	@SuppressWarnings("serial")
 	public class EOFException extends IOException {
-		public EOFException() { super("EOF"); }
+		public EOFException() {
+			super("EOF");
+		}
 	}
-	
+
 	public void open() throws IOException {
 		mConn = new Connection(STR_HOST);
 		mConn.connect();
@@ -79,14 +87,14 @@ public class KidsConnection {
 		mSess = mConn.openSession();
 		mSess.requestPTY(STR_VT100, WIDTH, HEIGHT, 640, 480, null);
 		mSess.startShell();
-		
+
 		mScreen = new VT220Screen(WIDTH, HEIGHT);
-		
+
 		mStdout = mSess.getStdout();
 		mStderr = mSess.getStderr();
 		mStdin = new OutputStreamWriter(mSess.getStdin(), "EUC-KR");
 	}
-	
+
 	public void close() {
 		if (mSess != null) {
 			mSess.close();
@@ -95,31 +103,31 @@ public class KidsConnection {
 			mConn.close();
 		}
 	}
-	
+
 	private int read(byte[] _buf, int _size) throws IOException {
 		// Check for conditions.
 		if (mStdout.available() == 0 && mStderr.available() == 0) {
 			int conditions = mSess.waitForCondition(
-					ChannelCondition.STDOUT_DATA |
-					ChannelCondition.STDERR_DATA |
-					ChannelCondition.EOF,
+					ChannelCondition.STDOUT_DATA
+					| ChannelCondition.STDERR_DATA
+					| ChannelCondition.EOF,
 					TIMEOUT);
 			if ((conditions & ChannelCondition.TIMEOUT) != 0) {
 				throw new TimeoutException();
 			}
 			if ((conditions & ChannelCondition.EOF) != 0) {
-				if ((conditions & (ChannelCondition.STDOUT_DATA |
-						ChannelCondition.STDERR_DATA)) == 0) {
+				if ((conditions & (ChannelCondition.STDOUT_DATA
+						| ChannelCondition.STDERR_DATA)) == 0) {
 					throw new EOFException();
 				}
 			}
 		}
-		
+
 		// Ignore stderr.
 		while (mStderr.available() > 0) {
 			mStderr.read(_buf, 0, _size);
 		}
-		
+
 		// Read from the streams.
 		int len = 0;
 		while (mStdout.available() > 0 && len < _size) {
@@ -127,38 +135,37 @@ public class KidsConnection {
 		}
 		return len;
 	}
-	
+
 	public String dump() throws IOException {
 		return mScreen.dump();
 	}
-	
+
 	public String dumpLine(int _y) throws IOException {
 		return mScreen.dumpLine(_y);
 	}
-	
+
 	public String dumpCurrentLine() throws IOException {
 		return dumpLine(mScreen.getY());
 	}
-	
+
 	public String getLine(int _y, String _charset) throws IOException {
-		return new String(mScreen.getLine(_y),
-				0, mScreen.getWidth(), _charset); 
+		return new String(mScreen.getLine(_y), 0, mScreen.getWidth(), _charset);
 	}
-	
+
 	public String getCurrentLine(String _charset) throws IOException {
-		return getLine(mScreen.getY(), _charset); 
+		return getLine(mScreen.getY(), _charset);
 	}
-	
+
 	public int getInputBuf(byte[] _buf) {
 		return mScreen.getInputBuf(_buf);
 	}
-	
+
 	public String getInputString(String _charset) throws IOException {
 		byte[] buf = new byte[BUF_SIZE];
 		int len = getInputBuf(buf);
 		return new String(buf, 0, len, _charset);
 	}
-	
+
 	public void process() throws IOException {
 		try {
 			int len = read(mBuf, BUF_SIZE);
@@ -169,15 +176,16 @@ public class KidsConnection {
 			throw e;
 		}
 	}
-	
+
 	public void write(String _s, int _off, int _len) throws IOException {
 		mStdin.write(_s, _off, _len);
 		mStdin.flush();
 	}
+
 	public void write(String _s) throws IOException {
 		write(_s, 0, _s.length());
 	}
-	
+
 	public int getWidth() { return mScreen.getWidth(); }
 	public int getHeight() { return mScreen.getHeight(); }
 	public int getX() { return mScreen.getX(); }
