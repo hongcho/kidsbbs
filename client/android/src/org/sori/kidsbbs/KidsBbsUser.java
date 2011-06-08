@@ -31,56 +31,54 @@ import android.os.Bundle;
 
 public class KidsBbsUser extends KidsBbsAList {
 	private String mBoardUser;
-	
-    @Override
-    public void onCreate(Bundle _state) {
-        super.onCreate(_state);
-        
-        final Uri data = getIntent().getData();
-        mBoardUser = data.getQueryParameter(KidsBbs.PARAM_N_USER);
-        
-        setTitleCommon(getResources().getString(R.string.title_user));
-        setQueryBase(KidsBbsProvider.CONTENT_URISTR_LIST, FIELDS_LIST,
-        		KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "'");
-        
-        updateTitle();
-        
-        registerForContextMenu(getListView());
-        
-        initializeStates();
-    }
-    
-    protected void refreshList() {
-    	refreshListCommon();
-    }
-    
-    protected void updateTitle() {
-    	updateTitleCommon(
-    			getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
-    	    			KidsBbsProvider.SELECTION_UNREAD + " AND " +
-    	    			KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "'"),
-    	    	getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
-    	    			KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "'"));
-    }
-    
-    protected boolean matchingBroadcast(int _seq, String _user,
-    		String _thread) {
-    	return _user.equals(mBoardUser);
-    }
-   
-    protected void showItem(int _index) {
-    	final Cursor c = getItem(_index);
-    	final int seq = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
-		showItemCommon(this, KidsBbsView.class, KidsBbs.URI_INTENT_VIEW,
-				"&" + KidsBbs.PARAM_N_SEQ + "=" + seq);
-    }
-    
-    protected void toggleRead(int _index) {
-    	toggleReadOne(getItem(_index));
-    }
-    
-    protected void toggleAllRead() {
-    	toggleAllReadCommon(
-    			KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "' AND ");
-    }
+
+	@Override
+	public void onCreate(Bundle _state) {
+		super.onCreate(_state);
+
+		final Uri data = getIntent().getData();
+		mBoardUser = data.getQueryParameter(KidsBbs.PARAM_N_USER);
+
+		setTitleCommon(getResources().getString(R.string.title_user));
+		setQueryBase(KidsBbsProvider.CONTENT_URISTR_LIST, FIELDS_LIST,
+				KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "'");
+
+		updateTitle();
+
+		registerForContextMenu(getListView());
+
+		initializeStates();
+	}
+
+	protected void refreshList() {
+		refreshListCommon();
+	}
+
+	protected void updateTitle() {
+		updateTitleCommon(getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
+				KidsBbsProvider.SELECTION_UNREAD + " AND "
+						+ KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "'"),
+				getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
+						KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "'"));
+	}
+
+	protected boolean matchingBroadcast(int _seq, String _user, String _thread) {
+		return _user.equals(mBoardUser);
+	}
+
+	protected void showItem(int _index) {
+		final Cursor c = getItem(_index);
+		final int seq = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
+		showItemCommon(this, KidsBbsView.class, KidsBbs.URI_INTENT_VIEW, "&"
+				+ KidsBbs.PARAM_N_SEQ + "=" + seq);
+	}
+
+	protected void toggleRead(int _index) {
+		toggleReadOne(getItem(_index));
+	}
+
+	protected void toggleAllRead() {
+		toggleAllReadCommon(KidsBbsProvider.KEYA_USER + "='" + mBoardUser
+				+ "' AND ");
+	}
 }

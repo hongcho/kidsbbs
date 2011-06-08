@@ -62,9 +62,9 @@ public class KidsBbsBList extends ListActivity {
 	private static final int MENU_PREFERENCES = Menu.FIRST + 1;
 	private static final int MENU_SHOW = Menu.FIRST + 2;
 	private static final int MENU_SELECT = Menu.FIRST + 3;
-	
+
 	private static final String KEY_SELECTED_ITEM = "KEY_SELECTED_ITEM";
-	
+
 	private ContentResolver mResolver;
 	private NotificationManager mNotificationManager;
 
@@ -84,21 +84,21 @@ public class KidsBbsBList extends ListActivity {
 	private String[] mTabnames;
 	private boolean[] mSelectedOld;
 	private boolean[] mSelectedNew;
-	
+
 	@Override
 	public void onCreate(Bundle _state) {
 		super.onCreate(_state);
 		setContentView(R.layout.board_list);
 
 		mTitleBase = getResources().getString(R.string.title_blist);
-		mStatusView = (TextView)findViewById(R.id.status);
-		
+		mStatusView = (TextView) findViewById(R.id.status);
+
 		final Resources resources = getResources();
 		mUpdateText = resources.getString(R.string.update_text);
 		mUpdateErrorText = resources.getString(R.string.update_error_text);
-		
+
 		mResolver = getContentResolver();
-		mNotificationManager = (NotificationManager)getSystemService(
+		mNotificationManager = (NotificationManager) getSystemService(
 				Context.NOTIFICATION_SERVICE);
 
 		mAdapter = new BoardsAdapter(this);
@@ -109,16 +109,16 @@ public class KidsBbsBList extends ListActivity {
 
 		initializeStates();
 	}
-	
+
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
 		unregisterReceivers();
-		
+
 		mAdapter.changeCursor(null);
 		mAdapter = null;
 	}
-	
+
 	@Override
 	protected void onResume() {
 		super.onResume();
@@ -126,8 +126,7 @@ public class KidsBbsBList extends ListActivity {
 	}
 
 	@Override
-	protected void onListItemClick(ListView _l, View _v, int _position,
-			long _id) {
+	protected void onListItemClick(ListView _l, View _v, int _position, long _id) {
 		super.onListItemClick(_l, _v, _position, _id);
 		showItem(_position);
 	}
@@ -135,7 +134,7 @@ public class KidsBbsBList extends ListActivity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu _menu) {
 		super.onCreateOptionsMenu(_menu);
-		
+
 		MenuItem item;
 		item = _menu.add(0, MENU_SELECT, Menu.NONE, R.string.menu_select);
 		item.setIcon(getResources().getIdentifier(
@@ -186,8 +185,7 @@ public class KidsBbsBList extends ListActivity {
 		super.onContextItemSelected(_item);
 		switch (_item.getItemId()) {
 		case MENU_SHOW:
-			showItem(((AdapterView.AdapterContextMenuInfo)
-					_item.getMenuInfo()).position);
+			showItem(((AdapterView.AdapterContextMenuInfo) _item.getMenuInfo()).position);
 			return true;
 		}
 		return false;
@@ -202,11 +200,9 @@ public class KidsBbsBList extends ListActivity {
 
 		@Override
 		protected Cursor doInBackground(Void... _args) {
-			final String ORDERBY =
-				KidsBbsProvider.ORDER_BY_COUNT_DESC + "," +
-				KidsBbsProvider.ORDER_BY_TITLE;
-			return mResolver.query(
-					KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
+			final String ORDERBY = KidsBbsProvider.ORDER_BY_COUNT_DESC + ","
+					+ KidsBbsProvider.ORDER_BY_TITLE;
+			return mResolver.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
 					KidsBbsProvider.SELECTION_STATE_ACTIVE, null, ORDERBY);
 		}
 
@@ -227,8 +223,8 @@ public class KidsBbsBList extends ListActivity {
 	}
 
 	private boolean isUpdating() {
-		return mLastUpdate != null &&
-			!mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED);
+		return mLastUpdate != null
+				&& !mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED);
 	}
 
 	private void refreshList() {
@@ -239,25 +235,22 @@ public class KidsBbsBList extends ListActivity {
 	}
 
 	private void showItem(int _index) {
-		final Cursor c = (Cursor)mAdapter.getItem(_index);
+		final Cursor c = (Cursor) mAdapter.getItem(_index);
 		final String tabname = c.getString(BoardsAdapter.COLUMN_TABNAME);
 		final String title = c.getString(BoardsAdapter.COLUMN_TITLE);
-		final Uri data = Uri.parse(KidsBbs.URI_INTENT_TLIST +
-				KidsBbs.PARAM_N_TABNAME + "=" + tabname +
-				"&" + KidsBbs.PARAM_N_TITLE + "=" + title);
+		final Uri data = Uri.parse(KidsBbs.URI_INTENT_TLIST
+				+ KidsBbs.PARAM_N_TABNAME + "=" + tabname + "&"
+				+ KidsBbs.PARAM_N_TITLE + "=" + title);
 		final Intent intent = new Intent(this, KidsBbsTList.class);
 		intent.setData(data);
 		startActivity(intent);
 	}
-	
+
 	private void selectBoards() {
-		final String[] FIELDS = {
-			KidsBbsProvider.KEYB_TABNAME,
-			KidsBbsProvider.KEYB_TITLE,
-			KidsBbsProvider.KEYB_STATE,
-		};
-		final String ORDERBY = KidsBbsProvider.ORDER_BY_STATE_DESC + "," +
-			KidsBbsProvider.ORDER_BY_TITLE;
+		final String[] FIELDS = { KidsBbsProvider.KEYB_TABNAME,
+				KidsBbsProvider.KEYB_TITLE, KidsBbsProvider.KEYB_STATE, };
+		final String ORDERBY = KidsBbsProvider.ORDER_BY_STATE_DESC + ","
+				+ KidsBbsProvider.ORDER_BY_TITLE;
 		String[] titles = null;
 		final Cursor c = mResolver.query(KidsBbsProvider.CONTENT_URI_BOARDS,
 				FIELDS, null, null, ORDERBY);
@@ -271,13 +264,12 @@ public class KidsBbsBList extends ListActivity {
 				int i = 0;
 				c.moveToFirst();
 				do {
-					mTabnames[i] = c.getString(c.getColumnIndex(
-							KidsBbsProvider.KEYB_TABNAME));
-					titles[i] = c.getString(c.getColumnIndex(
-							KidsBbsProvider.KEYB_TITLE));
-					mSelectedOld[i] = c.getInt(c.getColumnIndex(
-							KidsBbsProvider.KEYB_STATE)) !=
-								KidsBbsProvider.STATE_PAUSED;
+					mTabnames[i] = c.getString(
+							c.getColumnIndex(KidsBbsProvider.KEYB_TABNAME));
+					titles[i] = c.getString(
+							c.getColumnIndex(KidsBbsProvider.KEYB_TITLE));
+					mSelectedOld[i] = c.getInt(
+							c.getColumnIndex(KidsBbsProvider.KEYB_STATE)) != KidsBbsProvider.STATE_PAUSED;
 					mSelectedNew[i] = mSelectedOld[i];
 					++i;
 				} while (c.moveToNext());
@@ -289,35 +281,36 @@ public class KidsBbsBList extends ListActivity {
 			builder.setTitle(R.string.board_selection_title);
 			builder.setMultiChoiceItems(titles, mSelectedNew,
 					new DialogInterface.OnMultiChoiceClickListener() {
-				public void onClick(DialogInterface _dialog, int _which,
-						boolean _isChecked) {
-					mSelectedNew[_which] = _isChecked;
-				}
-			});
+						public void onClick(DialogInterface _dialog,
+								int _which, boolean _isChecked) {
+							mSelectedNew[_which] = _isChecked;
+						}
+					});
 			builder.setPositiveButton(android.R.string.ok,
 					new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface _dialog, int _which) {
-					int nUpdated = 0;
-					for (int i = 0; i < mSelectedNew.length; ++i) {
-						if (mSelectedNew[i] == mSelectedOld[i]) {
-							continue;
+						public void onClick(DialogInterface _dialog, int _which) {
+							int nUpdated = 0;
+							for (int i = 0; i < mSelectedNew.length; ++i) {
+								if (mSelectedNew[i] == mSelectedOld[i]) {
+									continue;
+								}
+								++nUpdated;
+								ContentValues values = new ContentValues();
+								values.put(KidsBbsProvider.KEYB_STATE,
+										mSelectedNew[i] ? KidsBbsProvider.STATE_SELECTED
+												: KidsBbsProvider.STATE_PAUSED);
+								mResolver.update(
+										KidsBbsProvider.CONTENT_URI_BOARDS,
+										values,
+										KidsBbsProvider.SELECTION_TABNAME,
+										new String[] { mTabnames[i] });
+							}
+							if (nUpdated > 0) {
+								startService(new Intent(KidsBbsBList.this,
+										KidsBbsService.class));
+							}
 						}
-						++nUpdated;
-						ContentValues values = new ContentValues();
-						values.put(KidsBbsProvider.KEYB_STATE,
-								mSelectedNew[i] ?
-									KidsBbsProvider.STATE_SELECTED :
-									KidsBbsProvider.STATE_PAUSED);
-						mResolver.update(KidsBbsProvider.CONTENT_URI_BOARDS,
-								values, KidsBbsProvider.SELECTION_TABNAME,
-								new String[] { mTabnames[i] });
-					}
-					if (nUpdated > 0) {
-						startService(new Intent(KidsBbsBList.this,
-								KidsBbsService.class));
-					}
-				}
-			});
+					});
 			builder.setNegativeButton(android.R.string.cancel, null);
 			builder.create().show();
 		}
@@ -336,11 +329,11 @@ public class KidsBbsBList extends ListActivity {
 		mSavedItemPosition = _state.getInt(KEY_SELECTED_ITEM, -1);
 		restoreListPosition();
 	}
-	
+
 	private void saveListPosition() {
 		mSavedItemPosition = getSelectedItemPosition();
 	}
-	
+
 	private void restoreListPosition() {
 		setSelection(mSavedItemPosition);
 	}
@@ -348,16 +341,17 @@ public class KidsBbsBList extends ListActivity {
 	private void initializeStates() {
 		refreshList();
 	}
-	
+
 	private void setError() {
 		mError = true;
 		mStatusView.setVisibility(View.VISIBLE);
 	}
+
 	private void clearError() {
 		mError = false;
 		mStatusView.setVisibility(View.GONE);
 	}
-	
+
 	private class UpdateErrorReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
@@ -365,17 +359,17 @@ public class KidsBbsBList extends ListActivity {
 			setError();
 		}
 	}
-	
+
 	private class BoardUpdatedReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
 			clearError();
 		}
 	}
-	
+
 	private UpdateErrorReceiver mReceiverError;
 	private BoardUpdatedReceiver mReceiverBoard;
-	
+
 	private void registerReceivers() {
 		IntentFilter filter;
 		mReceiverError = new UpdateErrorReceiver();
@@ -385,25 +379,26 @@ public class KidsBbsBList extends ListActivity {
 		filter = new IntentFilter(KidsBbs.BOARD_UPDATED);
 		registerReceiver(mReceiverBoard, filter);
 	}
-	
+
 	private void unregisterReceivers() {
 		unregisterReceiver(mReceiverError);
 		unregisterReceiver(mReceiverBoard);
 	}
-	
+
 	private static final String[] FIELDS = {
 		KidsBbsProvider.KEY_ID,
 		KidsBbsProvider.KEYB_TABNAME,
 		KidsBbsProvider.KEYB_TITLE,
 		KidsBbsProvider.KEYB_COUNT,
 	};
-	private class BoardsAdapter extends CursorAdapter
-			implements FilterQueryProvider {
+
+	private class BoardsAdapter extends CursorAdapter implements
+			FilterQueryProvider {
 		public static final int COLUMN_ID = 0;
 		public static final int COLUMN_TABNAME = 1;
 		public static final int COLUMN_TITLE = 2;
 		public static final int COLUMN_COUNT = 3;
-		
+
 		private Context mContext;
 		private LayoutInflater mInflater;
 		private Drawable mBgRead;
@@ -414,15 +409,15 @@ public class KidsBbsBList extends ListActivity {
 		public BoardsAdapter(Context _context) {
 			super(_context, null, true);
 			mContext = _context;
-			mInflater = (LayoutInflater)mContext.getSystemService(
-					Context.LAYOUT_INFLATER_SERVICE);
-			
+			mInflater = (LayoutInflater) mContext
+					.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
 			final Resources resources = mContext.getResources();
 			mBgRead = resources.getDrawable(
 					R.drawable.list_item_background_read);
 			mBgUnread = resources.getDrawable(
 					R.drawable.list_item_background_unread);
-			
+
 			final Theme theme = _context.getTheme();
 			TypedArray array;
 			array = theme.obtainStyledAttributes(
@@ -433,7 +428,7 @@ public class KidsBbsBList extends ListActivity {
 					new int[] { android.R.attr.textColorSecondary });
 			mTextColorSecondary = resources.getColorStateList(
 					array.getResourceId(0, 0));
-			
+
 			setFilterQueryProvider(this);
 		}
 
@@ -445,13 +440,13 @@ public class KidsBbsBList extends ListActivity {
 
 		@Override
 		public void bindView(View _v, Context _context, Cursor _c) {
-			final KidsBbsBItem itemView = (KidsBbsBItem)_v;
+			final KidsBbsBItem itemView = (KidsBbsBItem) _v;
 			itemView.mId = _c.getLong(COLUMN_ID);
 			itemView.mTabname = _c.getString(COLUMN_TABNAME);
 			itemView.mTitle = _c.getString(COLUMN_TITLE);
 			itemView.mCount = _c.getInt(COLUMN_COUNT);
-			
-			final ViewHolder holder = (ViewHolder)itemView.getTag();
+
+			final ViewHolder holder = (ViewHolder) itemView.getTag();
 			holder.title.setText(itemView.mTitle);
 			holder.count.setText(Integer.toString(itemView.mCount));
 			if (itemView.mCount > 0) {
@@ -471,32 +466,30 @@ public class KidsBbsBList extends ListActivity {
 
 		@Override
 		public View newView(Context _context, Cursor _c, ViewGroup _parent) {
-			final View v = mInflater.inflate(R.layout.board_list_item,
-					_parent, false);
+			final View v = mInflater.inflate(R.layout.board_list_item, _parent,
+					false);
 			final ViewHolder holder = new ViewHolder();
 			holder.item = v.findViewById(R.id.item);
-			holder.title = (TextView)v.findViewById(R.id.title);
-			holder.count = (TextView)v.findViewById(R.id.count);
+			holder.title = (TextView) v.findViewById(R.id.title);
+			holder.count = (TextView) v.findViewById(R.id.count);
 			v.setTag(holder);
 			return v;
 		}
-		
+
 		@Override
 		protected void onContentChanged() {
 			super.onContentChanged();
 			updateTitle();
 		}
-		
+
 		public Cursor runQuery(CharSequence _constraint) {
-			final String WHERE =
-				KidsBbsProvider.SELECTION_STATE_ACTIVE + " AND " +
-				KidsBbsProvider.KEYB_TITLE + " LIKE '%" + _constraint + "%'";
-			final String ORDERBY =
-				KidsBbsProvider.ORDER_BY_COUNT_DESC + "," +
-				KidsBbsProvider.ORDER_BY_TITLE;
-			return mResolver.query(
-					KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS, WHERE,
-					null, ORDERBY);
+			final String WHERE = KidsBbsProvider.SELECTION_STATE_ACTIVE
+					+ " AND " + KidsBbsProvider.KEYB_TITLE + " LIKE '%"
+					+ _constraint + "%'";
+			final String ORDERBY = KidsBbsProvider.ORDER_BY_COUNT_DESC + ","
+					+ KidsBbsProvider.ORDER_BY_TITLE;
+			return mResolver.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
+					WHERE, null, ORDERBY);
 		}
 	}
 }

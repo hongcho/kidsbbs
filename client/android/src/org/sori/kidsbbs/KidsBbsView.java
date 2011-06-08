@@ -54,12 +54,12 @@ public class KidsBbsView extends Activity {
 
 	private String mBoardTitle;
 	private String mTabname;
-	
+
 	private ContentResolver mResolver;
-	
+
 	private Uri mUri;
 	private String mWhere;
-	
+
 	private int mSeq;
 	private String mUser;
 	private String mAuthor;
@@ -67,7 +67,7 @@ public class KidsBbsView extends Activity {
 	private String mTitle;
 	private String mThread;
 	private String mBody;
-	
+
 	@Override
 	public void onCreate(Bundle _state) {
 		super.onCreate(_state);
@@ -76,22 +76,21 @@ public class KidsBbsView extends Activity {
 		final Uri data = getIntent().getData();
 		mTabname = data.getQueryParameter(KidsBbs.PARAM_N_TABNAME);
 		mBoardTitle = data.getQueryParameter(KidsBbs.PARAM_N_TITLE);
-		mSeq = Integer.parseInt(data.getQueryParameter(
-				KidsBbs.PARAM_N_SEQ));
+		mSeq = Integer.parseInt(data.getQueryParameter(KidsBbs.PARAM_N_SEQ));
 		setTitle(mSeq + " in [" + mBoardTitle + "]");
-		
+
 		mResolver = getContentResolver();
-		
+
 		mUri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + mTabname);
 		mWhere = KidsBbsProvider.KEYA_SEQ + "=" + mSeq;
-		
-		mStatusView = (TextView)findViewById(R.id.status);
+
+		mStatusView = (TextView) findViewById(R.id.status);
 		mStatusView.setVisibility(View.GONE);
 
-		mTitleView = (TextView)findViewById(R.id.title);
-		mUserView = (TextView)findViewById(R.id.username);
-		mDateView = (TextView)findViewById(R.id.date);
-		mBodyView = (TextView)findViewById(R.id.body);
+		mTitleView = (TextView) findViewById(R.id.title);
+		mUserView = (TextView) findViewById(R.id.username);
+		mDateView = (TextView) findViewById(R.id.date);
+		mBodyView = (TextView) findViewById(R.id.body);
 
 		mTitleView.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
@@ -105,10 +104,10 @@ public class KidsBbsView extends Activity {
 		});
 
 		registerReceivers();
-		
+
 		initializeStates();
 	}
-	
+
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
@@ -118,7 +117,7 @@ public class KidsBbsView extends Activity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu _menu) {
 		super.onCreateOptionsMenu(_menu);
-		
+
 		MenuItem item;
 		item = _menu.add(0, MENU_REFRESH, Menu.NONE, R.string.menu_refresh);
 		item.setIcon(getResources().getIdentifier(
@@ -167,24 +166,20 @@ public class KidsBbsView extends Activity {
 			if (_c == null || _c.isClosed() || _c.getCount() <= 0) {
 				return;
 			}
-			
+
 			_c.moveToFirst();
-			mSeq = _c.getInt(_c.getColumnIndex(
-					KidsBbsProvider.KEYA_SEQ));
-			mUser = _c.getString(_c.getColumnIndex(
-					KidsBbsProvider.KEYA_USER));
-			mAuthor = _c.getString(_c.getColumnIndex(
-					KidsBbsProvider.KEYA_AUTHOR));
-			mDate = _c.getString(_c.getColumnIndex(
-					KidsBbsProvider.KEYA_DATE));
+			mSeq = _c.getInt(_c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
+			mUser = _c.getString(_c.getColumnIndex(KidsBbsProvider.KEYA_USER));
+			mAuthor = _c.getString(
+					_c.getColumnIndex(KidsBbsProvider.KEYA_AUTHOR));
+			mDate = _c.getString(_c.getColumnIndex(KidsBbsProvider.KEYA_DATE));
 			mDate = KidsBbs.KidsToLocalDateString(mDate);
-			mTitle = _c.getString(_c.getColumnIndex(
-					KidsBbsProvider.KEYA_TITLE));
-			mThread = _c.getString(_c.getColumnIndex(
-					KidsBbsProvider.KEYA_THREAD));
-			mBody = _c.getString(_c.getColumnIndex(
-					KidsBbsProvider.KEYA_BODY));
-			
+			mTitle = _c.getString(
+					_c.getColumnIndex(KidsBbsProvider.KEYA_TITLE));
+			mThread = _c.getString(
+					_c.getColumnIndex(KidsBbsProvider.KEYA_THREAD));
+			mBody = _c.getString(_c.getColumnIndex(KidsBbsProvider.KEYA_BODY));
+
 			if (KidsBbs.updateArticleRead(mResolver, mTabname, mSeq, true)) {
 				KidsBbs.announceArticleUpdated(KidsBbsView.this, mTabname,
 						mSeq, mUser, mThread);
@@ -201,8 +196,8 @@ public class KidsBbsView extends Activity {
 	}
 
 	private boolean isUpdating() {
-		return mLastUpdate != null &&
-			!mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED);
+		return mLastUpdate != null
+				&& !mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED);
 	}
 
 	private void refreshView() {
@@ -214,10 +209,10 @@ public class KidsBbsView extends Activity {
 
 	private void startThreadView() {
 		if (mThread != null) {
-			final Uri data = Uri.parse(KidsBbs.URI_INTENT_THREAD +
-					KidsBbs.PARAM_N_TABNAME + "=" + mTabname +
-					"&" + KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle +
-					"&" + KidsBbs.PARAM_N_THREAD + "=" + mThread);
+			final Uri data = Uri.parse(KidsBbs.URI_INTENT_THREAD
+					+ KidsBbs.PARAM_N_TABNAME + "=" + mTabname + "&"
+					+ KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle + "&"
+					+ KidsBbs.PARAM_N_THREAD + "=" + mThread);
 			final Intent intent = new Intent(this, KidsBbsThread.class);
 			intent.setData(data);
 			startActivity(intent);
@@ -226,10 +221,10 @@ public class KidsBbsView extends Activity {
 
 	private void startUserView() {
 		if (mUser != null) {
-			final Uri data = Uri.parse(KidsBbs.URI_INTENT_USER +
-					KidsBbs.PARAM_N_TABNAME + "=" + mTabname +
-					"&" + KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle +
-					"&" + KidsBbs.PARAM_N_USER + "=" + mUser);
+			final Uri data = Uri.parse(KidsBbs.URI_INTENT_USER
+					+ KidsBbs.PARAM_N_TABNAME + "=" + mTabname + "&"
+					+ KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle + "&"
+					+ KidsBbs.PARAM_N_USER + "=" + mUser);
 			final Intent intent = new Intent(this, KidsBbsUser.class);
 			intent.setData(data);
 			startActivity(intent);
@@ -260,8 +255,7 @@ public class KidsBbsView extends Activity {
 	}
 
 	private void initializeStates() {
-		final SavedStates save =
-			(SavedStates)getLastNonConfigurationInstance();
+		final SavedStates save = (SavedStates) getLastNonConfigurationInstance();
 		if (save == null) {
 			refreshView();
 		} else {
@@ -275,30 +269,30 @@ public class KidsBbsView extends Activity {
 			updateView();
 		}
 	}
-	
+
 	private class ArticleUpdatedReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
-			final String tabname = _intent.getStringExtra(
-					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYB_TABNAME);
-			final int seq = _intent.getIntExtra(
-					KidsBbs.PARAM_BASE + KidsBbsProvider.KEYA_SEQ, -1);
-			if (mTabname != null && tabname != null &&
-					tabname.equals(mTabname) && seq == mSeq) {
+			final String tabname = _intent.getStringExtra(KidsBbs.PARAM_BASE
+					+ KidsBbsProvider.KEYB_TABNAME);
+			final int seq = _intent.getIntExtra(KidsBbs.PARAM_BASE
+					+ KidsBbsProvider.KEYA_SEQ, -1);
+			if (mTabname != null && tabname != null && tabname.equals(mTabname)
+					&& seq == mSeq) {
 				refreshView();
 			}
 		}
 	}
-	
+
 	private ArticleUpdatedReceiver mReceiver;
-	
+
 	private void registerReceivers() {
 		IntentFilter filter;
 		filter = new IntentFilter(KidsBbs.ARTICLE_UPDATED);
 		mReceiver = new ArticleUpdatedReceiver();
 		registerReceiver(mReceiver, filter);
 	}
-	
+
 	private void unregisterReceivers() {
 		unregisterReceiver(mReceiver);
 	}

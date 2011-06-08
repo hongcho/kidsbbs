@@ -67,20 +67,20 @@ public class KidsBbs extends Activity {
 	public static final String BCAST_BASE = PKG_BASE + "broadcast.";
 	public static final String PARAM_BASE = PKG_BASE + "param.";
 	public static final String ALARM_BASE = PKG_BASE + "alarm.";
-	
+
 	public static final String BOARD_UPDATED = BCAST_BASE + "BoardUpdated";
 	public static final String ARTICLE_UPDATED = BCAST_BASE + "ArticleUpdated";
 	public static final String UPDATE_ERROR = BCAST_BASE + "UpdateError";
 
 	private static final String URL_BASE = "http://sori.org/kids/kids.php?_o=1&";
-	public static final String URL_BLIST = URL_BASE; 
+	public static final String URL_BLIST = URL_BASE;
 	public static final String URL_PLIST = URL_BASE + "m=plist&";
 	public static final String URL_LIST = URL_BASE + "m=list&";
 	public static final String URL_TLIST = URL_BASE + "m=tlist&";
 	public static final String URL_THREAD = URL_BASE + "m=thread&";
 	public static final String URL_USER = URL_BASE + "m=user&";
 	public static final String URL_VIEW = URL_BASE + "m=view&";
-	
+
 	private static final String URI_BASE = "content:/kidsbbs/";
 	public static final String URI_INTENT_TLIST = URI_BASE + "tlist?";
 	public static final String URI_INTENT_THREAD = URI_BASE + "thread?";
@@ -96,10 +96,10 @@ public class KidsBbs extends Activity {
 	public static final String PARAM_N_START = "s";
 	public static final String PARAM_N_COUNT = "n";
 	public static final String PARAM_N_TABNAME = "tn";
-	
+
 	private static final String DATE_INVALID = "0000-00-00 00:00:00";
 	private static final String DATESHORT_INVALID = "0000-00-00";
-	//private static final String DATE_FORMAT = "MMM dd, yyyy h:mm:ss aa";
+	// private static final String DATE_FORMAT = "MMM dd, yyyy h:mm:ss aa";
 	private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
 	private static final DateFormat DF_TIME =
@@ -113,7 +113,7 @@ public class KidsBbs extends Activity {
 		DF_KIDS = new SimpleDateFormat(DATE_FORMAT);
 		DF_KIDS.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
 	}
-	
+
 	public static final int NOTIFICATION_NEW_ARTICLE = 0;
 
 	private static final int CONN_TIMEOUT = 30 * 1000; // 30 seconds
@@ -123,7 +123,7 @@ public class KidsBbs extends Activity {
 	public static final int MAX_FIRST_ARTICLES = 100;
 	public static final String KST_DIFF = "'-9 hours'";
 	public static final String MAX_TIME = "'-" + MAX_DAYS + " days'";
-	
+
 	public static final Date KidsToLocalDate(String _dateString) {
 		try {
 			return DF_FULL.parse(KidsToLocalDateString(_dateString));
@@ -131,7 +131,7 @@ public class KidsBbs extends Activity {
 			return null;
 		}
 	}
-	
+
 	public static final String GetShortDateString(String _dateString) {
 		try {
 			final Date local = DF_FULL.parse(_dateString);
@@ -147,7 +147,7 @@ public class KidsBbs extends Activity {
 			return DATESHORT_INVALID;
 		}
 	}
-	
+
 	public static final String KidsToLocalDateString(String _dateString) {
 		try {
 			Date date = DF_KIDS.parse(_dateString);
@@ -156,7 +156,7 @@ public class KidsBbs extends Activity {
 			return DATE_INVALID;
 		}
 	}
-	
+
 	public static final String LocalToKidsDateString(String _dateString) {
 		try {
 			final Date date = DF_FULL.parse(_dateString);
@@ -169,14 +169,9 @@ public class KidsBbs extends Activity {
 	public static final String generateSummary(String _s) {
 		final Pattern[] PATTERNS = {
 			Pattern.compile("\n+"),
-			Pattern.compile("\\s+"),
-			Pattern.compile("^\\s+"),
+			Pattern.compile("\\s+"), Pattern.compile("^\\s+"),
 		};
-		final String[] REPLACEMENTS = {
-			" ",
-			" ",
-			"",
-		};
+		final String[] REPLACEMENTS = { " ", " ", "", };
 		if (_s == null) {
 			return null;
 		}
@@ -187,8 +182,7 @@ public class KidsBbs extends Activity {
 		return _s;
 	}
 
-	public static final ArticleInfo parseArticle(String _tabname,
-			Element _item) {
+	public static final ArticleInfo parseArticle(String _tabname, Element _item) {
 		NodeList nl;
 		Node n;
 		try {
@@ -196,24 +190,24 @@ public class KidsBbs extends Activity {
 			if (nl == null || nl.getLength() <= 0) {
 				throw new KidsParseException("ParseException: THREAD");
 			}
-			n = ((Element)nl.item(0)).getFirstChild();
+			n = ((Element) nl.item(0)).getFirstChild();
 			if (n == null) {
 				throw new KidsParseException("ParseException: THREAD");
 			}
 			final String thread = n != null ? n.getNodeValue() : null;
-			
+
 			nl = _item.getElementsByTagName("TITLE");
 			if (nl == null || nl.getLength() <= 0) {
 				throw new KidsParseException("ParseException: TITLE");
 			}
-			n = ((Element)nl.item(0)).getFirstChild();
+			n = ((Element) nl.item(0)).getFirstChild();
 			final String title = n != null ? n.getNodeValue() : "";
 
 			nl = _item.getElementsByTagName("SEQ");
 			if (nl == null || nl.getLength() <= 0) {
 				throw new KidsParseException("ParseException: SEQ");
 			}
-			n = ((Element)nl.item(0)).getFirstChild();
+			n = ((Element) nl.item(0)).getFirstChild();
 			if (n == null) {
 				throw new KidsParseException("ParseException: SEQ");
 			}
@@ -223,7 +217,7 @@ public class KidsBbs extends Activity {
 			if (nl == null || nl.getLength() <= 0) {
 				throw new KidsParseException("ParseException: DATE");
 			}
-			n = ((Element)nl.item(0)).getFirstChild();
+			n = ((Element) nl.item(0)).getFirstChild();
 			if (n == null) {
 				throw new KidsParseException("ParseException: DATE");
 			}
@@ -233,7 +227,7 @@ public class KidsBbs extends Activity {
 			if (nl == null || nl.getLength() <= 0) {
 				throw new KidsParseException("ParseException: USER");
 			}
-			n = ((Element)nl.item(0)).getFirstChild();
+			n = ((Element) nl.item(0)).getFirstChild();
 			if (n == null) {
 				throw new KidsParseException("ParseException: USER");
 			}
@@ -243,7 +237,7 @@ public class KidsBbs extends Activity {
 			if (nl == null || nl.getLength() <= 0) {
 				throw new KidsParseException("ParseException: AUTHOR");
 			}
-			n = ((Element)nl.item(0)).getFirstChild();
+			n = ((Element) nl.item(0)).getFirstChild();
 			if (n == null) {
 				throw new KidsParseException("ParseException: AUTHOR");
 			}
@@ -252,7 +246,7 @@ public class KidsBbs extends Activity {
 			String desc = "";
 			nl = _item.getElementsByTagName("DESCRIPTION");
 			if (nl != null && nl.getLength() > 0) {
-				n = ((Element)nl.item(0)).getFirstChild();
+				n = ((Element) nl.item(0)).getFirstChild();
 				desc = n != null ? n.getNodeValue() : "";
 			}
 
@@ -263,15 +257,13 @@ public class KidsBbs extends Activity {
 			return null;
 		}
 	}
-	
+
 	public static final ArrayList<ArticleInfo> getArticles(String _board,
 			int _type, int _start) throws Exception {
 		final ArrayList<ArticleInfo> articles = new ArrayList<ArticleInfo>();
 		final String tabname = BoardInfo.buildTabname(_board, _type);
-		final String urlString = URL_PLIST +
-			PARAM_N_BOARD + "=" + _board +
-			"&" + PARAM_N_TYPE + "=" + _type +
-			"&" + PARAM_N_SEQ + "=" + _start;
+		final String urlString = URL_PLIST + PARAM_N_BOARD + "=" + _board + "&"
+				+ PARAM_N_TYPE + "=" + _type + "&" + PARAM_N_SEQ + "=" + _start;
 		final HttpClient client = new DefaultHttpClient();
 		client.getParams().setParameter(
 				HttpConnectionParams.CONNECTION_TIMEOUT, CONN_TIMEOUT);
@@ -280,8 +272,7 @@ public class KidsBbs extends Activity {
 		final HttpEntity entity = response.getEntity();
 		if (entity == null) {
 			// ???
-		} else if (response.getStatusLine().getStatusCode() ==
-				HttpStatus.SC_OK) {
+		} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 			final InputStream is = entity.getContent();
 			final DocumentBuilder db =
 				DocumentBuilderFactory.newInstance().newDocumentBuilder();
@@ -295,14 +286,14 @@ public class KidsBbs extends Activity {
 			if (nl == null || nl.getLength() <= 0) {
 				throw new KidsParseException("ParseException: ITEMS");
 			}
-			final Element items = (Element)nl.item(0);
+			final Element items = (Element) nl.item(0);
 
 			// Get a board item
 			nl = items.getElementsByTagName("ITEM");
 			if (nl != null && nl.getLength() > 0) {
 				for (int i = 0; i < nl.getLength(); ++i) {
 					final ArticleInfo info = parseArticle(tabname,
-							(Element)nl.item(i));
+							(Element) nl.item(i));
 					if (info != null) {
 						articles.add(info);
 					}
@@ -311,14 +302,12 @@ public class KidsBbs extends Activity {
 		}
 		return articles;
 	}
-	
+
 	public static final int getArticlesLastSeq(String _board, int _type) {
 		final String tabname = BoardInfo.buildTabname(_board, _type);
-		final String urlString = URL_LIST +
-			PARAM_N_BOARD + "=" + _board +
-			"&" + PARAM_N_TYPE + "=" + _type +
-			"&" + PARAM_N_START + "=0" +
-			"&" + PARAM_N_COUNT + "=1";
+		final String urlString = URL_LIST + PARAM_N_BOARD + "=" + _board + "&"
+				+ PARAM_N_TYPE + "=" + _type + "&" + PARAM_N_START + "=0" + "&"
+				+ PARAM_N_COUNT + "=1";
 		final HttpClient client = new DefaultHttpClient();
 		client.getParams().setParameter(
 				HttpConnectionParams.CONNECTION_TIMEOUT, CONN_TIMEOUT);
@@ -328,45 +317,44 @@ public class KidsBbs extends Activity {
 			final HttpEntity entity = response.getEntity();
 			if (entity == null) {
 				// ???
-			} else if (response.getStatusLine().getStatusCode() ==
-					HttpStatus.SC_OK) {
+			} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 				final InputStream is = entity.getContent();
 				final DocumentBuilder db =
 					DocumentBuilderFactory.newInstance().newDocumentBuilder();
-	
+
 				// Parse the article list.
 				final Document dom = db.parse(is);
 				final Element docEle = dom.getDocumentElement();
 				NodeList nl;
-	
+
 				nl = docEle.getElementsByTagName("ITEMS");
 				if (nl == null || nl.getLength() <= 0) {
 					throw new KidsParseException("ParseException: ITEMS");
 				}
-				final Element items = (Element)nl.item(0);
-	
+				final Element items = (Element) nl.item(0);
+
 				// Get a board item
 				nl = items.getElementsByTagName("ITEM");
 				if (nl != null && nl.getLength() > 0) {
 					final ArticleInfo info = parseArticle(tabname,
-							(Element)nl.item(0));
+							(Element) nl.item(0));
 					if (info != null) {
 						return info.getSeq();
 					}
 				}
 			}
-		} catch (Exception e) {}
+		} catch (Exception e) {
+		}
 		return 0;
 	}
-	
-	public static final int getBoardLastSeq(ContentResolver _cr,
-			String _tabname) {
+
+	public static final int getBoardLastSeq(ContentResolver _cr, String _tabname) {
 		final String[] FIELDS = {
 			KidsBbsProvider.KEYA_SEQ,
 		};
 		int seq = 0;
-		final Uri uri = Uri.parse(
-				KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
+		final Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST
+				+ _tabname);
 		final Cursor c = _cr.query(uri, FIELDS, null, null,
 				KidsBbsProvider.ORDER_BY_SEQ_DESC);
 		if (c != null) {
@@ -386,7 +374,7 @@ public class KidsBbs extends Activity {
 		};
 		String title = null;
 		final Cursor c = _cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
-				KidsBbsProvider.SELECTION_TABNAME, new String[] {_tabname},
+				KidsBbsProvider.SELECTION_TABNAME, new String[] { _tabname },
 				null);
 		if (c != null) {
 			if (c.getCount() > 0) {
@@ -397,15 +385,15 @@ public class KidsBbs extends Activity {
 		}
 		return title;
 	}
-	
+
 	public static final int getBoardTableSize(ContentResolver _cr,
 			String _tabname) {
 		final String[] FIELDS = {
 			KidsBbsProvider.KEYA_CNT_FIELD,
 		};
 		int cnt = 0;
-		final Uri uri = Uri.parse(
-				KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
+		final Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST
+				+ _tabname);
 		final Cursor c = _cr.query(uri, FIELDS, null, null, null);
 		if (c != null) {
 			if (c.getCount() > 0) {
@@ -422,9 +410,9 @@ public class KidsBbs extends Activity {
 		return getTableCount(_cr, KidsBbsProvider.CONTENT_URISTR_LIST,
 				_tabname, KidsBbsProvider.SELECTION_UNREAD);
 	}
-	
-	public static final int getTableCount(ContentResolver _cr,
-			String _uriBase, String _tabname, String _where) {
+
+	public static final int getTableCount(ContentResolver _cr, String _uriBase,
+			String _tabname, String _where) {
 		final String[] FIELDS = {
 			KidsBbsProvider.KEYA_CNT_FIELD,
 		};
@@ -440,7 +428,7 @@ public class KidsBbs extends Activity {
 		}
 		return count;
 	}
-	
+
 	public static final int getTotalUnreadCount(ContentResolver _cr) {
 		final String[] FIELDS = {
 			"TOTAL(" + KidsBbsProvider.KEYB_COUNT + ")",
@@ -458,28 +446,28 @@ public class KidsBbs extends Activity {
 		}
 		return count;
 	}
-	
+
 	public static final void updateBoardCount(ContentResolver _cr,
 			String _tabname) {
 		final ContentValues values = new ContentValues();
 		values.put(KidsBbsProvider.KEYB_COUNT,
 				getBoardUnreadCount(_cr, _tabname));
 		_cr.update(KidsBbsProvider.CONTENT_URI_BOARDS, values,
-				KidsBbsProvider.SELECTION_TABNAME, new String[] {_tabname});
+				KidsBbsProvider.SELECTION_TABNAME, new String[] { _tabname });
 	}
 
 	public static final boolean updateArticleRead(ContentResolver _cr,
 			String _tabname, int _seq, boolean _read) {
 		final String[] FIELDS = {
-				KidsBbsProvider.KEYA_READ,
+			KidsBbsProvider.KEYA_READ,
 		};
-		final Uri uri = Uri.parse(
-				KidsBbsProvider.CONTENT_URISTR_LIST + _tabname);
+		final Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST
+				+ _tabname);
 		final String[] args = new String[] { Integer.toString(_seq) };
-		
+
 		boolean readOld = false;
-		final Cursor c = _cr.query(uri, FIELDS, KidsBbsProvider.SELECTION_SEQ, args,
-				null);
+		final Cursor c = _cr.query(uri, FIELDS, KidsBbsProvider.SELECTION_SEQ,
+				args, null);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -490,14 +478,14 @@ public class KidsBbs extends Activity {
 		if (readOld == _read) {
 			return false;
 		}
-		
+
 		final ContentValues values = new ContentValues();
 		values.put(KidsBbsProvider.KEYA_READ, _read ? 1 : 0);
-		final int count = _cr.update(uri, values, KidsBbsProvider.SELECTION_SEQ,
-				args);
+		final int count = _cr.update(uri, values,
+				KidsBbsProvider.SELECTION_SEQ, args);
 		return (count > 0);
 	}
-	
+
 	public static final boolean getArticleRead(ContentResolver _cr, Uri _uri,
 			String _where, String[] _whereArgs) {
 		final String[] FIELDS = {
@@ -514,7 +502,7 @@ public class KidsBbs extends Activity {
 		}
 		return read;
 	}
-	
+
 	public static final boolean isRecent(String _dateString) {
 		boolean result = true;
 		final Date local = KidsToLocalDate(_dateString);
@@ -537,33 +525,28 @@ public class KidsBbs extends Activity {
 	public static final void announceUpdateError(Context _context) {
 		_context.sendBroadcast(new Intent(UPDATE_ERROR));
 	}
-	
+
 	public static final void announceBoardUpdated(Context _context,
 			String _tabname) {
 		updateBoardCount(_context.getContentResolver(), _tabname);
-		
+
 		final Intent intent = new Intent(BOARD_UPDATED);
-		intent.putExtra(PARAM_BASE + KidsBbsProvider.KEYB_TABNAME,
-				_tabname);
+		intent.putExtra(PARAM_BASE + KidsBbsProvider.KEYB_TABNAME, _tabname);
 		_context.sendBroadcast(intent);
 	}
-	
+
 	public static void announceArticleUpdated(Context _context,
 			String _tabname, int _seq, String _user, String _thread) {
 		updateBoardCount(_context.getContentResolver(), _tabname);
-		
+
 		final Intent intent = new Intent(ARTICLE_UPDATED);
-		intent.putExtra(PARAM_BASE + KidsBbsProvider.KEYB_TABNAME,
-				_tabname);
-		intent.putExtra(PARAM_BASE + KidsBbsProvider.KEYA_SEQ,
-				_seq);
-		intent.putExtra(PARAM_BASE + KidsBbsProvider.KEYA_USER,
-				_user);
-		intent.putExtra(PARAM_BASE + KidsBbsProvider.KEYA_THREAD,
-				_thread);
+		intent.putExtra(PARAM_BASE + KidsBbsProvider.KEYB_TABNAME, _tabname);
+		intent.putExtra(PARAM_BASE + KidsBbsProvider.KEYA_SEQ, _seq);
+		intent.putExtra(PARAM_BASE + KidsBbsProvider.KEYA_USER, _user);
+		intent.putExtra(PARAM_BASE + KidsBbsProvider.KEYA_THREAD, _thread);
 		_context.sendBroadcast(intent);
 	}
-	
+
 	@SuppressWarnings("serial")
 	private static class KidsParseException extends Exception {
 		public KidsParseException(String _message) {

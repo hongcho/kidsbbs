@@ -30,82 +30,81 @@ import android.database.Cursor;
 import android.os.Bundle;
 
 public class KidsBbsTList extends KidsBbsAList {
-	
-    @Override
-    public void onCreate(Bundle _state) {
-        super.onCreate(_state);
-        
-        setTitleCommon(getResources().getString(R.string.title_tlist));
-        setQueryBase(KidsBbsProvider.CONTENT_URISTR_TLIST, FIELDS_TLIST, null);
-        
-        updateTitle();
-        
-        registerForContextMenu(getListView());
-        
-        initializeStates();
-    }
-    
-    protected void refreshList() {
-    	refreshListCommon();
-    }
-    
-    protected void updateTitle() {
-    	updateTitleCommon(
-    			getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
-    					KidsBbsProvider.SELECTION_UNREAD),
-    			getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
-    					null));
-    }
-    
-    protected boolean matchingBroadcast(int _seq, String _user,
-    		String _thread) {
-    	return true;
-    }
-    
-    protected void showItem(int _index) {
-    	final Cursor c = getItem(_index);
-    	final int count = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_CNT));
+
+	@Override
+	public void onCreate(Bundle _state) {
+		super.onCreate(_state);
+
+		setTitleCommon(getResources().getString(R.string.title_tlist));
+		setQueryBase(KidsBbsProvider.CONTENT_URISTR_TLIST, FIELDS_TLIST, null);
+
+		updateTitle();
+
+		registerForContextMenu(getListView());
+
+		initializeStates();
+	}
+
+	protected void refreshList() {
+		refreshListCommon();
+	}
+
+	protected void updateTitle() {
+		updateTitleCommon(getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
+				KidsBbsProvider.SELECTION_UNREAD), getCount(
+				KidsBbsProvider.CONTENT_URISTR_LIST, null));
+	}
+
+	protected boolean matchingBroadcast(int _seq, String _user, String _thread) {
+		return true;
+	}
+
+	protected void showItem(int _index) {
+		final Cursor c = getItem(_index);
+		final int count = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_CNT));
 		String base;
 		String extra;
 		Class<?> target;
 		if (count > 1) {
-			final String thread = c.getString(c.getColumnIndex(
-					KidsBbsProvider.KEYA_THREAD));
+			final String thread = c.getString(c
+					.getColumnIndex(KidsBbsProvider.KEYA_THREAD));
 			base = KidsBbs.URI_INTENT_THREAD;
 			extra = "&" + KidsBbs.PARAM_N_THREAD + "=" + thread;
 			target = KidsBbsThread.class;
 		} else {
-			final int seq = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
+			final int seq = c.getInt(
+					c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
 			base = KidsBbs.URI_INTENT_VIEW;
 			extra = "&" + KidsBbs.PARAM_N_SEQ + "=" + seq;
 			target = KidsBbsView.class;
 		}
 		showItemCommon(this, target, base, extra);
-    }
-    
-    protected void toggleRead(int _index) {
-    	final Cursor c = getItem(_index);
-    	final int count = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_CNT));
+	}
+
+	protected void toggleRead(int _index) {
+		final Cursor c = getItem(_index);
+		final int count = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_CNT));
 		final boolean read = c.getInt(ArticlesAdapter.COLUMN_READ) != 0;
-    	int nChanged;
-    	if (count > 1) {
-    		final String thread = c.getString(c.getColumnIndex(
-    				KidsBbsProvider.KEYA_THREAD));
-    		final String where = KidsBbsProvider.KEYA_THREAD + "='" + thread +
-    			"' AND " + KidsBbsProvider.KEYA_READ + (read ? "!=0" : "=0");
-    		final ContentValues values = new ContentValues();
-    		values.put(KidsBbsProvider.KEYA_READ, read ? 0 : 1);
-    		nChanged = mResolver.update(getUriList(), values, where, null);
-    	} else {
-    		nChanged = toggleReadOne(c);
-    	}
-    	if (nChanged > 0) {
-    		KidsBbs.updateBoardCount(mResolver, mTabname);
-    		refreshList();
-    	}
-    }
-    
-    protected void toggleAllRead() {
-    	toggleAllReadCommon("");
-    }
+		int nChanged;
+		if (count > 1) {
+			final String thread = c.getString(
+					c.getColumnIndex(KidsBbsProvider.KEYA_THREAD));
+			final String where = KidsBbsProvider.KEYA_THREAD + "='" + thread
+					+ "' AND " + KidsBbsProvider.KEYA_READ
+					+ (read ? "!=0" : "=0");
+			final ContentValues values = new ContentValues();
+			values.put(KidsBbsProvider.KEYA_READ, read ? 0 : 1);
+			nChanged = mResolver.update(getUriList(), values, where, null);
+		} else {
+			nChanged = toggleReadOne(c);
+		}
+		if (nChanged > 0) {
+			KidsBbs.updateBoardCount(mResolver, mTabname);
+			refreshList();
+		}
+	}
+
+	protected void toggleAllRead() {
+		toggleAllReadCommon("");
+	}
 }
