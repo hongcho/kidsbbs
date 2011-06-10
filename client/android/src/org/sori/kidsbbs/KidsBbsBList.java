@@ -112,11 +112,10 @@ public class KidsBbsBList extends ListActivity {
 
 	@Override
 	protected void onDestroy() {
-		super.onDestroy();
 		unregisterReceivers();
-
 		mAdapter.changeCursor(null);
 		mAdapter = null;
+		super.onDestroy();
 	}
 
 	@Override

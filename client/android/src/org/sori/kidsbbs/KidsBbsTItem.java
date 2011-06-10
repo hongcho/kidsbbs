@@ -35,11 +35,11 @@ public class KidsBbsTItem extends RelativeLayout {
 	public String mUser;
 	public String mDate;
 	public String mTitle;
-	public int mCount;
 	public String mSummary;
 	public boolean mRead;
 	public String mThread;
 	public String mBody;
+	public boolean mExpanded;
 
 	public KidsBbsTItem(Context _context) {
 		super(_context);

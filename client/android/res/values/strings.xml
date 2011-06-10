@@ -31,6 +31,7 @@
     <string name="title_blist">보드목록</string>
     <string name="title_tlist">쓰레드목록</string>
     <string name="title_thread">쓰레드별 글목록</string>
+    <string name="title_tview">쓰레드 글목록</string>
     <string name="title_user">유저별 글목록</string>
     <string name="title_view">글보기</string>
     <string name="title_pref">키즈 비비에스 옵션</string>
@@ -39,6 +40,7 @@
     <string name="toggle_read_text">읽음표시 토글</string>
     <string name="blist_cm_header">보드목록 메뉴</string>
     <string name="alist_cm_header">글목록 메뉴</string>
+    <string name="tview_cm_header">쓰레드글 메뉴</string>
     <string name="tlist_cm_header">쓰레드목록 메뉴</string>
     <string name="thread_cm_header">글목록 메뉴</string>
     <string name="user_cm_header">사용자 글목록 메뉴</string>
@@ -46,6 +48,9 @@
     <string name="menu_select">보드선택</string>
     <string name="menu_refresh">업데이트</string>
     <string name="menu_toggle_all_read">전체읽음 토글</string>
+    <string name="menu_expand_all">모든 글 열기</string>
+    <string name="menu_collapse_all">모든 글 닫기</string>
+    <string name="menu_mark_unread">읽지 않음 표시</string>
     <string name="menu_preferences">옵션</string>
 
 	<string name="settings_update">업데이트 옵션</string>

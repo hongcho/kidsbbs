@@ -175,8 +175,8 @@ public class KidsBbsService extends Service
 
 	@Override
 	public void onDestroy() {
-		super.onDestroy();
 		unregisterReceivers();
+		super.onDestroy();
 	}
 
 	@Override

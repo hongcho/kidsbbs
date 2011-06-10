@@ -96,6 +96,7 @@ public class KidsBbs extends Activity {
 	public static final String PARAM_N_START = "s";
 	public static final String PARAM_N_COUNT = "n";
 	public static final String PARAM_N_TABNAME = "tn";
+	public static final String PARAM_N_TTITLE = "tt";
 
 	private static final String DATE_INVALID = "0000-00-00 00:00:00";
 	private static final String DATESHORT_INVALID = "0000-00-00";

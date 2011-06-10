@@ -56,7 +56,7 @@
 		android:singleLine="true"
 		android:ellipsize="end"
 		android:textAppearance="?android:attr/textAppearanceMedium"
-		android:text="title"
+		android:text="username"
 		/>
 	<TextView android:id="@+id/summary"
 		android:layout_width="fill_parent"

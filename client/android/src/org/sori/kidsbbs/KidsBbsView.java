@@ -110,8 +110,8 @@ public class KidsBbsView extends Activity {
 
 	@Override
 	protected void onDestroy() {
-		super.onDestroy();
 		unregisterReceivers();
+		super.onDestroy();
 	}
 
 	@Override

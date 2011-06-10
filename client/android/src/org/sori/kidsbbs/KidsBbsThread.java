@@ -55,11 +55,14 @@ public class KidsBbsThread extends KidsBbsAList {
 	}
 
 	protected void updateTitle() {
-		updateTitleCommon(getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
-				KidsBbsProvider.SELECTION_UNREAD + " AND "
+		updateTitleCommon(
+				getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
+						KidsBbsProvider.SELECTION_UNREAD + " AND "
 						+ KidsBbsProvider.KEYA_THREAD + "='" + mBoardThread
-						+ "'"), getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
-				KidsBbsProvider.KEYA_THREAD + "='" + mBoardThread + "'"));
+						+ "'"),
+				getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
+						KidsBbsProvider.KEYA_THREAD + "='"
+						+ mBoardThread + "'"));
 	}
 
 	protected boolean matchingBroadcast(int _seq, String _user, String _thread) {
