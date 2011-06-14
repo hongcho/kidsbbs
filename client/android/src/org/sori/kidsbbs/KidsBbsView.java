@@ -191,7 +191,10 @@ public class KidsBbsView extends Activity {
 	private void updateView() {
 		mTitleView.setText(mTitle);
 		mUserView.setText(mAuthor);
-		mDateView.setText(mDate);
+		//mUserView.setText(mUser);
+		//mDateView.setText(mDate);
+		//mDateView.setText(KidsBbs.GetShortDateString(mDate));
+		mDateView.setText(KidsBbs.GetLongDateString(mDate));
 		mBodyView.setText(mBody);
 	}
 

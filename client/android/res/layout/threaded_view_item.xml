@@ -31,55 +31,8 @@
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
 	android:orientation="vertical"
+	android:paddingBottom="4dp"
 	>
-	<LinearLayout
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		android:paddingTop="4dp"
-		android:paddingBottom="4dp"
-		android:paddingRight="4dp"
-		android:orientation="vertical"
-		android:background="?android:attr/colorBackground"
-		>
-		<TextView android:id="@+id/username"
-			android:layout_width="fill_parent"
-			android:layout_height="wrap_content"
-			android:singleLine="false"
-			android:ellipsize="none"
-			android:textAppearance="?android:attr/textAppearanceSmall"
-			android:textColor="?android:attr/textColorSecondary"
-			android:textStyle="bold"
-			android:text="username"
-			/>
-		<TextView android:id="@+id/date"
-			android:layout_width="fill_parent"
-			android:layout_height="wrap_content"
-			android:singleLine="true"
-			android:ellipsize="end"
-			android:textAppearance="?android:attr/textAppearanceSmall"
-			android:textColor="?android:attr/textColorSecondary"
-			android:text="date"
-			/>
-		<TextView android:id="@+id/summary"
-			android:layout_width="fill_parent"
-			android:layout_height="wrap_content"
-			android:visibility="visible"
-			android:singleLine="true"
-			android:ellipsize="end"
-			android:textAppearance="?android:attr/textAppearanceSmall"
-			android:textColor="?android:attr/textColorSecondary"
-			android:text="summary"
-			/>
-	</LinearLayout>
-	<TextView android:id="@+id/body"
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		android:visibility="gone"
-		android:background="?android:attr/colorForeground"
-		android:textAppearance="?android:attr/textAppearanceSmall"
-		android:textColor="?android:attr/colorForegroundInverse"
-		android:typeface="monospace"
-		android:autoLink="web|email|map"
-		android:text="body"
-		/>
+	<include layout="@layout/message_header" />
+	<include layout="@layout/message_body" />
 </org.sori.kidsbbs.KidsBbsTItem>

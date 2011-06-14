@@ -109,6 +109,8 @@ public class KidsBbs extends Activity {
 		DateFormat.getDateInstance(DateFormat.SHORT);
 	private static final DateFormat DF_FULL =
 		DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
+	private static final DateFormat DF_MEDIUM =
+		DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
 	private static final DateFormat DF_KIDS;
 	static {
 		DF_KIDS = new SimpleDateFormat(DATE_FORMAT);
@@ -146,6 +148,15 @@ public class KidsBbs extends Activity {
 			}
 		} catch (Exception e) {
 			return DATESHORT_INVALID;
+		}
+	}
+	
+	public static final String GetLongDateString(String _dateString) {
+		try {
+			final Date local = DF_FULL.parse(_dateString);
+			return DF_MEDIUM.format(local);
+		} catch (Exception e) {
+			return DATE_INVALID;
 		}
 	}
 

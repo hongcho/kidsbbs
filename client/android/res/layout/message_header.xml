@@ -26,12 +26,45 @@
 	(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 	THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="fill_parent"
-	android:layout_height="fill_parent"
-	android:orientation="vertical"
+	android:layout_height="wrap_content"
+	android:paddingBottom="4dp"
+	android:paddingRight="4dp"
+	android:background="?android:attr/colorBackground"
+	android:textColor="?android:attr/textColorSecondary"
+	android:textAppearance="?android:attr/textAppearanceSmall"
 	>
-	<include layout="@layout/common_header" />
-	<include layout="@layout/title_header" />
-	<include layout="@layout/common_list" />
-</LinearLayout>
+	<TextView android:id="@+id/date"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignParentTop="true"
+		android:layout_alignParentRight="true"
+		android:layout_alignBaseline="@+id/username"
+		android:paddingLeft="4dp"
+		android:singleLine="true"
+		android:ellipsize="end"
+		android:text="date"
+		/>
+	<TextView android:id="@+id/username"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignParentLeft="true"
+		android:layout_toLeftOf="@+id/date"
+		android:singleLine="true"
+		android:ellipsize="end"
+		android:textStyle="bold"
+		android:text="username"
+		/>
+	<TextView android:id="@+id/summary"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_alignParentLeft="true"
+		android:layout_alignParentRight="true"
+		android:layout_below="@+id/username"
+		android:visibility="gone"
+		android:singleLine="true"
+		android:ellipsize="end"
+		android:text="summary"
+		/>
+</RelativeLayout>
