@@ -35,11 +35,10 @@
 	<TextView android:id="@+id/title"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
-		android:paddingLeft="4dp"
 		android:paddingRight="4dp"
-		android:singleLine="true"
-		android:ellipsize="end"
+		android:singleLine="false"
 		android:textAppearance="?android:attr/textAppearanceMedium"
+		android:textColor="?android:attr/textColorPrimary"
 		android:text="thread title"
 		/>
 	<include layout="@layout/common_list" />

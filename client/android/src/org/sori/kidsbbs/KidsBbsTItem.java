@@ -27,9 +27,9 @@ package org.sori.kidsbbs;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.widget.RelativeLayout;
+import android.widget.LinearLayout;
 
-public class KidsBbsTItem extends RelativeLayout {
+public class KidsBbsTItem extends LinearLayout {
 	public long mId;
 	public int mSeq;
 	public String mUser;
@@ -47,9 +47,5 @@ public class KidsBbsTItem extends RelativeLayout {
 
 	public KidsBbsTItem(Context _context, AttributeSet _attrs) {
 		super(_context, _attrs);
-	}
-
-	public KidsBbsTItem(Context _context, AttributeSet _attrs, int _defStyle) {
-		super(_context, _attrs, _defStyle);
 	}
 }
