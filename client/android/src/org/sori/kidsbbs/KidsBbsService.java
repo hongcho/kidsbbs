@@ -296,7 +296,8 @@ public class KidsBbsService extends Service
 							final String title = c.getString(
 									c.getColumnIndex(KidsBbsProvider.KEYA_TITLE));
 							final boolean read = c.getInt(
-									c.getColumnIndex(KidsBbsProvider.KEYA_READ)) != 0;
+									c.getColumnIndex(KidsBbsProvider.KEYA_READ))
+									!= 0;
 							old = new ArticleInfo(_tabname, seq, user, null,
 									date, title, null, null, 1, read);
 						}
@@ -552,8 +553,8 @@ public class KidsBbsService extends Service
 			if (action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
 				mNoConnectivity = _intent.getBooleanExtra(
 						ConnectivityManager.EXTRA_NO_CONNECTIVITY, false);
-			} else if (action
-					.equals(ConnectivityManager.ACTION_BACKGROUND_DATA_SETTING_CHANGED)) {
+			} else if (action.equals(
+					ConnectivityManager.ACTION_BACKGROUND_DATA_SETTING_CHANGED)) {
 				mBgDataEnabled = mConnectivities.getBackgroundDataSetting();
 			} else {
 				return;

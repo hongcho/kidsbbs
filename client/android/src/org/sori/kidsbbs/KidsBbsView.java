@@ -170,14 +170,14 @@ public class KidsBbsView extends Activity {
 			_c.moveToFirst();
 			mSeq = _c.getInt(_c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
 			mUser = _c.getString(_c.getColumnIndex(KidsBbsProvider.KEYA_USER));
-			mAuthor = _c.getString(
-					_c.getColumnIndex(KidsBbsProvider.KEYA_AUTHOR));
+			mAuthor = _c.getString(_c.getColumnIndex(KidsBbsProvider.KEYA_AUTHOR));
+
 			mDate = _c.getString(_c.getColumnIndex(KidsBbsProvider.KEYA_DATE));
 			mDate = KidsBbs.KidsToLocalDateString(mDate);
-			mTitle = _c.getString(
-					_c.getColumnIndex(KidsBbsProvider.KEYA_TITLE));
-			mThread = _c.getString(
-					_c.getColumnIndex(KidsBbsProvider.KEYA_THREAD));
+			mDate = KidsBbs.GetLongDateString(mDate);
+
+			mTitle = _c.getString(_c.getColumnIndex(KidsBbsProvider.KEYA_TITLE));
+			mThread = _c.getString(_c.getColumnIndex(KidsBbsProvider.KEYA_THREAD));
 			mBody = _c.getString(_c.getColumnIndex(KidsBbsProvider.KEYA_BODY));
 
 			if (KidsBbs.updateArticleRead(mResolver, mTabname, mSeq, true)) {
@@ -191,10 +191,7 @@ public class KidsBbsView extends Activity {
 	private void updateView() {
 		mTitleView.setText(mTitle);
 		mUserView.setText(mAuthor);
-		//mUserView.setText(mUser);
-		//mDateView.setText(mDate);
-		//mDateView.setText(KidsBbs.GetShortDateString(mDate));
-		mDateView.setText(KidsBbs.GetLongDateString(mDate));
+		mDateView.setText(mDate);
 		mBodyView.setText(mBody);
 	}
 
