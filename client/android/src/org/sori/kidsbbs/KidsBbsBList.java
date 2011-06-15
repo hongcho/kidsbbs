@@ -184,7 +184,8 @@ public class KidsBbsBList extends ListActivity {
 		super.onContextItemSelected(_item);
 		switch (_item.getItemId()) {
 		case MENU_SHOW:
-			showItem(((AdapterView.AdapterContextMenuInfo) _item.getMenuInfo()).position);
+			showItem(((AdapterView.AdapterContextMenuInfo)
+					_item.getMenuInfo()).position);
 			return true;
 		}
 		return false;
@@ -268,7 +269,8 @@ public class KidsBbsBList extends ListActivity {
 					titles[i] = c.getString(
 							c.getColumnIndex(KidsBbsProvider.KEYB_TITLE));
 					mSelectedOld[i] = c.getInt(
-							c.getColumnIndex(KidsBbsProvider.KEYB_STATE)) != KidsBbsProvider.STATE_PAUSED;
+							c.getColumnIndex(KidsBbsProvider.KEYB_STATE))
+							!= KidsBbsProvider.STATE_PAUSED;
 					mSelectedNew[i] = mSelectedOld[i];
 					++i;
 				} while (c.moveToNext());

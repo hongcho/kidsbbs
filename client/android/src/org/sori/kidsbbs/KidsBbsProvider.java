@@ -52,12 +52,10 @@ public class KidsBbsProvider extends ContentProvider {
 	private static final String CONTENT_URI_BASE = "content://" + PROVIDER
 			+ "/";
 
-	public static final Uri CONTENT_URI_BOARDS =
-		Uri.parse(CONTENT_URI_BASE + "boards");
-	public static final String CONTENT_URISTR_LIST =
-		CONTENT_URI_BASE + "list/";
-	public static final String CONTENT_URISTR_TLIST =
-		CONTENT_URI_BASE + "tlist/";
+	public static final Uri CONTENT_URI_BOARDS = Uri.parse(
+			CONTENT_URI_BASE + "boards");
+	public static final String CONTENT_URISTR_LIST = CONTENT_URI_BASE + "list/";
+	public static final String CONTENT_URISTR_TLIST = CONTENT_URI_BASE + "tlist/";
 
 	private static final int TYPE_BOARDS = 0;
 	private static final int TYPE_LIST = 1;
@@ -98,44 +96,30 @@ public class KidsBbsProvider extends ContentProvider {
 	public static final String KEYA_READ = "read";
 
 	// Aggregate columns
-	public static final String KEYA_ALLREAD =
-		"allread";
+	public static final String KEYA_ALLREAD = "allread";
 	public static final String KEYA_ALLREAD_FIELD =
 		"MIN(" + KEYA_READ + ") AS " + KEYA_ALLREAD;
 	public static final String KEYA_READ_ALLREAD_FIELD =
 		KEYA_READ + " AS " + KEYA_ALLREAD;
-	public static final String KEYA_CNT =
-		"cnt";
-	public static final String KEYA_CNT_FIELD =
-		"COUNT(*) AS " + KEYA_CNT;
+	public static final String KEYA_CNT = "cnt";
+	public static final String KEYA_CNT_FIELD = "COUNT(*) AS " + KEYA_CNT;
 
 	// Selections
-	public static final String SELECTION_TABNAME =
-		KEYB_TABNAME + "=?";
+	public static final String SELECTION_TABNAME = KEYB_TABNAME + "=?";
 	public static final String SELECTION_STATE_ACTIVE =
 		KEYB_STATE + "!=" + STATE_PAUSED;
-	public static final String SELECTION_SEQ =
-		KEYA_SEQ + "=?";
-	public static final String SELECTION_UNREAD =
-		KEYA_READ + "=0";
-	public static final String SELECTION_ALLUNREAD =
-		KEYA_ALLREAD + "=0";
+	public static final String SELECTION_SEQ = KEYA_SEQ + "=?";
+	public static final String SELECTION_UNREAD = KEYA_READ + "=0";
+	public static final String SELECTION_ALLUNREAD = KEYA_ALLREAD + "=0";
 
 	// Orderings
-	public static final String ORDER_BY_ID =
-		KEY_ID + " ASC";
-	public static final String ORDER_BY_SEQ_DESC =
-		KEYA_SEQ + " DESC";
-	public static final String ORDER_BY_SEQ_ASC =
-		KEYA_SEQ + " ASC";
-	public static final String ORDER_BY_COUNT_DESC =
-		KEYB_COUNT + " DESC";
-	public static final String ORDER_BY_STATE_ASC =
-		KEYB_STATE + " ASC";
-	public static final String ORDER_BY_STATE_DESC =
-		KEYB_STATE + " DESC";
-	public static final String ORDER_BY_TITLE =
-		"LOWER(" + KEYB_TITLE + ")";
+	public static final String ORDER_BY_ID = KEY_ID + " ASC";
+	public static final String ORDER_BY_SEQ_DESC = KEYA_SEQ + " DESC";
+	public static final String ORDER_BY_SEQ_ASC = KEYA_SEQ + " ASC";
+	public static final String ORDER_BY_COUNT_DESC = KEYB_COUNT + " DESC";
+	public static final String ORDER_BY_STATE_ASC = KEYB_STATE + " ASC";
+	public static final String ORDER_BY_STATE_DESC = KEYB_STATE + " DESC";
+	public static final String ORDER_BY_TITLE = "LOWER(" + KEYB_TITLE + ")";
 
 	ContentResolver mResolver;
 

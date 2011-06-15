@@ -66,14 +66,13 @@ public class KidsBbsTList extends KidsBbsAList {
 		String extra;
 		Class<?> target;
 		if (count > 1) {
-			final String thread = c.getString(c
-					.getColumnIndex(KidsBbsProvider.KEYA_THREAD));
+			final String thread = c.getString(
+					c.getColumnIndex(KidsBbsProvider.KEYA_THREAD));
 			base = KidsBbs.URI_INTENT_THREAD;
 			extra = "&" + KidsBbs.PARAM_N_THREAD + "=" + thread;
 			target = KidsBbsThread.class;
 		} else {
-			final int seq = c.getInt(
-					c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
+			final int seq = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
 			base = KidsBbs.URI_INTENT_VIEW;
 			extra = "&" + KidsBbs.PARAM_N_SEQ + "=" + seq;
 			target = KidsBbsView.class;
