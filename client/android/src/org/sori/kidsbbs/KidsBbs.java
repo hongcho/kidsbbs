@@ -127,6 +127,21 @@ public class KidsBbs extends Activity {
 	public static final String KST_DIFF = "'-9 hours'";
 	public static final String MAX_TIME = "'-" + MAX_DAYS + " days'";
 
+	private static final String[] F_SEQ = { KidsBbsProvider.KEYA_SEQ, };
+	private static final String[] F_TITLE = { KidsBbsProvider.KEYB_TITLE, };
+	private static final String[] F_CNT_FIELD = {
+		KidsBbsProvider.KEYA_CNT_FIELD,
+	};
+	private static final String[] F_TOT_CNT = {
+		"TOTAL(" + KidsBbsProvider.KEYB_COUNT + ")",
+	};
+	private static final String[] F_READ = { KidsBbsProvider.KEYA_READ, };
+	private static final String[] F_ALLREAD = {
+		KidsBbsProvider.KEYA_ALLREAD_FIELD,
+	};
+	private static final String[] R_SUMMARY = { " ", " ", "", };
+	private static final String W_ACTIVE = KidsBbsProvider.SELECTION_STATE_ACTIVE;
+
 	public static final Date KidsToLocalDate(String _dateString) {
 		try {
 			return DF_FULL.parse(KidsToLocalDateString(_dateString));
@@ -181,15 +196,15 @@ public class KidsBbs extends Activity {
 	public static final String generateSummary(String _s) {
 		final Pattern[] PATTERNS = {
 			Pattern.compile("\n+"),
-			Pattern.compile("\\s+"), Pattern.compile("^\\s+"),
+			Pattern.compile("\\s+"),
+			Pattern.compile("^\\s+"),
 		};
-		final String[] REPLACEMENTS = { " ", " ", "", };
 		if (_s == null) {
 			return null;
 		}
 		for (int i = 0; i < PATTERNS.length; ++i) {
 			Matcher m = PATTERNS[i].matcher(_s);
-			_s = m.replaceAll(REPLACEMENTS[i]);
+			_s = m.replaceAll(R_SUMMARY[i]);
 		}
 		return _s;
 	}
@@ -361,13 +376,10 @@ public class KidsBbs extends Activity {
 	}
 
 	public static final int getBoardLastSeq(ContentResolver _cr, String _tabname) {
-		final String[] FIELDS = {
-			KidsBbsProvider.KEYA_SEQ,
-		};
 		int seq = 0;
 		final Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST
 				+ _tabname);
-		final Cursor c = _cr.query(uri, FIELDS, null, null,
+		final Cursor c = _cr.query(uri, F_SEQ, null, null,
 				KidsBbsProvider.ORDER_BY_SEQ_DESC);
 		if (c != null) {
 			if (c.getCount() > 0) {
@@ -381,11 +393,8 @@ public class KidsBbs extends Activity {
 
 	public static final String getBoardTitle(ContentResolver _cr,
 			String _tabname) {
-		final String[] FIELDS = {
-			KidsBbsProvider.KEYB_TITLE,
-		};
 		String title = null;
-		final Cursor c = _cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
+		final Cursor c = _cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, F_TITLE,
 				KidsBbsProvider.SELECTION_TABNAME, new String[] { _tabname },
 				null);
 		if (c != null) {
@@ -400,13 +409,10 @@ public class KidsBbs extends Activity {
 
 	public static final int getBoardTableSize(ContentResolver _cr,
 			String _tabname) {
-		final String[] FIELDS = {
-			KidsBbsProvider.KEYA_CNT_FIELD,
-		};
 		int cnt = 0;
 		final Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST
 				+ _tabname);
-		final Cursor c = _cr.query(uri, FIELDS, null, null, null);
+		final Cursor c = _cr.query(uri, F_CNT_FIELD, null, null, null);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -425,12 +431,9 @@ public class KidsBbs extends Activity {
 
 	public static final int getTableCount(ContentResolver _cr, String _uriBase,
 			String _tabname, String _where) {
-		final String[] FIELDS = {
-			KidsBbsProvider.KEYA_CNT_FIELD,
-		};
 		int count = 0;
 		final Uri uri = Uri.parse(_uriBase + _tabname);
-		final Cursor c = _cr.query(uri, FIELDS, _where, null, null);
+		final Cursor c = _cr.query(uri, F_CNT_FIELD, _where, null, null);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -442,13 +445,9 @@ public class KidsBbs extends Activity {
 	}
 
 	public static final int getTotalUnreadCount(ContentResolver _cr) {
-		final String[] FIELDS = {
-			"TOTAL(" + KidsBbsProvider.KEYB_COUNT + ")",
-		};
-		final String WHERE = KidsBbsProvider.SELECTION_STATE_ACTIVE;
 		int count = 0;
-		final Cursor c = _cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
-				WHERE, null, null);
+		final Cursor c = _cr.query(KidsBbsProvider.CONTENT_URI_BOARDS,
+				F_TOT_CNT, W_ACTIVE, null, null);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -470,15 +469,12 @@ public class KidsBbs extends Activity {
 
 	public static final boolean updateArticleRead(ContentResolver _cr,
 			String _tabname, int _seq, boolean _read) {
-		final String[] FIELDS = {
-			KidsBbsProvider.KEYA_READ,
-		};
 		final Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST
 				+ _tabname);
 		final String[] args = new String[] { Integer.toString(_seq) };
 
 		boolean readOld = false;
-		final Cursor c = _cr.query(uri, FIELDS, KidsBbsProvider.SELECTION_SEQ,
+		final Cursor c = _cr.query(uri, F_READ, KidsBbsProvider.SELECTION_SEQ,
 				args, null);
 		if (c != null) {
 			if (c.getCount() > 0) {
@@ -500,11 +496,8 @@ public class KidsBbs extends Activity {
 
 	public static final boolean getArticleRead(ContentResolver _cr, Uri _uri,
 			String _where, String[] _whereArgs) {
-		final String[] FIELDS = {
-			KidsBbsProvider.KEYA_ALLREAD_FIELD,
-		};
 		boolean read = false;
-		final Cursor c = _cr.query(_uri, FIELDS, _where, _whereArgs, null);
+		final Cursor c = _cr.query(_uri, F_ALLREAD, _where, _whereArgs, null);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
