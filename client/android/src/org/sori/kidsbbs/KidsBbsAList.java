@@ -186,6 +186,18 @@ public abstract class KidsBbsAList extends ListActivity
 		updateTitle();
 	}
 
+	@Override
+	protected void onStop() {
+		mAdapter.getCursor().deactivate();
+		super.onStop();
+	}
+
+	@Override
+	protected void onRestart() {
+		super.onRestart();
+		mAdapter.getCursor().requery();
+	}
+
 	public void onSharedPreferenceChanged(SharedPreferences _prefs, String _key) {
 		if (_key.equals(Preferences.PREF_HIDE_READ)) {
 			boolean hideRead = _prefs.getBoolean(_key, false);
