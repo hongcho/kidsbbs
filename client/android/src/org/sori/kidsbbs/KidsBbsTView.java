@@ -237,8 +237,7 @@ public class KidsBbsTView extends ListActivity {
 
 		@Override
 		protected Cursor doInBackground(Void... _args) {
-			return mResolver.query(mUri, FIELDS, mWhere, null,
-					KidsBbsProvider.ORDER_BY_SEQ_ASC);
+			return mResolver.query(mUri, FIELDS, mWhere, null, null);
 		}
 
 		@Override
