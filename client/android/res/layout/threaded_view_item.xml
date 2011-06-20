@@ -32,6 +32,7 @@
 	android:layout_height="wrap_content"
 	android:orientation="vertical"
 	android:paddingTop="12dp"
+	android:background="@drawable/list_item_background_read"
 	>
 	<include layout="@layout/message_header" />
 	<include layout="@layout/message_body" />

@@ -157,6 +157,18 @@ public class KidsBbsTView extends ListActivity {
 	}
 
 	@Override
+	protected void onStop() {
+		mAdapter.getCursor().deactivate();
+		super.onStop();
+	}
+
+	@Override
+	protected void onRestart() {
+		super.onRestart();
+		mAdapter.getCursor().requery();
+	}
+
+	@Override
 	protected void onListItemClick(ListView _l, View _v, int _position, long _id) {
 		super.onListItemClick(_l, _v, _position, _id);
 		toggleExpansion(_v, _position);
@@ -557,6 +569,10 @@ public class KidsBbsTView extends ListActivity {
 				holder.body.setVisibility(View.VISIBLE);
 				params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
 				holder.item.setLayoutParams(params);
+				// Un-focusing is necessary because the content of body may
+				// have other focusable stuff (e.g., links).
+				holder.body.setFocusable(false);
+				holder.body.setFocusableInTouchMode(false);
 			} else {
 				holder.summary.setVisibility(View.VISIBLE);
 				holder.body.setVisibility(View.GONE);
