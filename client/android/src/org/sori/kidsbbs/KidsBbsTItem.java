@@ -33,6 +33,7 @@ public class KidsBbsTItem extends LinearLayout {
 	public long mId;
 	public int mSeq;
 	public String mUser;
+	public String mAuthor;
 	public String mDate;
 	public String mTitle;
 	public String mSummary;

@@ -210,11 +210,13 @@ public class KidsBbsView extends Activity {
 
 	private void startThreadView() {
 		if (mThread != null) {
-			final Uri data = Uri.parse(KidsBbs.URI_INTENT_THREAD
+			final Uri data = Uri.parse(KidsBbs.URI_INTENT_TVIEW
 					+ KidsBbs.PARAM_N_TABNAME + "=" + mTabname + "&"
 					+ KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle + "&"
+					+ KidsBbs.PARAM_N_TTITLE + "="
+					+ KidsBbs.getThreadTitle(mTitle) + "&"
 					+ KidsBbs.PARAM_N_THREAD + "=" + mThread);
-			final Intent intent = new Intent(this, KidsBbsThread.class);
+			final Intent intent = new Intent(this, KidsBbsTView.class);
 			intent.setData(data);
 			startActivity(intent);
 		}

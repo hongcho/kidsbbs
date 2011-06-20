@@ -43,7 +43,7 @@
     <string name="tview_cm_header">쓰레드글 메뉴</string>
     <string name="tlist_cm_header">쓰레드목록 메뉴</string>
     <string name="thread_cm_header">글목록 메뉴</string>
-    <string name="user_cm_header">사용자 글목록 메뉴</string>
+    <string name="user_cm_header">유저 글목록 메뉴</string>
     
     <string name="menu_select">보드선택</string>
     <string name="menu_refresh">업데이트</string>
@@ -52,6 +52,8 @@
     <string name="menu_collapse_all">모든 글 접기</string>
     <string name="menu_mark_unread">읽지 않음 표시</string>
     <string name="menu_preferences">옵션</string>
+    <string name="menu_toggle_expansion">내용 보기 토글</string>
+    <string name="menu_show_user">유저 글목록 보기</string>
 
 	<string name="settings_update">업데이트 옵션</string>
     <string name="update_freq_title">업데이트 주기</string>
