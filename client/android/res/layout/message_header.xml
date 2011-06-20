@@ -31,7 +31,8 @@
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
 	android:paddingBottom="4dp"
-	android:paddingRight="4dp"
+	android:paddingLeft="4dp"
+	android:paddingRight="8dp"
 	android:textColor="?android:attr/textColorSecondary"
 	android:textAppearance="?android:attr/textAppearanceSmall"
 	>

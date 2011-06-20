@@ -42,7 +42,6 @@
 		android:scrollbarStyle="outsideOverlay"
 		android:fadingEdge="vertical"
 		android:fillViewport="true"
-		android:paddingRight="4dp"
 		>
 		<include layout="@layout/message_body" />
 	</ScrollView>
