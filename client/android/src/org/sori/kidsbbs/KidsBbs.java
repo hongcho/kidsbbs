@@ -225,13 +225,28 @@ public class KidsBbs extends Activity {
 		if (_s == null) {
 			return null;
 		}
-		final Pattern[] PATTERNS = {
-			Pattern.compile("\n+"),
-			Pattern.compile("\\s+"),
-			Pattern.compile("^\\s+"),
+		// Remove quoted texts
+		final Pattern[] P_QUOTES = {
+				Pattern.compile(
+						"^\\s*\\d{4}\\S+ \\d{2}\\S+ \\d{2}\\S+ \\(\\S+\\)"
+						+ " \\S+ \\d{2}\\S+ \\d{2}\\S+ \\d{2}\\S+"
+						+ " .+:\\s*$",
+						Pattern.MULTILINE),
+				Pattern.compile("^\\s*>.*$", Pattern.MULTILINE),
+				Pattern.compile("^\\s*-+\\s*$", Pattern.MULTILINE),
 		};
-		for (int i = 0; i < PATTERNS.length; ++i) {
-			Matcher m = PATTERNS[i].matcher(_s);
+		for (int i = 0; i < P_QUOTES.length; ++i) {
+			Matcher m = P_QUOTES[i].matcher(_s);
+			_s = m.replaceAll(R_EMPTY);
+		}
+		// Remove white spaces.
+		final Pattern[] P_SPACES= {
+				Pattern.compile("\n+"),
+				Pattern.compile("\\s+"),
+				Pattern.compile("^\\s+"),
+		};
+		for (int i = 0; i < P_SPACES.length; ++i) {
+			Matcher m = P_SPACES[i].matcher(_s);
 			_s = m.replaceAll(R_SUMMARY[i]);
 		}
 		return _s;
