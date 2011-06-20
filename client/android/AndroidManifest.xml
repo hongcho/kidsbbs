@@ -38,15 +38,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".KidsBbsThread"
-            android:label="@string/title_thread"
-            android:launchMode="singleTop"
-            >
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
         <activity android:name=".KidsBbsUser"
             android:label="@string/title_user"
             android:launchMode="singleTop"
