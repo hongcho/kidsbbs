@@ -33,5 +33,10 @@
 	>
 	<include layout="@layout/common_header" />
 	<include layout="@layout/title_header" />
+	<View
+		android:layout_width="fill_parent"
+		android:layout_height="2dp"
+		android:background="?android:attr/colorForeground"
+		/>
 	<include layout="@layout/common_list" />
 </LinearLayout>

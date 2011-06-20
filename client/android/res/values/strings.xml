@@ -30,7 +30,6 @@
     <string name="title_app">키즈 비비에스</string>
     <string name="title_blist">보드목록</string>
     <string name="title_tlist">쓰레드목록</string>
-    <string name="title_thread">쓰레드별 글목록</string>
     <string name="title_tview">쓰레드 글목록</string>
     <string name="title_user">유저별 글목록</string>
     <string name="title_view">글보기</string>
@@ -42,7 +41,6 @@
     <string name="alist_cm_header">글목록 메뉴</string>
     <string name="tview_cm_header">쓰레드글 메뉴</string>
     <string name="tlist_cm_header">쓰레드목록 메뉴</string>
-    <string name="thread_cm_header">글목록 메뉴</string>
     <string name="user_cm_header">유저 글목록 메뉴</string>
     
     <string name="menu_select">보드선택</string>
