@@ -496,14 +496,16 @@ public class KidsBbsTView extends ListActivity {
 			itemView.mSeq = _c.getInt(COLUMN_SEQ);
 			itemView.mUser = _c.getString(COLUMN_USER);
 			itemView.mAuthor = _c.getString(COLUMN_AUTHOR);
-			String date = _c.getString(COLUMN_DATE);
+			itemView.mDate = _c.getString(COLUMN_DATE);
 			itemView.mTitle = _c.getString(COLUMN_TITLE);
 			itemView.mThread = _c.getString(COLUMN_THREAD);
 			itemView.mBody = _c.getString(COLUMN_BODY);
-			itemView.mBody = KidsBbs.trimText(itemView.mBody);
 			itemView.mRead = _c.getInt(COLUMN_READ) != 0;
-			date = KidsBbs.KidsToLocalDateString(date);
-			itemView.mDate = KidsBbs.GetLongDateString(date);
+
+			itemView.mDate = KidsBbs.KidsToLocalDateString(itemView.mDate);
+			itemView.mDate = KidsBbs.GetLongDateString(itemView.mDate);
+
+			itemView.mBody = KidsBbs.trimText(itemView.mBody);
 			itemView.mSummary = KidsBbs.generateSummary(itemView.mBody);
 
 			final ViewHolder holder = (ViewHolder) itemView.getTag();
@@ -530,9 +532,10 @@ public class KidsBbsTView extends ListActivity {
 		}
 
 		public Cursor runQuery(CharSequence _constraint) {
-			return mResolver.query(mUri, FIELDS,
-					mWhere + "(" + KidsBbsProvider.KEYA_USER
-					+ " LIKE '%" + _constraint + "%')",
+			return mResolver.query(mUri, FIELDS, mWhere + " AND ("
+					+ KidsBbsProvider.KEYA_USER + " LIKE '%" + _constraint
+					+ "%' OR " + KidsBbsProvider.KEYA_BODY + " LIKE '%"
+					+ _constraint + "%')",
 					null, null);
 		}
 
