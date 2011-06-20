@@ -234,6 +234,7 @@ public class KidsBbs extends Activity {
 						Pattern.MULTILINE),
 				Pattern.compile("^\\s*>.*$", Pattern.MULTILINE),
 				Pattern.compile("^\\s*-+\\s*$", Pattern.MULTILINE),
+				Pattern.compile("^\\s*=+\\s*$", Pattern.MULTILINE),
 		};
 		for (int i = 0; i < P_QUOTES.length; ++i) {
 			Matcher m = P_QUOTES[i].matcher(_s);
