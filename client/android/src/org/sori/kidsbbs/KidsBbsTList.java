@@ -68,9 +68,12 @@ public class KidsBbsTList extends KidsBbsAList {
 		if (count > 1) {
 			final String thread = c.getString(
 					c.getColumnIndex(KidsBbsProvider.KEYA_THREAD));
-			base = KidsBbs.URI_INTENT_THREAD;
-			extra = "&" + KidsBbs.PARAM_N_THREAD + "=" + thread;
-			target = KidsBbsThread.class;
+			final String ttitle = KidsBbs.getThreadTitle(
+					c.getString(c.getColumnIndex(KidsBbsProvider.KEYA_TITLE)));
+			base = KidsBbs.URI_INTENT_TVIEW;
+			extra = "&" + KidsBbs.PARAM_N_THREAD + "=" + thread
+				+ "&" + KidsBbs.PARAM_N_TTITLE + "=" + ttitle;
+			target = KidsBbsTView.class;
 		} else {
 			final int seq = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
 			base = KidsBbs.URI_INTENT_VIEW;
@@ -85,17 +88,20 @@ public class KidsBbsTList extends KidsBbsAList {
 		final int count = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_CNT));
 		final boolean read = c.getInt(ArticlesAdapter.COLUMN_READ) != 0;
 		int nChanged;
-		if (count > 1) {
+		// Change only one for Marking it unread.
+		if (count == 1 || read) {
+			nChanged = toggleReadOne(c);
+		} else {
+			final int seq = c.getInt(
+					c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
 			final String thread = c.getString(
 					c.getColumnIndex(KidsBbsProvider.KEYA_THREAD));
 			final String where = KidsBbsProvider.KEYA_THREAD + "='" + thread
-					+ "' AND " + KidsBbsProvider.KEYA_READ
-					+ (read ? "!=0" : "=0");
+					+ "' AND " + KidsBbsProvider.KEYA_SEQ + "<=" + seq
+					+ " AND " + KidsBbsProvider.KEYA_READ + "=0";
 			final ContentValues values = new ContentValues();
-			values.put(KidsBbsProvider.KEYA_READ, read ? 0 : 1);
+			values.put(KidsBbsProvider.KEYA_READ, 1);
 			nChanged = mResolver.update(getUriList(), values, where, null);
-		} else {
-			nChanged = toggleReadOne(c);
 		}
 		if (nChanged > 0) {
 			KidsBbs.updateBoardCount(mResolver, mTabname);
@@ -103,7 +109,7 @@ public class KidsBbsTList extends KidsBbsAList {
 		}
 	}
 
-	protected void toggleAllRead() {
-		toggleAllReadCommon("");
+	protected void markAllRead() {
+		markAllReadCommon("");
 	}
 }

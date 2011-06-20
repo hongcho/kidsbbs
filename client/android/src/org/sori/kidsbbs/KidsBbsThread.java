@@ -80,8 +80,8 @@ public class KidsBbsThread extends KidsBbsAList {
 		toggleReadOne(getItem(_index));
 	}
 
-	protected void toggleAllRead() {
-		toggleAllReadCommon(KidsBbsProvider.KEYA_THREAD + "='" + mBoardThread
+	protected void markAllRead() {
+		markAllReadCommon(KidsBbsProvider.KEYA_THREAD + "='" + mBoardThread
 				+ "' AND ");
 	}
 }

@@ -86,6 +86,7 @@ public class KidsBbs extends Activity {
 	public static final String URI_INTENT_THREAD = URI_BASE + "thread?";
 	public static final String URI_INTENT_USER = URI_BASE + "user?";
 	public static final String URI_INTENT_VIEW = URI_BASE + "view?";
+	public static final String URI_INTENT_TVIEW = URI_BASE + "tview?";
 
 	public static final String PARAM_N_TITLE = "bt";
 	public static final String PARAM_N_BOARD = "b";
@@ -122,7 +123,7 @@ public class KidsBbs extends Activity {
 	private static final int CONN_TIMEOUT = 30 * 1000; // 30 seconds
 	private static final int MAX_DAYS = 7;
 	public static final int MIN_ARTICLES = 10;
-	public static final int MAX_ARTICLES = 300;
+	public static final int MAX_ARTICLES = 200;
 	public static final int MAX_FIRST_ARTICLES = 100;
 	public static final String KST_DIFF = "'-9 hours'";
 	public static final String MAX_TIME = "'-" + MAX_DAYS + " days'";
@@ -139,6 +140,7 @@ public class KidsBbs extends Activity {
 	private static final String[] F_ALLREAD = {
 		KidsBbsProvider.KEYA_ALLREAD_FIELD,
 	};
+	private static final String R_EMPTY = "";
 	private static final String[] R_SUMMARY = { " ", " ", "", };
 	private static final String W_ACTIVE = KidsBbsProvider.SELECTION_STATE_ACTIVE;
 
@@ -193,15 +195,41 @@ public class KidsBbs extends Activity {
 		}
 	}
 
+	public static final String trimText(String _s) {
+		if (_s != null && _s.length() > 0) {
+			final Pattern PATTERNS[] = {
+					Pattern.compile("^\\s+", Pattern.CASE_INSENSITIVE),
+					Pattern.compile("\\s+$", Pattern.CASE_INSENSITIVE),
+			};
+			for (int i = 0; i < PATTERNS.length; ++i) {
+				Matcher m = PATTERNS[i].matcher(_s);
+				_s = m.replaceAll(R_EMPTY);
+			}
+		}
+		return _s;
+	}
+
+	public static final String getThreadTitle(String _s) {
+		if (_s != null && _s.length() > 0) {
+			final Pattern PATTERN =
+				Pattern.compile("^Re:\\s*", Pattern.CASE_INSENSITIVE);
+			final Matcher m = PATTERN.matcher(_s);
+			if (m.find()) {
+				return m.replaceFirst(R_EMPTY);
+			}
+		}
+		return _s;
+	}
+
 	public static final String generateSummary(String _s) {
+		if (_s == null) {
+			return null;
+		}
 		final Pattern[] PATTERNS = {
 			Pattern.compile("\n+"),
 			Pattern.compile("\\s+"),
 			Pattern.compile("^\\s+"),
 		};
-		if (_s == null) {
-			return null;
-		}
 		for (int i = 0; i < PATTERNS.length; ++i) {
 			Matcher m = PATTERNS[i].matcher(_s);
 			_s = m.replaceAll(R_SUMMARY[i]);

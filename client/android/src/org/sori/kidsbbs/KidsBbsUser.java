@@ -77,8 +77,8 @@ public class KidsBbsUser extends KidsBbsAList {
 		toggleReadOne(getItem(_index));
 	}
 
-	protected void toggleAllRead() {
-		toggleAllReadCommon(KidsBbsProvider.KEYA_USER + "='" + mBoardUser
+	protected void markAllRead() {
+		markAllReadCommon(KidsBbsProvider.KEYA_USER + "='" + mBoardUser
 				+ "' AND ");
 	}
 }

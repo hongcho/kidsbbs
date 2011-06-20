@@ -25,9 +25,6 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.BroadcastReceiver;
@@ -68,7 +65,7 @@ public abstract class KidsBbsAList extends ListActivity
 	protected static final int MENU_SHOW = Menu.FIRST + 1;
 	protected static final int MENU_PREFERENCES = Menu.FIRST + 2;
 	protected static final int MENU_TOGGLE_READ = Menu.FIRST + 3;
-	protected static final int MENU_TOGGLE_ALL_READ = Menu.FIRST + 4;
+	protected static final int MENU_MARK_ALL_READ = Menu.FIRST + 4;
 
 	protected ContentResolver mResolver;
 
@@ -96,7 +93,6 @@ public abstract class KidsBbsAList extends ListActivity
 	private boolean mHideRead;
 
 	private String mTitle;
-	private int mUnreadCount;
 
 	// First call setQueryBase(), and all refreshListCommon().
 	abstract protected void refreshList();
@@ -110,7 +106,7 @@ public abstract class KidsBbsAList extends ListActivity
 	// Marking articles read.
 	abstract protected void toggleRead(int _index);
 
-	abstract protected void toggleAllRead();
+	abstract protected void markAllRead();
 
 	// A matching broadcast?
 	abstract protected boolean matchingBroadcast(int _seq, String _user,
@@ -133,8 +129,7 @@ public abstract class KidsBbsAList extends ListActivity
 	}
 
 	protected final void updateTitleCommon(int _unread, int _total) {
-		mUnreadCount = _unread;
-		setTitle("[" + mBoardTitle + "] " + mTitle + " (" + mUnreadCount + "/"
+		setTitle("[" + mBoardTitle + "] " + mTitle + " (" + _unread + "/"
 				+ _total + ")");
 	}
 
@@ -224,8 +219,8 @@ public abstract class KidsBbsAList extends ListActivity
 				"android:drawable/ic_menu_refresh", null, null));
 		item.setShortcut('0', 'r');
 
-		item = _menu.add(0, MENU_TOGGLE_ALL_READ, Menu.NONE,
-				R.string.menu_toggle_all_read);
+		item = _menu.add(0, MENU_MARK_ALL_READ, Menu.NONE,
+				R.string.menu_mark_all_read);
 		item.setIcon(getResources().getIdentifier(
 				"android:drawable/ic_menu_mark", null, null));
 		item.setShortcut('1', 't');
@@ -244,8 +239,8 @@ public abstract class KidsBbsAList extends ListActivity
 		case MENU_REFRESH:
 			refreshList();
 			return true;
-		case MENU_TOGGLE_ALL_READ:
-			toggleAllRead();
+		case MENU_MARK_ALL_READ:
+			markAllRead();
 			return true;
 		case MENU_PREFERENCES:
 			showPreference();
@@ -311,10 +306,10 @@ public abstract class KidsBbsAList extends ListActivity
 		@Override
 		protected void onPostExecute(Cursor _c) {
 			mStatusView.setVisibility(View.GONE);
-			if (_c == null || _c.isClosed()) {
+			if (_c == null || _c.isClosed() || mAdapter == null) {
 				return;
 			}
-			KidsBbsAList.this.mAdapter.changeCursor(_c);
+			mAdapter.changeCursor(_c);
 			restoreListPosition();
 			updateTitle();
 		}
@@ -364,10 +359,10 @@ public abstract class KidsBbsAList extends ListActivity
 		return 0;
 	}
 
-	protected void toggleAllReadCommon(final String _w) {
+	protected void markAllReadCommon(final String _w) {
 		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setTitle(R.string.confirm_text);
-		builder.setMessage(R.string.toggle_all_read_message);
+		builder.setMessage(R.string.mark_all_read_message);
 		builder.setPositiveButton(android.R.string.ok,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface _dialog, int _which) {
@@ -376,11 +371,9 @@ public abstract class KidsBbsAList extends ListActivity
 								c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
 						final String where = _w + KidsBbsProvider.KEYA_SEQ
 								+ "<=" + seq + " AND "
-								+ KidsBbsProvider.KEYA_READ
-								+ (mUnreadCount == 0 ? "!=0" : "=0");
+								+ KidsBbsProvider.KEYA_READ + "=0";
 						final ContentValues values = new ContentValues();
-						values.put(KidsBbsProvider.KEYA_READ,
-								mUnreadCount > 0 ? 1 : 0);
+						values.put(KidsBbsProvider.KEYA_READ, 1);
 						final int nChanged = mResolver.update(getUriList(),
 								values, where, null);
 						if (nChanged > 0) {
@@ -533,6 +526,7 @@ public abstract class KidsBbsAList extends ListActivity
 					new int[] { android.R.attr.textColorSecondary });
 			mTextColorSecondary = resources.getColorStateList(
 					array.getResourceId(0, 0));
+			array.recycle();
 
 			setFilterQueryProvider(this);
 		}
@@ -547,10 +541,6 @@ public abstract class KidsBbsAList extends ListActivity
 
 		@Override
 		public void bindView(View _v, Context _context, Cursor _c) {
-			final Pattern PATTERN =
-				Pattern.compile("^Re:\\s*", Pattern.CASE_INSENSITIVE);
-			final String REPLACEMENT = "";
-
 			final KidsBbsAItem itemView = (KidsBbsAItem) _v;
 			itemView.mId = _c.getLong(COLUMN_ID);
 			itemView.mSeq = _c.getInt(COLUMN_SEQ);
@@ -576,8 +566,7 @@ public abstract class KidsBbsAList extends ListActivity
 			itemView.mSummary = KidsBbs.generateSummary(body);
 			// Remove "RE:" for threaded list.
 			if (mFields[COLUMN_READ].equals(KidsBbsProvider.KEYA_ALLREAD)) {
-				final Matcher m = PATTERN.matcher(itemView.mTitle);
-				itemView.mTitle = m.replaceFirst(REPLACEMENT);
+				itemView.mTitle = KidsBbs.getThreadTitle(itemView.mTitle);
 			}
 
 			final ViewHolder holder = (ViewHolder) itemView.getTag();
