@@ -545,7 +545,7 @@ public abstract class KidsBbsAList extends ListActivity
 			itemView.mId = _c.getLong(COLUMN_ID);
 			itemView.mSeq = _c.getInt(COLUMN_SEQ);
 			itemView.mUser = _c.getString(COLUMN_USER);
-			String date = _c.getString(COLUMN_DATE);
+			itemView.mDate = _c.getString(COLUMN_DATE);
 			itemView.mTitle = _c.getString(COLUMN_TITLE);
 			itemView.mThread = _c.getString(COLUMN_THREAD);
 			final String body = _c.getString(COLUMN_BODY);
@@ -561,9 +561,12 @@ public abstract class KidsBbsAList extends ListActivity
 				final int cnt = itemView.mCount - 1;
 				user += " (+" + cnt + ")";
 			}
-			date = KidsBbs.KidsToLocalDateString(date);
-			itemView.mDate = KidsBbs.GetShortDateString(date);
+
+			itemView.mDate = KidsBbs.KidsToLocalDateString(itemView.mDate);
+			itemView.mDate = KidsBbs.GetShortDateString(itemView.mDate);
+
 			itemView.mSummary = KidsBbs.generateSummary(body);
+
 			// Remove "RE:" for threaded list.
 			if (mFields[COLUMN_READ].equals(KidsBbsProvider.KEYA_ALLREAD)) {
 				itemView.mTitle = KidsBbs.getThreadTitle(itemView.mTitle);
