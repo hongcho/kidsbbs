@@ -41,11 +41,13 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.TypedValue;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.CursorAdapter;
 import android.widget.FilterQueryProvider;
 import android.widget.ListView;
@@ -56,11 +58,14 @@ public class KidsBbsTView extends ListActivity {
 	private static final int MENU_PREFERENCES = Menu.FIRST + 1;
 	private static final int MENU_EXPAND_ALL = Menu.FIRST + 2;
 	private static final int MENU_COLLAPSE_ALL = Menu.FIRST + 3;
+	private static final int MENU_TOGGLE_EXPANSION = Menu.FIRST + 4;
+	private static final int MENU_SHOW_USER = Menu.FIRST + 5;
 
 	private ContentResolver mResolver;
 
 	private static final String KEY_SELECTED_ITEM = "KEY_SELECTED_ITEM";
 
+	private ContextMenu mContextMenu;
 	private ArticlesAdapter mAdapter;
 	private int mSavedItemPosition;
 
@@ -143,14 +148,18 @@ public class KidsBbsTView extends ListActivity {
 		updateTitle();
 	}
 
-	@Override
-	protected void onListItemClick(ListView _l, View _v, int _position, long _id) {
-		super.onListItemClick(_l, _v, _position, _id);
+	private void toggleExpansion(View _v, int _position) {
 		mAdapter.toggleExpansion(_v);
 		if (_v.getTop() < 0) {
 			setSelection(_position);
 		}
 		refreshView();
+	}
+
+	@Override
+	protected void onListItemClick(ListView _l, View _v, int _position, long _id) {
+		super.onListItemClick(_l, _v, _position, _id);
+		toggleExpansion(_v, _position);
 	}
 
 	@Override
@@ -197,6 +206,44 @@ public class KidsBbsTView extends ListActivity {
 			return true;
 		case MENU_PREFERENCES:
 			showPreference();
+			return true;
+		}
+		return false;
+	}
+
+	@Override
+	public void onCreateContextMenu(ContextMenu _menu, View _v,
+			ContextMenu.ContextMenuInfo _menuInfo) {
+		super.onCreateOptionsMenu(_menu);
+
+		mContextMenu = _menu;
+		if (mContextMenu != null) {
+			mContextMenu.setHeaderTitle(
+					getResources().getString(R.string.tview_cm_header));
+		}
+		mContextMenu.add(0, MENU_TOGGLE_EXPANSION, Menu.NONE,
+				R.string.menu_toggle_expansion);
+		mContextMenu.add(1, MENU_SHOW_USER, Menu.NONE,
+				R.string.menu_show_user);
+	}
+
+	@Override
+	public boolean onContextItemSelected(MenuItem _item) {
+		super.onContextItemSelected(_item);
+		int pos = ((AdapterView.AdapterContextMenuInfo) _item.getMenuInfo()).position;
+		View v = ((AdapterView.AdapterContextMenuInfo) _item.getMenuInfo()).targetView;
+		switch (_item.getItemId()) {
+		case MENU_TOGGLE_EXPANSION:
+			toggleExpansion(v, pos);
+			return true;
+		case MENU_SHOW_USER:
+			final Uri data = Uri.parse(KidsBbs.URI_INTENT_USER
+					+ KidsBbs.PARAM_N_TABNAME + "=" + mTabname + "&"
+					+ KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle + "&"
+					+ KidsBbs.PARAM_N_USER + "=" + ((KidsBbsTItem) v).mUser);
+			final Intent intent = new Intent(this, KidsBbsUser.class);
+			intent.setData(data);
+			startActivity(intent);
 			return true;
 		}
 		return false;
@@ -372,6 +419,7 @@ public class KidsBbsTView extends ListActivity {
 	protected static final String[] FIELDS = {
 		KidsBbsProvider.KEY_ID,
 		KidsBbsProvider.KEYA_SEQ,
+		KidsBbsProvider.KEYA_USER,
 		KidsBbsProvider.KEYA_AUTHOR,
 		KidsBbsProvider.KEYA_DATE,
 		KidsBbsProvider.KEYA_TITLE,
@@ -385,11 +433,12 @@ public class KidsBbsTView extends ListActivity {
 		public static final int COLUMN_ID = 0;
 		public static final int COLUMN_SEQ = 1;
 		public static final int COLUMN_USER = 2;
-		public static final int COLUMN_DATE = 3;
-		public static final int COLUMN_TITLE = 4;
-		public static final int COLUMN_THREAD = 5;
-		public static final int COLUMN_BODY = 6;
-		public static final int COLUMN_READ = 7;
+		public static final int COLUMN_AUTHOR = 3;
+		public static final int COLUMN_DATE = 4;
+		public static final int COLUMN_TITLE = 5;
+		public static final int COLUMN_THREAD = 6;
+		public static final int COLUMN_BODY = 7;
+		public static final int COLUMN_READ = 8;
 
 		private Context mContext;
 		private LayoutInflater mInflater;
@@ -434,6 +483,7 @@ public class KidsBbsTView extends ListActivity {
 			itemView.mId = _c.getLong(COLUMN_ID);
 			itemView.mSeq = _c.getInt(COLUMN_SEQ);
 			itemView.mUser = _c.getString(COLUMN_USER);
+			itemView.mAuthor = _c.getString(COLUMN_AUTHOR);
 			String date = _c.getString(COLUMN_DATE);
 			itemView.mTitle = _c.getString(COLUMN_TITLE);
 			itemView.mThread = _c.getString(COLUMN_THREAD);
@@ -446,7 +496,7 @@ public class KidsBbsTView extends ListActivity {
 
 			final ViewHolder holder = (ViewHolder) itemView.getTag();
 			holder.date.setText(itemView.mDate);
-			holder.username.setText(itemView.mUser);
+			holder.username.setText(itemView.mAuthor);
 			holder.summary.setText(itemView.mSummary);
 			holder.body.setText(itemView.mBody);
 
