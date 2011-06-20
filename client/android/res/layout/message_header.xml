@@ -27,11 +27,11 @@
 	THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/header"
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
 	android:paddingBottom="4dp"
 	android:paddingRight="4dp"
-	android:background="?android:attr/colorBackground"
 	android:textColor="?android:attr/textColorSecondary"
 	android:textAppearance="?android:attr/textAppearanceSmall"
 	>

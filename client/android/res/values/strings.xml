@@ -47,9 +47,9 @@
     
     <string name="menu_select">보드선택</string>
     <string name="menu_refresh">업데이트</string>
-    <string name="menu_toggle_all_read">전체읽음 토글</string>
-    <string name="menu_expand_all">모든 글 열기</string>
-    <string name="menu_collapse_all">모든 글 닫기</string>
+    <string name="menu_mark_all_read">전체읽음 표시</string>
+    <string name="menu_expand_all">모든 글 펴기</string>
+    <string name="menu_collapse_all">모든 글 접기</string>
     <string name="menu_mark_unread">읽지 않음 표시</string>
     <string name="menu_preferences">옵션</string>
 
@@ -78,7 +78,7 @@
     
     <string name="board_selection_title">보드를 골라주세요.</string>
     <string name="confirm_text">정말로 계속하겠습니까?</string>
-    <string name="toggle_all_read_message">글목록 전체의 읽음 표시를 토글합니다.</string>
+    <string name="mark_all_read_message">글목록 전체를 읽은 것으로 표시합니다.</string>
     
     <string name="notification_title_text">새 글이 올라왔습니다.</string>
     <string name="notification_message">보드 목록으로 가서 읽으세요.</string>

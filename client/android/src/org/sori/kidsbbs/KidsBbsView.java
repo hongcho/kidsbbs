@@ -179,6 +179,7 @@ public class KidsBbsView extends Activity {
 			mTitle = _c.getString(_c.getColumnIndex(KidsBbsProvider.KEYA_TITLE));
 			mThread = _c.getString(_c.getColumnIndex(KidsBbsProvider.KEYA_THREAD));
 			mBody = _c.getString(_c.getColumnIndex(KidsBbsProvider.KEYA_BODY));
+			mBody = KidsBbs.trimText(mBody);
 
 			if (KidsBbs.updateArticleRead(mResolver, mTabname, mSeq, true)) {
 				KidsBbs.announceArticleUpdated(KidsBbsView.this, mTabname,

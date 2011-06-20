@@ -209,10 +209,10 @@ public class KidsBbsBList extends ListActivity {
 		@Override
 		protected void onPostExecute(Cursor _c) {
 			mStatusView.setVisibility(View.GONE);
-			if (_c == null || _c.isClosed()) {
+			if (_c == null || _c.isClosed() || mAdapter == null) {
 				return;
 			}
-			KidsBbsBList.this.mAdapter.changeCursor(_c);
+			mAdapter.changeCursor(_c);
 			restoreListPosition();
 			updateTitle();
 		}

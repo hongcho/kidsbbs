@@ -25,22 +25,22 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
-import android.app.AlertDialog;
+import java.util.HashMap;
+
 import android.app.ListActivity;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
-import android.content.res.TypedArray;
 import android.content.res.Resources.Theme;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -54,9 +54,8 @@ import android.widget.TextView;
 public class KidsBbsTView extends ListActivity {
 	private static final int MENU_REFRESH = Menu.FIRST;
 	private static final int MENU_PREFERENCES = Menu.FIRST + 1;
-	private static final int MENU_MARK_UNREAD = Menu.FIRST + 2;
-	private static final int MENU_EXPAND_ALL = Menu.FIRST + 3;
-	private static final int MENU_COLLAPSE_ALL = Menu.FIRST + 4;
+	private static final int MENU_EXPAND_ALL = Menu.FIRST + 2;
+	private static final int MENU_COLLAPSE_ALL = Menu.FIRST + 3;
 
 	private ContentResolver mResolver;
 
@@ -73,14 +72,13 @@ public class KidsBbsTView extends ListActivity {
 	private String mTabname;
 	private String mBoardThread;
 	private String mThreadTitle;
+	private String mTitle;
 
 	private String mUpdateText;
-
 	private TextView mStatusView;
+	private ListView mListView;
 
 	private UpdateTask mLastUpdate;
-
-	private String mTitle;
 
 	@Override
 	public void onCreate(Bundle _state) {
@@ -109,16 +107,25 @@ public class KidsBbsTView extends ListActivity {
 
 		mStatusView = (TextView) findViewById(R.id.status);
 		mStatusView.setVisibility(View.GONE);
+		
+		mListView = getListView();
+		//mListView.setSmoothScrollbarEnabled(false);
 
 		mAdapter = new ArticlesAdapter(this);
 		setListAdapter(mAdapter);
 
 		registerReceivers();
+
+		updateTitle();
+
+		registerForContextMenu(mListView);
+
+		initializeStates();
 	}
 	
 	@Override
 	protected void onPause() {
-		markAllRead(true);
+		//markAllRead(true);
 		super.onPause();
 	}
 
@@ -139,7 +146,11 @@ public class KidsBbsTView extends ListActivity {
 	@Override
 	protected void onListItemClick(ListView _l, View _v, int _position, long _id) {
 		super.onListItemClick(_l, _v, _position, _id);
-		showItem(_position);
+		mAdapter.toggleExpansion(_v);
+		if (_v.getTop() < 0) {
+			setSelection(_position);
+		}
+		refreshView();
 	}
 
 	@Override
@@ -155,19 +166,13 @@ public class KidsBbsTView extends ListActivity {
 		item = _menu.add(0, MENU_EXPAND_ALL, Menu.NONE,
 				R.string.menu_expand_all);
 		item.setIcon(getResources().getIdentifier(
-				"android:drawable/ic_menu_forward", null, null));
+				"android:drawable/ic_menu_zoom", null, null));
 		item.setShortcut('1', 'e');
 
 		item = _menu.add(0, MENU_COLLAPSE_ALL, Menu.NONE,
 				R.string.menu_collapse_all);
 		item.setIcon(getResources().getIdentifier(
-				"android:drawable/ic_menu_back", null, null));
-		item.setShortcut('2', 'c');
-
-		item = _menu.add(0, MENU_MARK_UNREAD, Menu.NONE,
-				R.string.menu_mark_unread);
-		item.setIcon(getResources().getIdentifier(
-				"android:drawable/ic_menu_mark", null, null));
+				"android:drawable/ic_menu_revert", null, null));
 		item.setShortcut('2', 'c');
 
 		item = _menu.add(0, MENU_PREFERENCES, Menu.NONE,
@@ -185,13 +190,10 @@ public class KidsBbsTView extends ListActivity {
 			refreshList();
 			return true;
 		case MENU_EXPAND_ALL:
-			expandAll();
+			expandAll(true);
 			return true;
 		case MENU_COLLAPSE_ALL:
-			collapseAll();
-			return true;
-		case MENU_MARK_UNREAD:
-			markAllRead(false);
+			expandAll(false);
 			return true;
 		case MENU_PREFERENCES:
 			showPreference();
@@ -213,19 +215,11 @@ public class KidsBbsTView extends ListActivity {
 				+ getCount("") + ")");
 	}
 
-	private final Cursor getItem(int _index) {
-		return (Cursor) getListView().getItemAtPosition(_index);
+	private final int getCount() {
+		return mListView.getCount();
 	}
-
-	private void showItem(int _index) {
-		final Cursor c = getItem(_index);
-		final int seq = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
-		final Intent intent = new Intent(this, KidsBbsView.class);
-		intent.setData(Uri.parse(KidsBbs.URI_INTENT_VIEW
-				+ KidsBbs.PARAM_N_TABNAME + "=" + mTabname + "&"
-				+ KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle + "&"
-				+ KidsBbs.PARAM_N_SEQ + "=" + seq));
-		startActivity(intent);
+	private final Cursor getItem(int _index) {
+		return (Cursor) mListView.getItemAtPosition(_index);
 	}
 
 	private class UpdateTask extends AsyncTask<Void, Void, Cursor> {
@@ -237,18 +231,21 @@ public class KidsBbsTView extends ListActivity {
 
 		@Override
 		protected Cursor doInBackground(Void... _args) {
-			return mResolver.query(mUri, FIELDS, mWhere, null, null);
+			return mResolver.query(mUri, FIELDS, mWhere, null,
+					KidsBbsProvider.ORDER_BY_SEQ_ASC);
 		}
 
 		@Override
 		protected void onPostExecute(Cursor _c) {
 			mStatusView.setVisibility(View.GONE);
-			if (_c == null || _c.isClosed()) {
+			if (_c == null || _c.isClosed() || mAdapter == null) {
 				return;
 			}
 			mAdapter.changeCursor(_c);
+			mSavedItemPosition = mAdapter.initExpansionStates(_c);
 			restoreListPosition();
 			updateTitle();
+			markAllRead(true);
 		}
 	}
 
@@ -264,41 +261,38 @@ public class KidsBbsTView extends ListActivity {
 		}
 	}
 
-	private void expandAll() {
-
+	private final void refreshView() {
+		mListView.requestLayout();
 	}
 
-	private void collapseAll() {
-
+	private void expandAll(boolean _state) {
+		final int pos = mListView.getSelectedItemPosition();
+		mAdapter.setExpansionAll(_state);
+		final int n = mListView.getChildCount();
+		for (int i = n - 1; i >= 0; --i) {
+			mAdapter.setExpansion(mListView.getChildAt(i), _state);
+		}
+		if (pos >= 0) {
+			setSelection(pos);
+		}
+		refreshView();
 	}
 
-	private void markAllRead(final boolean _read) {
-		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setTitle(R.string.confirm_text);
-		builder.setMessage(R.string.toggle_all_read_message);
-		builder.setPositiveButton(android.R.string.ok,
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface _dialog, int _which) {
-						final Cursor c = getItem(0);
-						final int seq = c.getInt(
-								c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
-						final String where =
-							KidsBbsProvider.KEYA_THREAD + "='" + mBoardThread
-							+ "' AND " + KidsBbsProvider.KEYA_SEQ + "<=" + seq
-							+ " AND " + KidsBbsProvider.KEYA_READ
-							+ (_read ? "=0" : "!=0");
-						final ContentValues values = new ContentValues();
-						values.put(KidsBbsProvider.KEYA_READ, _read ? 1 : 0);
-						final int nChanged = mResolver.update(mUriList,
-								values, where, null);
-						if (nChanged > 0) {
-							KidsBbs.updateBoardCount(mResolver, mTabname);
-							refreshList();
-						}
-					}
-				});
-		builder.setNegativeButton(android.R.string.cancel, null);
-		builder.create().show();
+	private void markAllRead(boolean _read) {
+		final Cursor c = getItem(getCount() - 1);
+		final int seq = c.getInt(
+				c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
+		final String where =
+			KidsBbsProvider.KEYA_THREAD + "='" + mBoardThread
+			+ "' AND " + KidsBbsProvider.KEYA_SEQ + "<=" + seq
+			+ " AND " + KidsBbsProvider.KEYA_READ + (_read ? "=0" : "!=0");
+		final ContentValues values = new ContentValues();
+		values.put(KidsBbsProvider.KEYA_READ, _read ? 1 : 0);
+		final int nChanged = mResolver.update(mUriList,
+				values, where, null);
+		if (nChanged > 0) {
+			KidsBbs.updateBoardCount(mResolver, mTabname);
+		}
 	}
 
 	private void showPreference() {
@@ -378,7 +372,7 @@ public class KidsBbsTView extends ListActivity {
 	protected static final String[] FIELDS = {
 		KidsBbsProvider.KEY_ID,
 		KidsBbsProvider.KEYA_SEQ,
-		KidsBbsProvider.KEYA_USER,
+		KidsBbsProvider.KEYA_AUTHOR,
 		KidsBbsProvider.KEYA_DATE,
 		KidsBbsProvider.KEYA_TITLE,
 		KidsBbsProvider.KEYA_THREAD,
@@ -399,8 +393,10 @@ public class KidsBbsTView extends ListActivity {
 
 		private Context mContext;
 		private LayoutInflater mInflater;
-		
 		private int mCollapsedHeight;
+
+		private HashMap<Integer, Boolean> mExpansionStates =
+			new HashMap<Integer, Boolean>();
 
 		public ArticlesAdapter(Context _context) {
 			super(_context, null, true);
@@ -409,11 +405,17 @@ public class KidsBbsTView extends ListActivity {
 					Context.LAYOUT_INFLATER_SERVICE);
 			
 			final Resources resources = mContext.getResources();
-			final Theme theme = mContext.getTheme();
-			TypedArray array = theme.obtainStyledAttributes(
-					new int[] { android.R.attr.listPreferredItemHeight });
-			mCollapsedHeight = resources.getDimensionPixelSize(
-					array.getResourceId(0, 0));
+			final Theme theme = _context.getTheme();
+
+			TypedValue value = new TypedValue();
+			if (theme.resolveAttribute(
+					android.R.attr.listPreferredItemHeight,
+					value, true)) {
+				mCollapsedHeight = (int) (value.getDimension(
+						resources.getDisplayMetrics()) + 0.5f);
+			} else {
+				mCollapsedHeight = ViewGroup.LayoutParams.WRAP_CONTENT;
+			}
 
 			setFilterQueryProvider(this);
 		}
@@ -436,11 +438,10 @@ public class KidsBbsTView extends ListActivity {
 			itemView.mTitle = _c.getString(COLUMN_TITLE);
 			itemView.mThread = _c.getString(COLUMN_THREAD);
 			itemView.mBody = _c.getString(COLUMN_BODY);
+			itemView.mBody = KidsBbs.trimText(itemView.mBody);
 			itemView.mRead = _c.getInt(COLUMN_READ) != 0;
-			itemView.mExpanded = !itemView.mRead;
-
 			date = KidsBbs.KidsToLocalDateString(date);
-			itemView.mDate = KidsBbs.GetShortDateString(date);
+			itemView.mDate = KidsBbs.GetLongDateString(date);
 			itemView.mSummary = KidsBbs.generateSummary(itemView.mBody);
 
 			final ViewHolder holder = (ViewHolder) itemView.getTag();
@@ -449,23 +450,12 @@ public class KidsBbsTView extends ListActivity {
 			holder.summary.setText(itemView.mSummary);
 			holder.body.setText(itemView.mBody);
 
-			ViewGroup.LayoutParams params = holder.item.getLayoutParams();
-			if (itemView.mExpanded) {
-				holder.summary.setVisibility(View.GONE);
-				holder.body.setVisibility(View.VISIBLE);
-				params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-				holder.item.setLayoutParams(params);
-			} else {
-				holder.summary.setVisibility(View.VISIBLE);
-				holder.body.setVisibility(View.GONE);
-				params.height = mCollapsedHeight;
-				holder.item.setLayoutParams(params);
-			}
+			setExpansion(_v, mExpansionStates.get(itemView.mSeq));
 		}
 
 		@Override
 		public View newView(Context _context, Cursor _c, ViewGroup _parent) {
-			final View v = mInflater.inflate(R.layout.article_list_item,
+			final View v = mInflater.inflate(R.layout.threaded_view_item,
 					_parent, false);
 			final ViewHolder holder = new ViewHolder();
 			holder.item = v.findViewById(R.id.item);
@@ -482,6 +472,65 @@ public class KidsBbsTView extends ListActivity {
 					mWhere + "(" + KidsBbsProvider.KEYA_USER
 					+ " LIKE '%" + _constraint + "%')",
 					null, null);
+		}
+
+		public int initExpansionStates(Cursor _c) {
+			if (_c == null || _c.getCount() <= 0) {
+				return 0;
+			}
+			int pos = -1;
+			_c.moveToFirst();
+			do {
+				final boolean read = _c.getInt(COLUMN_READ) != 0;
+				if (pos == -1 && !read) {
+					pos = _c.getPosition();
+				}
+				mExpansionStates.put(_c.getInt(COLUMN_SEQ), !read);
+			} while (_c.moveToNext());
+			if (pos == -1) {
+				pos = _c.getPosition();
+			}
+			return pos;
+		}
+
+		public boolean isExpanded(View _v) {
+			final ViewHolder holder = (ViewHolder) _v.getTag();
+			return (holder.summary.getVisibility() == View.GONE);
+		}
+
+		public void setExpansion(View _v, boolean _state) {
+			final KidsBbsTItem itemView = (KidsBbsTItem) _v;
+			final ViewHolder holder = (ViewHolder) _v.getTag();
+			ViewGroup.LayoutParams params = holder.item.getLayoutParams();
+			if (_state) {
+				holder.summary.setVisibility(View.GONE);
+				holder.body.setVisibility(View.VISIBLE);
+				params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+				holder.item.setLayoutParams(params);
+			} else {
+				holder.summary.setVisibility(View.VISIBLE);
+				holder.body.setVisibility(View.GONE);
+				params.height = mCollapsedHeight;
+				holder.item.setLayoutParams(params);
+			}
+			mExpansionStates.put(itemView.mSeq, _state);
+		}
+
+		public void toggleExpansion(View _v) {
+			setExpansion(_v, !isExpanded(_v));
+		}
+
+		public void setExpansionAll(boolean _state) {
+			Cursor c = getCursor();
+			if (c == null || c.getCount() <= 0) {
+				return;
+			}
+			final int saved = c.getPosition();
+			c.moveToFirst();
+			do {
+				mExpansionStates.put(c.getInt(COLUMN_SEQ), _state);
+			} while (c.moveToNext());
+			c.moveToPosition(saved);
 		}
 	}
 }
