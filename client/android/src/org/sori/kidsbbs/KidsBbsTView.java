@@ -89,7 +89,6 @@ public class KidsBbsTView extends ListActivity
 	private TextView mDateView;
 
 	private int mHeaderSeq;
-	private boolean mHeaderVisible;
 
 	private UpdateTask mLastUpdate;
 
@@ -125,7 +124,6 @@ public class KidsBbsTView extends ListActivity
 		mUsernameView = (TextView) findViewById(R.id.username);
 		mDateView = (TextView) findViewById(R.id.date);
 		mHeaderView.setVisibility(View.GONE);
-		mHeaderVisible = false;
 		
 		mListView = getListView();
 		//mListView.setSmoothScrollbarEnabled(false);
@@ -281,58 +279,60 @@ public class KidsBbsTView extends ListActivity
 		if (_total <= 0) {
 			return;
 		}
-		final int n = _v.getChildCount();
-		KidsBbsTItem itemView = null;
-		// getChildAt(0) wasn't _first...
-		for (int i = 0; i < n; ++i) {
-			final KidsBbsTItem v = (KidsBbsTItem) _v.getChildAt(i);
-			if (v.getTop() == 0 || v.getBottom() > 0) {
-				itemView = v;
-				break;
-			}
-		}
-		if (itemView == null) {
-			return;
-		}
-		if (mHeaderSeq != -1 && mHeaderSeq == itemView.mSeq) {
-			return;
-		}
-		final int top = itemView.getTop();
-		boolean headerState;
-		if (top == 0) {
-			if (!mHeaderVisible) {
-				return;
-			}
-			headerState = false;
-		} else {
-			mHeaderSeq = itemView.mSeq;
-			final boolean isExpanded =
-				itemView.findViewById(R.id.summary).getVisibility() == View.GONE;
-			if (isExpanded == mHeaderVisible) {
-				return;
-			}
-			headerState = isExpanded;
-		}
-		if (headerState) {
-			mUsernameView.setText(itemView.mAuthor);
-			mDateView.setText(itemView.mDate);
-			if (!mHeaderVisible) {
-				mHeaderView.setVisibility(View.VISIBLE);
-				mHeaderVisible = true;
-				mListView.requestLayout();
-			}
-			mHeaderView.requestLayout();
-		} else {
-			mHeaderView.setVisibility(View.GONE);
-			mHeaderVisible = false;
-			mHeaderView.requestLayout();
-			mListView.requestLayout();
-		}
+		updateHeader(_v);
 	}
 
 	@Override
 	public void onScrollStateChanged(AbsListView _v, int _state) {
-		// Nothing...
+		if (AbsListView.OnScrollListener.SCROLL_STATE_IDLE == _state) {
+			updateHeader(_v);
+		}
+	}
+	
+	private void updateHeader(AbsListView _v) {
+		KidsBbsTItem vItem = (KidsBbsTItem) getFirstView(_v);
+		if (null == vItem) {
+			return;
+		}
+		final boolean curHeader =
+			mHeaderView.getVisibility() == View.VISIBLE;
+		// Top _can_ be positive (I've seen "1").
+		final int top = vItem.getTop();
+		boolean newHeader =
+			vItem.findViewById(R.id.body).getVisibility() == View.VISIBLE;
+		if (mHeaderSeq != -1 && mHeaderSeq == vItem.mSeq
+				&& top < 0 && newHeader == curHeader) {
+			return;
+		}
+		if (top >= 0) {
+			mHeaderSeq = -1;
+			if (!curHeader) {
+				return;
+			}
+			newHeader = false;
+		} else {
+			mHeaderSeq = vItem.mSeq;
+		}
+		if (newHeader) {
+			mUsernameView.setText(vItem.mAuthor);
+			mDateView.setText(vItem.mDate);
+			if (!curHeader) {
+				mHeaderView.setVisibility(View.VISIBLE);
+			}
+		} else {
+			mHeaderView.setVisibility(View.GONE);
+		}
+	}
+	
+	private View getFirstView(AbsListView _v) {
+		final int n = _v.getChildCount();
+		for (int i = 0; i < n; ++i) {
+			final View vChild = _v.getChildAt(i);
+			if (vChild.getTop() >= 0 || vChild.getBottom() > 0) {
+				return vChild;
+			}
+		}
+		return null;
 	}
 	
 	private final int getCount(String _where) {
@@ -397,6 +397,8 @@ public class KidsBbsTView extends ListActivity
 
 	private final void refreshView() {
 		mListView.requestLayout();
+		// This is needed since onScroll doesn't get called.
+		updateHeader(mListView);
 	}
 
 	private void expandAll(boolean _state) {
