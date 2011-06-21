@@ -47,13 +47,15 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.CursorAdapter;
 import android.widget.FilterQueryProvider;
 import android.widget.ListView;
 import android.widget.TextView;
 
-public class KidsBbsTView extends ListActivity {
+public class KidsBbsTView extends ListActivity
+		implements ListView.OnScrollListener {
 	private static final int MENU_REFRESH = Menu.FIRST;
 	private static final int MENU_PREFERENCES = Menu.FIRST + 1;
 	private static final int MENU_EXPAND_ALL = Menu.FIRST + 2;
@@ -82,6 +84,12 @@ public class KidsBbsTView extends ListActivity {
 	private String mUpdateText;
 	private TextView mStatusView;
 	private ListView mListView;
+	private View mHeaderView;
+	private TextView mUsernameView;
+	private TextView mDateView;
+
+	private int mHeaderSeq;
+	private boolean mHeaderVisible;
 
 	private UpdateTask mLastUpdate;
 
@@ -113,11 +121,18 @@ public class KidsBbsTView extends ListActivity {
 		mStatusView = (TextView) findViewById(R.id.status);
 		mStatusView.setVisibility(View.GONE);
 		
+		mHeaderView = findViewById(R.id.header);
+		mUsernameView = (TextView) findViewById(R.id.username);
+		mDateView = (TextView) findViewById(R.id.date);
+		mHeaderView.setVisibility(View.GONE);
+		mHeaderVisible = false;
+		
 		mListView = getListView();
 		//mListView.setSmoothScrollbarEnabled(false);
 
 		mAdapter = new ArticlesAdapter(this);
 		setListAdapter(mAdapter);
+		mListView.setOnScrollListener(this);
 
 		registerReceivers();
 
@@ -260,6 +275,65 @@ public class KidsBbsTView extends ListActivity {
 		}
 		return false;
 	}
+
+	@Override
+	public void onScroll(AbsListView _v, int _first, int _count, int _total) {
+		if (_total <= 0) {
+			return;
+		}
+		final int n = _v.getChildCount();
+		KidsBbsTItem itemView = null;
+		// getChildAt(0) wasn't _first...
+		for (int i = 0; i < n; ++i) {
+			final KidsBbsTItem v = (KidsBbsTItem) _v.getChildAt(i);
+			if (v.getTop() == 0 || v.getBottom() > 0) {
+				itemView = v;
+				break;
+			}
+		}
+		if (itemView == null) {
+			return;
+		}
+		if (mHeaderSeq != -1 && mHeaderSeq == itemView.mSeq) {
+			return;
+		}
+		final int top = itemView.getTop();
+		boolean headerState;
+		if (top == 0) {
+			if (!mHeaderVisible) {
+				return;
+			}
+			headerState = false;
+		} else {
+			mHeaderSeq = itemView.mSeq;
+			final boolean isExpanded =
+				itemView.findViewById(R.id.summary).getVisibility() == View.GONE;
+			if (isExpanded == mHeaderVisible) {
+				return;
+			}
+			headerState = isExpanded;
+		}
+		if (headerState) {
+			mUsernameView.setText(itemView.mAuthor);
+			mDateView.setText(itemView.mDate);
+			if (!mHeaderVisible) {
+				mHeaderView.setVisibility(View.VISIBLE);
+				mHeaderVisible = true;
+				mListView.requestLayout();
+			}
+			mHeaderView.requestLayout();
+		} else {
+			mHeaderView.setVisibility(View.GONE);
+			mHeaderVisible = false;
+			mHeaderView.requestLayout();
+			mListView.requestLayout();
+		}
+	}
+
+	@Override
+	public void onScrollStateChanged(AbsListView _v, int _state) {
+		// Nothing...
+	}
 	
 	private final int getCount(String _where) {
 		return KidsBbs.getTableCount(mResolver,
@@ -300,6 +374,7 @@ public class KidsBbsTView extends ListActivity {
 			if (_c == null || _c.isClosed() || mAdapter == null) {
 				return;
 			}
+			mHeaderSeq = -1;
 			mAdapter.changeCursor(_c);
 			mSavedItemPosition = mAdapter.initExpansionStates(_c);
 			restoreListPosition();
