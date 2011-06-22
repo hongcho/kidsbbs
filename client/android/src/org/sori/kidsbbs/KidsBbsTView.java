@@ -68,7 +68,7 @@ public class KidsBbsTView extends ListActivity
 	private static final String KEY_SELECTED_ITEM = "KEY_SELECTED_ITEM";
 
 	private ContextMenu mContextMenu;
-	private ArticlesAdapter mAdapter;
+	private ArticlesAdapter mAdapter = null;
 	private int mSavedItemPosition;
 
 	private Uri mUri;
@@ -150,8 +150,10 @@ public class KidsBbsTView extends ListActivity
 	@Override
 	protected void onDestroy() {
 		unregisterReceivers();
-		mAdapter.changeCursor(null);
-		mAdapter = null;
+		if (mAdapter != null) {
+			mAdapter.changeCursor(null);
+			mAdapter = null;
+		}
 		super.onDestroy();
 	}
 
@@ -161,30 +163,40 @@ public class KidsBbsTView extends ListActivity
 		updateTitle();
 	}
 
-	private void toggleExpansion(View _v, int _position) {
-		mAdapter.toggleExpansion(_v);
-		if (_v.getTop() < 0) {
-			setSelection(_position);
-		}
-		refreshView();
-	}
-
 	@Override
 	protected void onStop() {
-		mAdapter.getCursor().deactivate();
+		if (mAdapter != null) {
+			final Cursor c = mAdapter.getCursor();
+			if (c != null) {
+				c.deactivate();
+			}
+		}
 		super.onStop();
 	}
 
 	@Override
 	protected void onRestart() {
 		super.onRestart();
-		mAdapter.getCursor().requery();
+		if (mAdapter != null) {
+			final Cursor c = mAdapter.getCursor();
+			if (c != null) {
+				c.requery();
+			}
+		}
 	}
 
 	@Override
 	protected void onListItemClick(ListView _l, View _v, int _position, long _id) {
 		super.onListItemClick(_l, _v, _position, _id);
 		toggleExpansion(_v, _position);
+	}
+
+	private void toggleExpansion(View _v, int _position) {
+		mAdapter.toggleExpansion(_v);
+		if (_v.getTop() < 0) {
+			setSelection(_position);
+		}
+		refreshView();
 	}
 
 	@Override

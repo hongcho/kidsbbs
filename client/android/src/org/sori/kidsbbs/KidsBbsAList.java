@@ -71,7 +71,7 @@ public abstract class KidsBbsAList extends ListActivity
 
 	private static final String KEY_SELECTED_ITEM = "KEY_SELECTED_ITEM";
 
-	private ArticlesAdapter mAdapter;
+	private ArticlesAdapter mAdapter = null;
 	private int mSavedItemPosition;
 
 	private Uri mUri;
@@ -170,8 +170,10 @@ public abstract class KidsBbsAList extends ListActivity
 	@Override
 	protected void onDestroy() {
 		unregisterReceivers();
-		mAdapter.changeCursor(null);
-		mAdapter = null;
+		if (mAdapter != null) {
+			mAdapter.changeCursor(null);
+			mAdapter = null;
+		}
 		super.onDestroy();
 	}
 
@@ -183,14 +185,24 @@ public abstract class KidsBbsAList extends ListActivity
 
 	@Override
 	protected void onStop() {
-		mAdapter.getCursor().deactivate();
+		if (mAdapter != null) {
+			final Cursor c = mAdapter.getCursor();
+			if (c != null) {
+				c.deactivate();
+			}
+		}
 		super.onStop();
 	}
 
 	@Override
 	protected void onRestart() {
 		super.onRestart();
-		mAdapter.getCursor().requery();
+		if (mAdapter != null) {
+			final Cursor c = mAdapter.getCursor();
+			if (c != null) {
+				c.requery();
+			}
+		}
 	}
 
 	public void onSharedPreferenceChanged(SharedPreferences _prefs, String _key) {
