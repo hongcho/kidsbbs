@@ -68,7 +68,7 @@ public class KidsBbsBList extends ListActivity {
 	private ContentResolver mResolver;
 	private NotificationManager mNotificationManager;
 
-	private BoardsAdapter mAdapter = null;
+	private BoardsAdapter mAdapter;
 	private int mSavedItemPosition;
 
 	private String mTitleBase;
@@ -113,10 +113,6 @@ public class KidsBbsBList extends ListActivity {
 	@Override
 	protected void onDestroy() {
 		unregisterReceivers();
-		if (mAdapter != null) {
-			mAdapter.changeCursor(null);
-			mAdapter = null;
-		}
 		super.onDestroy();
 	}
 
@@ -125,26 +121,13 @@ public class KidsBbsBList extends ListActivity {
 		super.onResume();
 		mNotificationManager.cancel(KidsBbs.NOTIFICATION_NEW_ARTICLE);
 	}
-
-	@Override
-	protected void onStop() {
-		if (mAdapter != null) {
-			final Cursor c = mAdapter.getCursor();
-			if (c != null) {
-				c.deactivate();
-			}
-		}
-		super.onStop();
-	}
-
+	
 	@Override
 	protected void onRestart() {
 		super.onRestart();
-		if (mAdapter != null) {
-			final Cursor c = mAdapter.getCursor();
-			if (c != null) {
-				c.requery();
-			}
+		final Cursor c = mAdapter.getCursor();
+		if (c != null) {
+			c.requery();
 		}
 	}
 
@@ -363,8 +346,24 @@ public class KidsBbsBList extends ListActivity {
 		setSelection(mSavedItemPosition);
 	}
 
+	private class SavedStates {
+		Cursor cursor;
+	};
+
+	// Saving state for rotation changes...
+	public Object onRetainNonConfigurationInstance() {
+		final SavedStates save = new SavedStates();
+		save.cursor = mAdapter.getCursor();
+		return save;
+	}
+
 	private void initializeStates() {
-		refreshList();
+		final SavedStates save = (SavedStates) getLastNonConfigurationInstance();
+		if (save == null || save.cursor == null) {
+			refreshList();
+		} else {
+			mAdapter.changeCursor(save.cursor);
+		}
 	}
 
 	private void setError() {

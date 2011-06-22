@@ -28,12 +28,10 @@ package org.sori.kidsbbs;
 import java.util.HashMap;
 
 import android.app.ListActivity;
-import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.content.res.Resources.Theme;
 import android.database.Cursor;
@@ -68,7 +66,7 @@ public class KidsBbsTView extends ListActivity
 	private static final String KEY_SELECTED_ITEM = "KEY_SELECTED_ITEM";
 
 	private ContextMenu mContextMenu;
-	private ArticlesAdapter mAdapter = null;
+	private ArticlesAdapter mAdapter;
 	private int mSavedItemPosition;
 
 	private Uri mUri;
@@ -140,20 +138,10 @@ public class KidsBbsTView extends ListActivity
 
 		initializeStates();
 	}
-	
-	@Override
-	protected void onPause() {
-		//markAllRead(true);
-		super.onPause();
-	}
 
 	@Override
 	protected void onDestroy() {
 		unregisterReceivers();
-		if (mAdapter != null) {
-			mAdapter.changeCursor(null);
-			mAdapter = null;
-		}
 		super.onDestroy();
 	}
 
@@ -161,28 +149,6 @@ public class KidsBbsTView extends ListActivity
 	protected void onResume() {
 		super.onResume();
 		updateTitle();
-	}
-
-	@Override
-	protected void onStop() {
-		if (mAdapter != null) {
-			final Cursor c = mAdapter.getCursor();
-			if (c != null) {
-				c.deactivate();
-			}
-		}
-		super.onStop();
-	}
-
-	@Override
-	protected void onRestart() {
-		super.onRestart();
-		if (mAdapter != null) {
-			final Cursor c = mAdapter.getCursor();
-			if (c != null) {
-				c.requery();
-			}
-		}
 	}
 
 	@Override
@@ -344,18 +310,10 @@ public class KidsBbsTView extends ListActivity
 		}
 		return null;
 	}
-	
-	private final int getCount(String _where) {
-		return KidsBbs.getTableCount(mResolver,
-				KidsBbsProvider.CONTENT_URISTR_LIST, mTabname,
-				KidsBbsProvider.KEYA_THREAD + "='" + mBoardThread + "'"
-				+ _where);
-	}
 
 	private final void updateTitle() {
 		setTitle("[" + mBoardTitle + "] " + mTitle + " ("
-				+ getCount(" AND " + KidsBbsProvider.SELECTION_UNREAD) + "/"
-				+ getCount("") + ")");
+				+ mAdapter.getCount() + ")");
 	}
 
 	private final int getCount() {
@@ -389,7 +347,7 @@ public class KidsBbsTView extends ListActivity
 			mSavedItemPosition = mAdapter.initExpansionStates(_c);
 			restoreListPosition();
 			updateTitle();
-			markAllRead(true);
+			markAllRead();
 		}
 	}
 
@@ -404,7 +362,7 @@ public class KidsBbsTView extends ListActivity
 			mLastUpdate.execute();
 		}
 	}
-
+	
 	private final void refreshView() {
 		mListView.requestLayout();
 		// This is needed since onScroll doesn't get called.
@@ -424,16 +382,16 @@ public class KidsBbsTView extends ListActivity
 		refreshView();
 	}
 
-	private void markAllRead(boolean _read) {
+	private void markAllRead() {
 		final Cursor c = getItem(getCount() - 1);
 		final int seq = c.getInt(
 				c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
 		final String where =
 			KidsBbsProvider.KEYA_THREAD + "='" + mBoardThread
 			+ "' AND " + KidsBbsProvider.KEYA_SEQ + "<=" + seq
-			+ " AND " + KidsBbsProvider.KEYA_READ + (_read ? "=0" : "!=0");
+			+ " AND " + KidsBbsProvider.KEYA_READ + "=0";
 		final ContentValues values = new ContentValues();
-		values.put(KidsBbsProvider.KEYA_READ, _read ? 1 : 0);
+		values.put(KidsBbsProvider.KEYA_READ, 1);
 		final int nChanged = mResolver.update(mUriList,
 				values, where, null);
 		if (nChanged > 0) {
@@ -467,52 +425,33 @@ public class KidsBbsTView extends ListActivity
 		setSelection(mSavedItemPosition);
 	}
 
-	protected final void initializeStates() {
-		refreshList();
+	private class SavedStates {
+		Cursor cursor;
+		Object expansionStates;
+	};
+
+	// Saving state for rotation changes...
+	public Object onRetainNonConfigurationInstance() {
+		final SavedStates save = new SavedStates();
+		save.cursor = mAdapter.getCursor();
+		save.expansionStates = mAdapter.getExpansionStates();
+		return save;
 	}
 
-	private class ArticleUpdatedReceiver extends BroadcastReceiver {
-		@Override
-		public void onReceive(Context _context, Intent _intent) {
-			final String tabname = _intent.getStringExtra(KidsBbs.PARAM_BASE
-					+ KidsBbsProvider.KEYB_TABNAME);
-			final String thread = _intent.getStringExtra(KidsBbs.PARAM_BASE
-					+ KidsBbsProvider.KEYA_THREAD);
-			if (mTabname != null && tabname != null && mTabname.equals(tabname)
-					&& mBoardThread != null && thread != null
-					&& mBoardThread.equals(thread)) {
-				updateTitle();
-			}
+	private void initializeStates() {
+		final SavedStates save = (SavedStates) getLastNonConfigurationInstance();
+		if (save == null || save.cursor == null || save.expansionStates == null) {
+			refreshList();
+		} else {
+			mAdapter.setExpansionStates(save.expansionStates);
+			mAdapter.changeCursor(save.cursor);
 		}
 	}
-
-	private class BoardUpdatedReceiver extends BroadcastReceiver {
-		@Override
-		public void onReceive(Context _context, Intent _intent) {
-			final String tabname = _intent.getStringExtra(KidsBbs.PARAM_BASE
-					+ KidsBbsProvider.KEYB_TABNAME);
-			if (mTabname != null && tabname != null && mTabname.equals(tabname)) {
-				updateTitle();
-			}
-		}
-	}
-
-	private ArticleUpdatedReceiver mReceiverArticleUpdated;
-	private BoardUpdatedReceiver mReceiverBoardUpdated;
 
 	private void registerReceivers() {
-		IntentFilter filter;
-		mReceiverArticleUpdated = new ArticleUpdatedReceiver();
-		filter = new IntentFilter(KidsBbs.ARTICLE_UPDATED);
-		registerReceiver(mReceiverArticleUpdated, filter);
-		mReceiverBoardUpdated = new BoardUpdatedReceiver();
-		filter = new IntentFilter(KidsBbs.BOARD_UPDATED);
-		registerReceiver(mReceiverBoardUpdated, filter);
 	}
 
 	private void unregisterReceivers() {
-		unregisterReceiver(mReceiverArticleUpdated);
-		unregisterReceiver(mReceiverBoardUpdated);
 	}
 
 	protected static final String[] FIELDS = {
@@ -545,6 +484,14 @@ public class KidsBbsTView extends ListActivity
 
 		private HashMap<Integer, Boolean> mExpansionStates =
 			new HashMap<Integer, Boolean>();
+		
+		public Object getExpansionStates() {
+			return mExpansionStates;
+		}
+		@SuppressWarnings("unchecked")
+		public void setExpansionStates(Object _states) {
+			mExpansionStates = (HashMap<Integer, Boolean>) _states;
+		}
 
 		public ArticlesAdapter(Context _context) {
 			super(_context, null, true);
