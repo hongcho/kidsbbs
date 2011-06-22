@@ -274,7 +274,6 @@ public class KidsBbsTView extends ListActivity
 		return false;
 	}
 
-	@Override
 	public void onScroll(AbsListView _v, int _first, int _count, int _total) {
 		if (_total <= 0) {
 			return;
@@ -282,7 +281,6 @@ public class KidsBbsTView extends ListActivity
 		updateHeader(_v);
 	}
 
-	@Override
 	public void onScrollStateChanged(AbsListView _v, int _state) {
 		if (AbsListView.OnScrollListener.SCROLL_STATE_IDLE == _state) {
 			updateHeader(_v);
