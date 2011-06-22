@@ -68,7 +68,7 @@ public class KidsBbsBList extends ListActivity {
 	private ContentResolver mResolver;
 	private NotificationManager mNotificationManager;
 
-	private BoardsAdapter mAdapter;
+	private BoardsAdapter mAdapter = null;
 	private int mSavedItemPosition;
 
 	private String mTitleBase;
@@ -113,8 +113,10 @@ public class KidsBbsBList extends ListActivity {
 	@Override
 	protected void onDestroy() {
 		unregisterReceivers();
-		mAdapter.changeCursor(null);
-		mAdapter = null;
+		if (mAdapter != null) {
+			mAdapter.changeCursor(null);
+			mAdapter = null;
+		}
 		super.onDestroy();
 	}
 
@@ -122,6 +124,28 @@ public class KidsBbsBList extends ListActivity {
 	protected void onResume() {
 		super.onResume();
 		mNotificationManager.cancel(KidsBbs.NOTIFICATION_NEW_ARTICLE);
+	}
+
+	@Override
+	protected void onStop() {
+		if (mAdapter != null) {
+			final Cursor c = mAdapter.getCursor();
+			if (c != null) {
+				c.deactivate();
+			}
+		}
+		super.onStop();
+	}
+
+	@Override
+	protected void onRestart() {
+		super.onRestart();
+		if (mAdapter != null) {
+			final Cursor c = mAdapter.getCursor();
+			if (c != null) {
+				c.requery();
+			}
+		}
 	}
 
 	@Override
