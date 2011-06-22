@@ -27,6 +27,5 @@
 	THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 <resources>
-    <integer name="version_code">00012</integer>
     <string name="version_name">0.10.2</string>
 </resources>
