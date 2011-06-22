@@ -274,12 +274,9 @@ public class KidsBbsTView extends ListActivity
 		if (null == vItem) {
 			return;
 		}
-		final Cursor c = (Cursor) mAdapter.getItem(0);
-		final int seqFirst = c.getInt(
-				c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
 		final boolean curHeader =
 			mHeaderView.getVisibility() == View.VISIBLE;
-		final boolean newHeader = vItem.mSeq != seqFirst || vItem.getTop() < 0;
+		final boolean newHeader = vItem.getTop() < 0;
 		if (mHeaderSeq != -1 && mHeaderSeq == vItem.mSeq
 				&& newHeader == curHeader) {
 			return;
