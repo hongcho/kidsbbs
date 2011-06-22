@@ -118,9 +118,13 @@ public class KidsBbsTView extends ListActivity
 		mStatusView = (TextView) findViewById(R.id.status);
 		mStatusView.setVisibility(View.GONE);
 		
-		mHeaderView = findViewById(R.id.header);
 		mUsernameView = (TextView) findViewById(R.id.username);
 		mDateView = (TextView) findViewById(R.id.date);
+		mHeaderView = findViewById(R.id.header);
+		mHeaderView.setPadding(mHeaderView.getPaddingLeft(),
+				3 * mHeaderView.getPaddingBottom(),
+				mHeaderView.getPaddingRight(),
+				mHeaderView.getPaddingBottom());
 		mHeaderView.setVisibility(View.GONE);
 		
 		mListView = getListView();
