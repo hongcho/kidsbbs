@@ -89,6 +89,7 @@
 		<PreferenceScreen
 			android:key="PREF_ABOUT_APP"
 			android:title="@string/about_app_title"
+			android:summary="@string/version_name"
 			/>
 	</PreferenceCategory>
 </PreferenceScreen>
