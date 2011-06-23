@@ -159,6 +159,7 @@ public class KidsBbsTView extends ListActivity
 	protected void onListItemClick(ListView _l, View _v, int _position, long _id) {
 		super.onListItemClick(_l, _v, _position, _id);
 		toggleExpansion(_v, _position);
+		refreshView();
 	}
 
 	private void toggleExpansion(View _v, int _position) {
