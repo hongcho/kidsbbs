@@ -38,6 +38,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
@@ -54,6 +55,8 @@ import android.widget.TextView;
 
 public class KidsBbsTView extends ListActivity
 		implements ListView.OnScrollListener {
+	private static final String TAG = "KidsBbsTView";
+
 	private static final int MENU_REFRESH = Menu.FIRST;
 	private static final int MENU_PREFERENCES = Menu.FIRST + 1;
 	private static final int MENU_EXPAND_ALL = Menu.FIRST + 2;
@@ -159,7 +162,6 @@ public class KidsBbsTView extends ListActivity
 	protected void onListItemClick(ListView _l, View _v, int _position, long _id) {
 		super.onListItemClick(_l, _v, _position, _id);
 		toggleExpansion(_v, _position);
-		refreshView();
 	}
 
 	private void toggleExpansion(View _v, int _position) {
@@ -278,6 +280,8 @@ public class KidsBbsTView extends ListActivity
 		final boolean curHeader =
 			mHeaderView.getVisibility() == View.VISIBLE;
 		final boolean newHeader = vItem.getTop() < 0;
+		Log.i(TAG, "updateHeader: (" + mHeaderSeq + "," + vItem.mSeq + ","
+				 + vItem.getTop() + ","+ curHeader + "," + newHeader + ")");
 		if (mHeaderSeq != -1 && mHeaderSeq == vItem.mSeq
 				&& newHeader == curHeader) {
 			return;
@@ -358,20 +362,16 @@ public class KidsBbsTView extends ListActivity
 	}
 	
 	private final void refreshView() {
-		mListView.requestLayout();
 		// This is needed since onScroll doesn't get called.
 		updateHeader(mListView);
+		mListView.invalidate();
 	}
 
 	private void expandAll(boolean _state) {
-		final int pos = mListView.getSelectedItemPosition();
 		mAdapter.setExpansionAll(_state);
 		final int n = mListView.getChildCount();
 		for (int i = n - 1; i >= 0; --i) {
 			mAdapter.setExpansion(mListView.getChildAt(i), _state);
-		}
-		if (pos >= 0) {
-			setSelection(pos);
 		}
 		refreshView();
 	}
