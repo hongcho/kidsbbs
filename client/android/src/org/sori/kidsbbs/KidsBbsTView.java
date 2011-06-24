@@ -124,10 +124,6 @@ public class KidsBbsTView extends ListActivity
 		mUsernameView = (TextView) findViewById(R.id.username);
 		mDateView = (TextView) findViewById(R.id.date);
 		mHeaderView = findViewById(R.id.header);
-		mHeaderView.setPadding(mHeaderView.getPaddingLeft(),
-				3 * mHeaderView.getPaddingBottom(),
-				mHeaderView.getPaddingRight(),
-				mHeaderView.getPaddingBottom());
 		mHeaderView.setVisibility(View.GONE);
 		
 		mListView = getListView();
@@ -166,9 +162,6 @@ public class KidsBbsTView extends ListActivity
 
 	private void toggleExpansion(View _v, int _position) {
 		mAdapter.toggleExpansion(_v);
-		if (_v.getTop() < 0) {
-			setSelection(_position);
-		}
 		refreshView();
 	}
 
@@ -263,25 +256,29 @@ public class KidsBbsTView extends ListActivity
 		if (_total <= 0) {
 			return;
 		}
-		updateHeader(_v);
+		refreshView();
 	}
 
 	public void onScrollStateChanged(AbsListView _v, int _state) {
 		if (AbsListView.OnScrollListener.SCROLL_STATE_IDLE == _state) {
-			updateHeader(_v);
+			refreshView();
 		}
 	}
 	
 	private void updateHeader(AbsListView _v) {
-		KidsBbsTItem vItem = (KidsBbsTItem) getFirstView(_v);
+		KidsBbsTItem vItem = (KidsBbsTItem) getFirstVisibleView(_v);
 		if (null == vItem) {
 			return;
 		}
 		final boolean curHeader =
 			mHeaderView.getVisibility() == View.VISIBLE;
 		final boolean newHeader = vItem.getTop() < 0;
-		Log.i(TAG, "updateHeader: (" + mHeaderSeq + "," + vItem.mSeq + ","
-				 + vItem.getTop() + ","+ curHeader + "," + newHeader + ")");
+		Log.i(TAG, "updateHeader:0(" + mHeaderSeq
+				+ "," + vItem.mSeq
+				+ "," + vItem.getTop()
+				+ ","+ mHeaderView.isShown()
+				+ ","+ mListView.getTop()
+				+ "," + newHeader + ")");
 		if (mHeaderSeq != -1 && mHeaderSeq == vItem.mSeq
 				&& newHeader == curHeader) {
 			return;
@@ -296,9 +293,15 @@ public class KidsBbsTView extends ListActivity
 		} else {
 			mHeaderView.setVisibility(View.GONE);
 		}
+		Log.i(TAG, "updateHeader:1(" + mHeaderSeq
+				+ "," + vItem.mSeq
+				+ "," + vItem.getTop()
+				+ ","+ mHeaderView.isShown()
+				+ ","+ mListView.getTop()
+				+ "," + newHeader + ")");
 	}
 	
-	private View getFirstView(AbsListView _v) {
+	private View getFirstVisibleView(AbsListView _v) {
 		final int n = _v.getChildCount();
 		for (int i = 0; i < n; ++i) {
 			final View vChild = _v.getChildAt(i);
@@ -362,9 +365,7 @@ public class KidsBbsTView extends ListActivity
 	}
 	
 	private final void refreshView() {
-		// This is needed since onScroll doesn't get called.
 		updateHeader(mListView);
-		mListView.invalidate();
 	}
 
 	private void expandAll(boolean _state) {
@@ -542,7 +543,7 @@ public class KidsBbsTView extends ListActivity
 			holder.summary.setText(itemView.mSummary);
 			holder.body.setText(itemView.mBody);
 
-			setExpansion(_v, mExpansionStates.get(itemView.mSeq));
+			setExpansion(itemView, mExpansionStates.get(itemView.mSeq));
 		}
 
 		@Override
