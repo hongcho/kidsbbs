@@ -31,7 +31,6 @@
 	android:layout_height="fill_parent"
 	android:minHeight="?android:attr/listPreferredItemHeight"
 	android:orientation="vertical"
-	android:background="?android:attr/colorBackground"
 	>
 	<include layout="@layout/common_header" />
 	<include layout="@layout/title_header" />
