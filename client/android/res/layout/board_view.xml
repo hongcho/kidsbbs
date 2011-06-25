@@ -37,7 +37,7 @@
 	<include layout="@layout/message_header" />
 	<ScrollView
 		android:layout_width="fill_parent"
-		android:layout_height="fill_parent"
+		android:layout_height="wrap_content"
 		android:scrollbarStyle="outsideOverlay"
 		android:fadingEdge="vertical"
 		android:fillViewport="true"
