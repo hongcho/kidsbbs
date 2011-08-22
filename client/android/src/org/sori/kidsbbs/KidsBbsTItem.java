@@ -42,6 +42,7 @@ public class KidsBbsTItem extends LinearLayout {
 	public String mBody;
 	public boolean mExpanded;
 	public boolean mFirst;
+	public boolean mLast;
 
 	public KidsBbsTItem(Context _context) {
 		super(_context);

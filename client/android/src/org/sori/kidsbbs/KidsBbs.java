@@ -233,8 +233,16 @@ public class KidsBbs extends Activity {
 						+ " .+:\\s*$",
 						Pattern.MULTILINE),
 				Pattern.compile("^\\s*>.*$", Pattern.MULTILINE),
-				Pattern.compile("^\\s*-+\\s*$", Pattern.MULTILINE),
-				Pattern.compile("^\\s*=+\\s*$", Pattern.MULTILINE),
+				Pattern.compile("^\\s*-{3,}\\s*$", Pattern.MULTILINE),
+				Pattern.compile("^\\s*={3,}\\s*$", Pattern.MULTILINE),
+				Pattern.compile("^\\s*_{3,}\\s*$", Pattern.MULTILINE),
+				Pattern.compile("^\\s*/{3,}\\s*$", Pattern.MULTILINE),
+				Pattern.compile("^\\s*#{3,}\\s*$", Pattern.MULTILINE),
+				Pattern.compile("^\\s*\\*{3,}\\s*$", Pattern.MULTILINE),
+				Pattern.compile("^\\s*\\+{3,}\\s*$", Pattern.MULTILINE),
+				Pattern.compile("^\\s*\\.{3,}\\s*$", Pattern.MULTILINE),
+				Pattern.compile("^\\s*\\\\{3,}\\s*$", Pattern.MULTILINE),
+				Pattern.compile("^\\s*(\\*-/){3,}\\s*$", Pattern.MULTILINE),
 		};
 		for (int i = 0; i < P_QUOTES.length; ++i) {
 			Matcher m = P_QUOTES[i].matcher(_s);

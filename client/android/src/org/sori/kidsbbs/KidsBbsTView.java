@@ -521,7 +521,8 @@ public class KidsBbsTView extends ListActivity
 			itemView.mThread = _c.getString(COLUMN_THREAD);
 			itemView.mBody = _c.getString(COLUMN_BODY);
 			itemView.mRead = _c.getInt(COLUMN_READ) != 0;
-			itemView.mFirst = _c.getPosition() == 0;
+			itemView.mFirst = _c.isFirst();
+			itemView.mLast = _c.isLast();
 
 			itemView.mDate = KidsBbs.KidsToLocalDateString(itemView.mDate);
 			itemView.mDate = KidsBbs.GetLongDateString(itemView.mDate);
@@ -596,7 +597,7 @@ public class KidsBbsTView extends ListActivity
 			final KidsBbsTItem itemView = (KidsBbsTItem) _v;
 			final ViewHolder holder = (ViewHolder) _v.getTag();
 			ViewGroup.LayoutParams params = holder.item.getLayoutParams();
-			if (_state) {
+			if (itemView.mLast || _state) {
 				holder.summary.setVisibility(View.GONE);
 				holder.body.setVisibility(View.VISIBLE);
 				params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
