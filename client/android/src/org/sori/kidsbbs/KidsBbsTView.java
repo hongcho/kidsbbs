@@ -38,7 +38,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
@@ -55,7 +54,7 @@ import android.widget.TextView;
 
 public class KidsBbsTView extends ListActivity
 		implements ListView.OnScrollListener {
-	private static final String TAG = "KidsBbsTView";
+	//private static final String TAG = "KidsBbsTView";
 
 	private static final int MENU_REFRESH = Menu.FIRST;
 	private static final int MENU_PREFERENCES = Menu.FIRST + 1;
@@ -85,7 +84,6 @@ public class KidsBbsTView extends ListActivity
 	private String mUpdateText;
 	private TextView mStatusView;
 	private ListView mListView;
-	private View mHeaderView;
 	private TextView mUsernameView;
 	private TextView mDateView;
 
@@ -123,8 +121,6 @@ public class KidsBbsTView extends ListActivity
 		
 		mUsernameView = (TextView) findViewById(R.id.username);
 		mDateView = (TextView) findViewById(R.id.date);
-		mHeaderView = findViewById(R.id.header);
-		mHeaderView.setVisibility(View.GONE);
 		
 		mListView = getListView();
 		//mListView.setSmoothScrollbarEnabled(false);
@@ -270,35 +266,12 @@ public class KidsBbsTView extends ListActivity
 		if (null == vItem) {
 			return;
 		}
-		final boolean curHeader =
-			mHeaderView.getVisibility() == View.VISIBLE;
-		final boolean newHeader = vItem.getTop() < 0;
-		Log.i(TAG, "updateHeader:0(" + mHeaderSeq
-				+ "," + vItem.mSeq
-				+ "," + vItem.getTop()
-				+ ","+ mHeaderView.isShown()
-				+ ","+ mListView.getTop()
-				+ "," + newHeader + ")");
-		if (mHeaderSeq != -1 && mHeaderSeq == vItem.mSeq
-				&& newHeader == curHeader) {
+		if (mHeaderSeq != -1 && mHeaderSeq == vItem.mSeq) {
 			return;
 		}
 		mHeaderSeq = vItem.mSeq;
-		if (newHeader) {
-			mUsernameView.setText(vItem.mAuthor);
-			mDateView.setText(vItem.mDate);
-			if (!curHeader) {
-				mHeaderView.setVisibility(View.VISIBLE);
-			}
-		} else {
-			mHeaderView.setVisibility(View.GONE);
-		}
-		Log.i(TAG, "updateHeader:1(" + mHeaderSeq
-				+ "," + vItem.mSeq
-				+ "," + vItem.getTop()
-				+ ","+ mHeaderView.isShown()
-				+ ","+ mListView.getTop()
-				+ "," + newHeader + ")");
+		mUsernameView.setText(vItem.mAuthor);
+		mDateView.setText(vItem.mDate);
 	}
 	
 	private View getFirstVisibleView(AbsListView _v) {
@@ -475,7 +448,9 @@ public class KidsBbsTView extends ListActivity
 
 		private Context mContext;
 		private LayoutInflater mInflater;
-		private int mCollapsedHeight;
+		private int mCollapsedHeight0;
+		private int mCollapsedHeightX;
+		private int mTopPaddingX;
 
 		private HashMap<Integer, Boolean> mExpansionStates =
 			new HashMap<Integer, Boolean>();
@@ -493,18 +468,33 @@ public class KidsBbsTView extends ListActivity
 			mContext = _context;
 			mInflater = (LayoutInflater) mContext.getSystemService(
 					Context.LAYOUT_INFLATER_SERVICE);
-			
-			final Resources resources = mContext.getResources();
-			final Theme theme = _context.getTheme();
 
+			final Resources resources = mContext.getResources();
+			final float density = resources.getDisplayMetrics().density;
+			final float scaledDensity = resources.getDisplayMetrics().scaledDensity;
+
+			// HACK!!!
+			// Top padding for tview items.
+			final float topPadding = 10 * density;
+			// textAppearanceSmall uses 14sp.
+			final float textHeight = 14 * scaledDensity;
+			final float extraHeight = 8 * density;
+
+			mTopPaddingX = (int) (topPadding + 0.5f);
+
+			final Theme theme = _context.getTheme();
 			TypedValue value = new TypedValue();
 			if (theme.resolveAttribute(
 					android.R.attr.listPreferredItemHeight,
 					value, true)) {
-				mCollapsedHeight = (int) (value.getDimension(
-						resources.getDisplayMetrics()) + 0.5f);
+				float collapsedHeight = value.getDimension(
+						resources.getDisplayMetrics());
+				mCollapsedHeightX = (int) (collapsedHeight + 0.5f);
+				mCollapsedHeight0 = (int) (collapsedHeight - topPadding -
+						textHeight - extraHeight + 0.5f);
 			} else {
-				mCollapsedHeight = ViewGroup.LayoutParams.WRAP_CONTENT;
+				mCollapsedHeightX = ViewGroup.LayoutParams.WRAP_CONTENT;
+				mCollapsedHeight0 = ViewGroup.LayoutParams.WRAP_CONTENT;
 			}
 
 			setFilterQueryProvider(this);
@@ -512,6 +502,7 @@ public class KidsBbsTView extends ListActivity
 
 		private class ViewHolder {
 			View item;
+			View subheader;
 			TextView date;
 			TextView username;
 			TextView summary;
@@ -530,6 +521,7 @@ public class KidsBbsTView extends ListActivity
 			itemView.mThread = _c.getString(COLUMN_THREAD);
 			itemView.mBody = _c.getString(COLUMN_BODY);
 			itemView.mRead = _c.getInt(COLUMN_READ) != 0;
+			itemView.mFirst = _c.getPosition() == 0;
 
 			itemView.mDate = KidsBbs.KidsToLocalDateString(itemView.mDate);
 			itemView.mDate = KidsBbs.GetLongDateString(itemView.mDate);
@@ -542,6 +534,13 @@ public class KidsBbsTView extends ListActivity
 			holder.username.setText(itemView.mAuthor);
 			holder.summary.setText(itemView.mSummary);
 			holder.body.setText(itemView.mBody);
+			if (itemView.mFirst) {
+				holder.subheader.setVisibility(View.GONE);
+				itemView.setPadding(0, 0, 0, 0);
+			} else {
+				holder.subheader.setVisibility(View.VISIBLE);
+				itemView.setPadding(0, mTopPaddingX, 0, 0);
+			}
 
 			setExpansion(itemView, mExpansionStates.get(itemView.mSeq));
 		}
@@ -552,6 +551,7 @@ public class KidsBbsTView extends ListActivity
 					_parent, false);
 			final ViewHolder holder = new ViewHolder();
 			holder.item = v.findViewById(R.id.item);
+			holder.subheader = v.findViewById(R.id.subheader);
 			holder.date = (TextView) v.findViewById(R.id.date);
 			holder.username = (TextView) v.findViewById(R.id.username);
 			holder.summary = (TextView) v.findViewById(R.id.summary);
@@ -608,7 +608,8 @@ public class KidsBbsTView extends ListActivity
 			} else {
 				holder.summary.setVisibility(View.VISIBLE);
 				holder.body.setVisibility(View.GONE);
-				params.height = mCollapsedHeight;
+				params.height = itemView.mFirst ?
+						mCollapsedHeight0 : mCollapsedHeightX;
 				holder.item.setLayoutParams(params);
 			}
 			mExpansionStates.put(itemView.mSeq, _state);
