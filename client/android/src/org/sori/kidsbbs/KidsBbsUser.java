@@ -25,12 +25,14 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 
 public class KidsBbsUser extends KidsBbsAList {
 	private String mBoardUser;
+	private String mTitleView;
 
 	@Override
 	public void onCreate(Bundle _state) {
@@ -39,7 +41,10 @@ public class KidsBbsUser extends KidsBbsAList {
 		final Uri data = getIntent().getData();
 		mBoardUser = data.getQueryParameter(KidsBbs.PARAM_N_USER);
 
-		setTitleCommon(getResources().getString(R.string.title_user));
+		final Resources resources = getResources();
+		mTitleView = resources.getString(R.string.title_view);
+
+		setTitleCommon(resources.getString(R.string.title_user));
 		setQueryBase(KidsBbsProvider.CONTENT_URISTR_LIST, FIELDS_LIST,
 				KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "'");
 
@@ -69,8 +74,15 @@ public class KidsBbsUser extends KidsBbsAList {
 	protected void showItem(int _index) {
 		final Cursor c = getItem(_index);
 		final int seq = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
-		showItemCommon(this, KidsBbsView.class, KidsBbs.URI_INTENT_VIEW, "&"
-				+ KidsBbs.PARAM_N_SEQ + "=" + seq);
+		final String thread = c.getString(
+				c.getColumnIndex(KidsBbsProvider.KEYA_THREAD));
+		final String title = c.getString(
+				c.getColumnIndex(KidsBbsProvider.KEYA_TITLE));
+		showItemCommon(this, KidsBbsTView.class, KidsBbs.URI_INTENT_TVIEW,
+				"&" + KidsBbs.PARAM_N_VTITLE + "=" + mTitleView
+				+ "&" + KidsBbs.PARAM_N_THREAD + "=" + thread
+				+ "&" + KidsBbs.PARAM_N_SEQ + "=" + seq
+				+ "&" + KidsBbs.PARAM_N_TTITLE + "=" + title);
 	}
 
 	protected void toggleRead(int _index) {

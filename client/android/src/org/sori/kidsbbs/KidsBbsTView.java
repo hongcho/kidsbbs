@@ -80,6 +80,7 @@ public class KidsBbsTView extends ListActivity
 	private String mBoardThread;
 	private String mThreadTitle;
 	private String mTitle;
+	private int mSeq;
 
 	private String mUpdateText;
 	private TextView mStatusView;
@@ -101,17 +102,27 @@ public class KidsBbsTView extends ListActivity
 		mBoardTitle = data.getQueryParameter(KidsBbs.PARAM_N_TITLE);
 		mBoardThread = data.getQueryParameter(KidsBbs.PARAM_N_THREAD);
 		mThreadTitle = data.getQueryParameter(KidsBbs.PARAM_N_TTITLE);
+		mTitle = data.getQueryParameter(KidsBbs.PARAM_N_VTITLE);
+		final String paramSeq = data.getQueryParameter(KidsBbs.PARAM_N_SEQ);
+		mSeq = (paramSeq != null && paramSeq.length() > 0) ?
+				Integer.parseInt(paramSeq) : -1;
 
 		mUriList = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + mTabname);
 
 		mResolver = getContentResolver();
 
 		final Resources resources = getResources();
-		mTitle = resources.getString(R.string.title_tview);
 		mUpdateText = resources.getString(R.string.update_text);
+		if (mTitle == null || mTitle.length() == 0) {
+			mTitle = resources.getString(R.string.title_tview);
+		}
 
 		mUri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + mTabname);
-		mWhere = KidsBbsProvider.KEYA_THREAD + "='" + mBoardThread + "'";
+		if (mSeq < 0) {
+			mWhere = KidsBbsProvider.KEYA_THREAD + "='" + mBoardThread + "'";
+		} else {
+			mWhere = KidsBbsProvider.KEYA_SEQ + "=" + mSeq;
+		}
 		
 		final TextView titleView = (TextView) findViewById(R.id.title);
 		titleView.setText(mThreadTitle);
@@ -286,8 +297,14 @@ public class KidsBbsTView extends ListActivity
 	}
 
 	private final void updateTitle() {
-		setTitle("[" + mBoardTitle + "] " + mTitle + " ("
-				+ mAdapter.getCount() + ")");
+		final int count = mAdapter.getCount();
+		final String countString;
+		if (mSeq < 0) {
+			countString = " (" + count + ")";
+		} else {
+			countString = "";
+		}
+		setTitle("[" + mBoardTitle + "] " + mTitle + countString);
 	}
 
 	private final int getCount() {
@@ -593,7 +610,7 @@ public class KidsBbsTView extends ListActivity
 			return (holder.summary.getVisibility() == View.GONE);
 		}
 
-		public void setExpansion(View _v, boolean _state) {
+		public synchronized void setExpansion(View _v, boolean _state) {
 			final KidsBbsTItem itemView = (KidsBbsTItem) _v;
 			final ViewHolder holder = (ViewHolder) _v.getTag();
 			ViewGroup.LayoutParams params = holder.item.getLayoutParams();

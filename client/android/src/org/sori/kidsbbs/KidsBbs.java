@@ -79,13 +79,11 @@ public class KidsBbs extends Activity {
 	public static final String URL_TLIST = URL_BASE + "m=tlist&";
 	public static final String URL_THREAD = URL_BASE + "m=thread&";
 	public static final String URL_USER = URL_BASE + "m=user&";
-	public static final String URL_VIEW = URL_BASE + "m=view&";
 
 	private static final String URI_BASE = "content:/kidsbbs/";
 	public static final String URI_INTENT_TLIST = URI_BASE + "tlist?";
 	public static final String URI_INTENT_THREAD = URI_BASE + "thread?";
 	public static final String URI_INTENT_USER = URI_BASE + "user?";
-	public static final String URI_INTENT_VIEW = URI_BASE + "view?";
 	public static final String URI_INTENT_TVIEW = URI_BASE + "tview?";
 
 	public static final String PARAM_N_TITLE = "bt";
@@ -98,6 +96,7 @@ public class KidsBbs extends Activity {
 	public static final String PARAM_N_COUNT = "n";
 	public static final String PARAM_N_TABNAME = "tn";
 	public static final String PARAM_N_TTITLE = "tt";
+	public static final String PARAM_N_VTITLE = "vt";
 
 	private static final String DATE_INVALID = "0000-00-00 00:00:00";
 	private static final String DATESHORT_INVALID = "0000-00-00";
@@ -242,7 +241,6 @@ public class KidsBbs extends Activity {
 				Pattern.compile("^\\s*\\+{3,}\\s*$", Pattern.MULTILINE),
 				Pattern.compile("^\\s*\\.{3,}\\s*$", Pattern.MULTILINE),
 				Pattern.compile("^\\s*\\\\{3,}\\s*$", Pattern.MULTILINE),
-				Pattern.compile("^\\s*(\\*-/){3,}\\s*$", Pattern.MULTILINE),
 		};
 		for (int i = 0; i < P_QUOTES.length; ++i) {
 			Matcher m = P_QUOTES[i].matcher(_s);

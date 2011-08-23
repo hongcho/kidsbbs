@@ -26,16 +26,22 @@
 package org.sori.kidsbbs;
 
 import android.content.ContentValues;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.os.Bundle;
 
 public class KidsBbsTList extends KidsBbsAList {
 
+	private String mTitleTView;
+
 	@Override
 	public void onCreate(Bundle _state) {
 		super.onCreate(_state);
 
-		setTitleCommon(getResources().getString(R.string.title_tlist));
+		final Resources resources = getResources();
+		mTitleTView = resources.getString(R.string.title_tview);
+
+		setTitleCommon(resources.getString(R.string.title_tlist));
 		setQueryBase(KidsBbsProvider.CONTENT_URISTR_TLIST, FIELDS_TLIST, null);
 
 		updateTitle();
@@ -62,25 +68,15 @@ public class KidsBbsTList extends KidsBbsAList {
 	protected void showItem(int _index) {
 		final Cursor c = getItem(_index);
 		final int count = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_CNT));
-		String base;
-		String extra;
-		Class<?> target;
-		if (count > 1) {
-			final String thread = c.getString(
-					c.getColumnIndex(KidsBbsProvider.KEYA_THREAD));
-			final String ttitle = KidsBbs.getThreadTitle(
-					c.getString(c.getColumnIndex(KidsBbsProvider.KEYA_TITLE)));
-			base = KidsBbs.URI_INTENT_TVIEW;
-			extra = "&" + KidsBbs.PARAM_N_THREAD + "=" + thread
-				+ "&" + KidsBbs.PARAM_N_TTITLE + "=" + ttitle;
-			target = KidsBbsTView.class;
-		} else {
-			final int seq = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
-			base = KidsBbs.URI_INTENT_VIEW;
-			extra = "&" + KidsBbs.PARAM_N_SEQ + "=" + seq;
-			target = KidsBbsView.class;
-		}
-		showItemCommon(this, target, base, extra);
+		final String thread = c.getString(
+				c.getColumnIndex(KidsBbsProvider.KEYA_THREAD));
+		final String title = c.getString(
+				c.getColumnIndex(KidsBbsProvider.KEYA_TITLE));
+		final String ttitle = count > 1 ? KidsBbs.getThreadTitle(title) : title;
+		showItemCommon(this, KidsBbsTView.class, KidsBbs.URI_INTENT_TVIEW,
+				"&" + KidsBbs.PARAM_N_VTITLE + "=" + mTitleTView
+				+ "&" + KidsBbs.PARAM_N_THREAD + "=" + thread
+				+ "&" + KidsBbs.PARAM_N_TTITLE + "=" + ttitle);
 	}
 
 	protected void toggleRead(int _index) {
