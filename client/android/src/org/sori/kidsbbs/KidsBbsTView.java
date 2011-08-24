@@ -88,7 +88,7 @@ public class KidsBbsTView extends ListActivity
 	private TextView mUsernameView;
 	private TextView mDateView;
 
-	private int mHeaderSeq;
+	private int mHeaderSeq = -1;
 
 	private UpdateTask mLastUpdate;
 
@@ -127,6 +127,26 @@ public class KidsBbsTView extends ListActivity
 		final TextView titleView = (TextView) findViewById(R.id.title);
 		titleView.setText(mThreadTitle);
 
+		final View headerView = findViewById(R.id.header);
+		headerView.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View _v) {
+				_v = findViewBySeq(mHeaderSeq);
+				if (_v != null) {
+					toggleExpansion(_v);
+				}
+			}
+		});
+		headerView.setOnLongClickListener(new View.OnLongClickListener() {
+			public boolean onLongClick(View _v) {
+				_v = findViewBySeq(mHeaderSeq);
+				if (_v != null) {
+					openContextMenu(_v);
+					return true;
+				}
+				return false;
+			}
+		});
+
 		mStatusView = (TextView) findViewById(R.id.status);
 		mStatusView.setVisibility(View.GONE);
 		
@@ -164,10 +184,23 @@ public class KidsBbsTView extends ListActivity
 	@Override
 	protected void onListItemClick(ListView _l, View _v, int _position, long _id) {
 		super.onListItemClick(_l, _v, _position, _id);
-		toggleExpansion(_v, _position);
+		toggleExpansion(_v);
 	}
 
-	private void toggleExpansion(View _v, int _position) {
+	private View findViewBySeq(int _seq) {
+		if (_seq >= 0) {
+			final int n = mListView.getChildCount();
+			for (int i = 0; i < n; ++i) {
+				final KidsBbsTItem vItem = (KidsBbsTItem) mListView.getChildAt(i);
+				if (vItem.mSeq == _seq) {
+					return vItem;
+				}
+			}
+		}
+		return null;
+	}
+
+	private void toggleExpansion(View _v) {
 		mAdapter.toggleExpansion(_v);
 		refreshView();
 	}
@@ -240,11 +273,10 @@ public class KidsBbsTView extends ListActivity
 	@Override
 	public boolean onContextItemSelected(MenuItem _item) {
 		super.onContextItemSelected(_item);
-		int pos = ((AdapterView.AdapterContextMenuInfo) _item.getMenuInfo()).position;
 		View v = ((AdapterView.AdapterContextMenuInfo) _item.getMenuInfo()).targetView;
 		switch (_item.getItemId()) {
 		case MENU_TOGGLE_EXPANSION:
-			toggleExpansion(v, pos);
+			toggleExpansion(v);
 			return true;
 		case MENU_SHOW_USER:
 			final Uri data = Uri.parse(KidsBbs.URI_INTENT_USER
