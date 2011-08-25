@@ -27,5 +27,6 @@
 	THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 <resources>
-    <string name="version_name">0.10.5</string>
+	<!-- for versionCode: 16 -->
+    <string name="version_name">0.10.6</string>
 </resources>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.sori.kidsbbs"
-    android:versionCode="00015"
+    android:versionCode="00016"
     android:versionName="@string/version_name"
     >
     <application
