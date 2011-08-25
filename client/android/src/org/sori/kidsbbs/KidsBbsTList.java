@@ -68,15 +68,18 @@ public class KidsBbsTList extends KidsBbsAList {
 	protected void showItem(int _index) {
 		final Cursor c = getItem(_index);
 		final int count = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_CNT));
-		final String thread = c.getString(
-				c.getColumnIndex(KidsBbsProvider.KEYA_THREAD));
 		final String title = c.getString(
 				c.getColumnIndex(KidsBbsProvider.KEYA_TITLE));
 		final String ttitle = count > 1 ? KidsBbs.getThreadTitle(title) : title;
+		Bundle extras = new Bundle();
+		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_VTITLE,
+				mTitleTView);
+		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_THREAD,
+				c.getString(c.getColumnIndex(KidsBbsProvider.KEYA_THREAD)));
+		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_TTITLE,
+				ttitle);
 		showItemCommon(this, KidsBbsTView.class, KidsBbs.URI_INTENT_TVIEW,
-				"&" + KidsBbs.PARAM_N_VTITLE + "=" + mTitleTView
-				+ "&" + KidsBbs.PARAM_N_THREAD + "=" + thread
-				+ "&" + KidsBbs.PARAM_N_TTITLE + "=" + ttitle);
+				extras);
 	}
 
 	protected void toggleRead(int _index) {
