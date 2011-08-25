@@ -142,9 +142,11 @@ public abstract class KidsBbsAList extends ListActivity
 		super.onCreate(_state);
 		setContentView(R.layout.article_list);
 
-		final Uri data = getIntent().getData();
-		mTabname = data.getQueryParameter(KidsBbs.PARAM_N_TABNAME);
-		mBoardTitle = data.getQueryParameter(KidsBbs.PARAM_N_TITLE);
+		final Intent intent = getIntent();
+		mTabname = intent.getStringExtra(
+				KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_TABNAME);
+		mBoardTitle = intent.getStringExtra(
+				KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_BTITLE);
 
 		mUriList = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + mTabname);
 
@@ -330,12 +332,14 @@ public abstract class KidsBbsAList extends ListActivity
 	}
 
 	protected final void showItemCommon(Context _from, Class<?> _to,
-			String _base, String _extra) {
-		final String uriString = _base + KidsBbs.PARAM_N_TABNAME + "="
-				+ mTabname + "&" + KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle
-				+ _extra;
+			Uri _uri, Bundle _extras) {
 		final Intent intent = new Intent(_from, _to);
-		intent.setData(Uri.parse(uriString));
+		intent.setData(_uri);
+		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_TABNAME,
+				mTabname);
+		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_BTITLE,
+				mBoardTitle);
+		intent.putExtras(_extras);
 		startActivity(intent);
 	}
 

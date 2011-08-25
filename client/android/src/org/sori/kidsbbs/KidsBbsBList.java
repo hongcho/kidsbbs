@@ -42,7 +42,6 @@ import android.content.res.Resources.Theme;
 import android.database.Cursor;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.ContextMenu;
@@ -243,13 +242,12 @@ public class KidsBbsBList extends ListActivity {
 
 	private void showItem(int _index) {
 		final Cursor c = (Cursor) mAdapter.getItem(_index);
-		final String tabname = c.getString(BoardsAdapter.COLUMN_TABNAME);
-		final String title = c.getString(BoardsAdapter.COLUMN_TITLE);
-		final Uri data = Uri.parse(KidsBbs.URI_INTENT_TLIST
-				+ KidsBbs.PARAM_N_TABNAME + "=" + tabname + "&"
-				+ KidsBbs.PARAM_N_TITLE + "=" + title);
 		final Intent intent = new Intent(this, KidsBbsTList.class);
-		intent.setData(data);
+		intent.setData(KidsBbs.URI_INTENT_TLIST);
+		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_TABNAME,
+				c.getString(BoardsAdapter.COLUMN_TABNAME));
+		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_BTITLE,
+				c.getString(BoardsAdapter.COLUMN_TITLE));
 		startActivity(intent);
 	}
 

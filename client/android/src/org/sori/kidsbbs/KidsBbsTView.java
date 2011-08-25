@@ -97,15 +97,19 @@ public class KidsBbsTView extends ListActivity
 		super.onCreate(_state);
 		setContentView(R.layout.threaded_view);
 
-		final Uri data = getIntent().getData();
-		mTabname = data.getQueryParameter(KidsBbs.PARAM_N_TABNAME);
-		mBoardTitle = data.getQueryParameter(KidsBbs.PARAM_N_TITLE);
-		mBoardThread = data.getQueryParameter(KidsBbs.PARAM_N_THREAD);
-		mThreadTitle = data.getQueryParameter(KidsBbs.PARAM_N_TTITLE);
-		mTitle = data.getQueryParameter(KidsBbs.PARAM_N_VTITLE);
-		final String paramSeq = data.getQueryParameter(KidsBbs.PARAM_N_SEQ);
-		mSeq = (paramSeq != null && paramSeq.length() > 0) ?
-				Integer.parseInt(paramSeq) : -1;
+		final Intent intent = getIntent();
+		mTabname = intent.getStringExtra(
+				KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_TABNAME);
+		mBoardTitle = intent.getStringExtra(
+				KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_BTITLE);
+		mBoardThread = intent.getStringExtra(
+				KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_THREAD);
+		mThreadTitle = intent.getStringExtra(
+				KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_TTITLE);
+		mTitle = intent.getStringExtra(
+				KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_VTITLE);
+		mSeq = intent.getIntExtra(
+				KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_SEQ, -1);
 
 		mUriList = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + mTabname);
 
@@ -149,7 +153,7 @@ public class KidsBbsTView extends ListActivity
 
 		mStatusView = (TextView) findViewById(R.id.status);
 		mStatusView.setVisibility(View.GONE);
-		
+
 		mUsernameView = (TextView) findViewById(R.id.username);
 		mDateView = (TextView) findViewById(R.id.date);
 		
@@ -279,12 +283,14 @@ public class KidsBbsTView extends ListActivity
 			toggleExpansion(v);
 			return true;
 		case MENU_SHOW_USER:
-			final Uri data = Uri.parse(KidsBbs.URI_INTENT_USER
-					+ KidsBbs.PARAM_N_TABNAME + "=" + mTabname + "&"
-					+ KidsBbs.PARAM_N_TITLE + "=" + mBoardTitle + "&"
-					+ KidsBbs.PARAM_N_USER + "=" + ((KidsBbsTItem) v).mUser);
 			final Intent intent = new Intent(this, KidsBbsUser.class);
-			intent.setData(data);
+			intent.setData(KidsBbs.URI_INTENT_USER);
+			intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_TABNAME,
+					mTabname);
+			intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_BTITLE,
+					mBoardTitle);
+			intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_USER,
+					((KidsBbsTItem) v).mUser);
 			startActivity(intent);
 			return true;
 		}
@@ -315,6 +321,8 @@ public class KidsBbsTView extends ListActivity
 		mHeaderSeq = vItem.mSeq;
 		mUsernameView.setText(vItem.mAuthor);
 		mDateView.setText(vItem.mDate);
+		// Force width layout adjustment (does not work all the time still).
+		mDateView.getParent().getParent().requestLayout();
 	}
 	
 	private View getFirstVisibleView(AbsListView _v) {

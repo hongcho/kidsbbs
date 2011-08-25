@@ -80,13 +80,13 @@ public class KidsBbs extends Activity {
 	public static final String URL_THREAD = URL_BASE + "m=thread&";
 	public static final String URL_USER = URL_BASE + "m=user&";
 
-	private static final String URI_BASE = "content:/kidsbbs/";
-	public static final String URI_INTENT_TLIST = URI_BASE + "tlist?";
-	public static final String URI_INTENT_THREAD = URI_BASE + "thread?";
-	public static final String URI_INTENT_USER = URI_BASE + "user?";
-	public static final String URI_INTENT_TVIEW = URI_BASE + "tview?";
+	private static final String URI_BASE_STRING = "content:/kidsbbs/";
+	public static final Uri URI_INTENT_TLIST = Uri.parse(URI_BASE_STRING + "tlist");
+	public static final Uri URI_INTENT_THREAD = Uri.parse(URI_BASE_STRING + "thread");
+	public static final Uri URI_INTENT_USER = Uri.parse(URI_BASE_STRING + "user");
+	public static final Uri URI_INTENT_TVIEW = Uri.parse(URI_BASE_STRING + "tview");
 
-	public static final String PARAM_N_TITLE = "bt";
+	public static final String PARAM_N_BTITLE = "bt";
 	public static final String PARAM_N_BOARD = "b";
 	public static final String PARAM_N_TYPE = "t";
 	public static final String PARAM_N_THREAD = "id";

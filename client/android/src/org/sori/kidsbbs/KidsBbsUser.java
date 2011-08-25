@@ -25,9 +25,9 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs;
 
+import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
 
 public class KidsBbsUser extends KidsBbsAList {
@@ -38,8 +38,9 @@ public class KidsBbsUser extends KidsBbsAList {
 	public void onCreate(Bundle _state) {
 		super.onCreate(_state);
 
-		final Uri data = getIntent().getData();
-		mBoardUser = data.getQueryParameter(KidsBbs.PARAM_N_USER);
+		final Intent intent = getIntent();
+		mBoardUser = intent.getStringExtra(
+				KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_USER);
 
 		final Resources resources = getResources();
 		mTitleView = resources.getString(R.string.title_view);
@@ -73,16 +74,17 @@ public class KidsBbsUser extends KidsBbsAList {
 
 	protected void showItem(int _index) {
 		final Cursor c = getItem(_index);
-		final int seq = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
-		final String thread = c.getString(
-				c.getColumnIndex(KidsBbsProvider.KEYA_THREAD));
-		final String title = c.getString(
-				c.getColumnIndex(KidsBbsProvider.KEYA_TITLE));
+		Bundle extras = new Bundle();
+		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_VTITLE,
+				mTitleView);
+		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_THREAD,
+				c.getString(c.getColumnIndex(KidsBbsProvider.KEYA_THREAD)));
+		extras.putInt(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_SEQ,
+				c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_SEQ)));
+		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_TTITLE,
+				c.getString(c.getColumnIndex(KidsBbsProvider.KEYA_TITLE)));
 		showItemCommon(this, KidsBbsTView.class, KidsBbs.URI_INTENT_TVIEW,
-				"&" + KidsBbs.PARAM_N_VTITLE + "=" + mTitleView
-				+ "&" + KidsBbs.PARAM_N_THREAD + "=" + thread
-				+ "&" + KidsBbs.PARAM_N_SEQ + "=" + seq
-				+ "&" + KidsBbs.PARAM_N_TTITLE + "=" + title);
+				extras);
 	}
 
 	protected void toggleRead(int _index) {
