@@ -158,7 +158,6 @@ public class KidsBbsTView extends ListActivity
 		mDateView = (TextView) findViewById(R.id.date);
 		
 		mListView = getListView();
-		//mListView.setSmoothScrollbarEnabled(false);
 
 		mAdapter = new ArticlesAdapter(this);
 		setListAdapter(mAdapter);
@@ -511,13 +510,16 @@ public class KidsBbsTView extends ListActivity
 
 		private HashMap<Integer, Boolean> mExpansionStates =
 			new HashMap<Integer, Boolean>();
-		
+
 		public Object getExpansionStates() {
 			return mExpansionStates;
 		}
+
 		@SuppressWarnings("unchecked")
 		public void setExpansionStates(Object _states) {
-			mExpansionStates = (HashMap<Integer, Boolean>) _states;
+			synchronized(mExpansionStates) {
+				mExpansionStates = (HashMap<Integer, Boolean>) _states;
+			}
 		}
 
 		public ArticlesAdapter(Context _context) {
@@ -600,7 +602,12 @@ public class KidsBbsTView extends ListActivity
 				itemView.setPadding(0, mTopPaddingX, 0, 0);
 			}
 
-			setExpansion(itemView, mExpansionStates.get(itemView.mSeq));
+			Boolean state;
+			synchronized(mExpansionStates) {
+				state = (mExpansionStates != null) ?
+						mExpansionStates.get(itemView.mSeq) : false;
+			}
+			setExpansion(itemView, state);
 		}
 
 		@Override
@@ -637,7 +644,9 @@ public class KidsBbsTView extends ListActivity
 				if (pos == -1 && !read) {
 					pos = _c.getPosition();
 				}
-				mExpansionStates.put(_c.getInt(COLUMN_SEQ), !read);
+				synchronized(mExpansionStates) {
+					mExpansionStates.put(_c.getInt(COLUMN_SEQ), !read);
+				}
 			} while (_c.moveToNext());
 			if (pos == -1) {
 				pos = _c.getPosition();
@@ -650,7 +659,7 @@ public class KidsBbsTView extends ListActivity
 			return (holder.summary.getVisibility() == View.GONE);
 		}
 
-		public synchronized void setExpansion(View _v, boolean _state) {
+		public void setExpansion(View _v, boolean _state) {
 			final KidsBbsTItem itemView = (KidsBbsTItem) _v;
 			final ViewHolder holder = (ViewHolder) _v.getTag();
 			ViewGroup.LayoutParams params = holder.item.getLayoutParams();
@@ -670,7 +679,9 @@ public class KidsBbsTView extends ListActivity
 						mCollapsedHeight0 : mCollapsedHeightX;
 				holder.item.setLayoutParams(params);
 			}
-			mExpansionStates.put(itemView.mSeq, _state);
+			synchronized(mExpansionStates) {
+				mExpansionStates.put(itemView.mSeq, _state);
+			}
 		}
 
 		public void toggleExpansion(View _v) {
@@ -685,7 +696,9 @@ public class KidsBbsTView extends ListActivity
 			final int saved = c.getPosition();
 			c.moveToFirst();
 			do {
-				mExpansionStates.put(c.getInt(COLUMN_SEQ), _state);
+				synchronized(mExpansionStates) {
+					mExpansionStates.put(c.getInt(COLUMN_SEQ), _state);
+				}
 			} while (c.moveToNext());
 			c.moveToPosition(saved);
 		}
