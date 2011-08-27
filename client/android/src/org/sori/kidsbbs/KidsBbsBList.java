@@ -44,6 +44,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.view.MenuCompat;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -145,16 +146,20 @@ public class KidsBbsBList extends ListActivity {
 		item.setIcon(getResources().getIdentifier(
 				"android:drawable/ic_menu_add", null, null));
 		item.setShortcut('0', 's');
+		MenuCompat.setShowAsAction(item, 5);
 
 		item = _menu.add(0, MENU_REFRESH, Menu.NONE, R.string.menu_refresh);
 		item.setIcon(getResources().getIdentifier(
 				"android:drawable/ic_menu_refresh", null, null));
 		item.setShortcut('1', 'r');
+		MenuCompat.setShowAsAction(item, 1);
 
 		item = _menu.add(0, MENU_PREFERENCES, Menu.NONE,
 				R.string.menu_preferences);
 		item.setIcon(android.R.drawable.ic_menu_preferences);
 		item.setShortcut('2', 'p');
+		MenuCompat.setShowAsAction(item, 1);
+
 		return true;
 	}
 

@@ -82,14 +82,13 @@ public class KidsBbsTList extends KidsBbsAList {
 				extras);
 	}
 
-	protected void toggleRead(int _index) {
+	protected void markRead(int _index) {
 		final Cursor c = getItem(_index);
 		final int count = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_CNT));
-		final boolean read = c.getInt(ArticlesAdapter.COLUMN_READ) != 0;
 		int nChanged;
 		// Change only one for Marking it unread.
-		if (count == 1 || read) {
-			nChanged = toggleReadOne(c);
+		if (count == 1) {
+			nChanged = markReadOne(c);
 		} else {
 			final int seq = c.getInt(
 					c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
