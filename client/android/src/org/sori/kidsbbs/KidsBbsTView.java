@@ -512,7 +512,9 @@ public class KidsBbsTView extends ListActivity
 			new HashMap<Integer, Boolean>();
 
 		public Object getExpansionStates() {
-			return mExpansionStates;
+			synchronized(mExpansionStates) {
+				return mExpansionStates;
+			}
 		}
 
 		@SuppressWarnings("unchecked")
@@ -604,8 +606,7 @@ public class KidsBbsTView extends ListActivity
 
 			Boolean state;
 			synchronized(mExpansionStates) {
-				state = (mExpansionStates != null) ?
-						mExpansionStates.get(itemView.mSeq) : false;
+				state = mExpansionStates.get(itemView.mSeq);
 			}
 			setExpansion(itemView, state);
 		}
