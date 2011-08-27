@@ -36,7 +36,7 @@
     <string name="title_pref">키즈 비비에스 설정</string>
 
     <string name="read_text">보기</string>
-    <string name="toggle_read_text">읽음표시 바꾸기</string>
+    <string name="mark_read_text">읽음 표시</string>
     <string name="blist_cm_header">보드 목록 메뉴</string>
     <string name="alist_cm_header">글 목록 메뉴</string>
     <string name="tview_cm_header">주제별 글 보기 메뉴</string>
@@ -45,12 +45,11 @@
     
     <string name="menu_select">보드 고르기</string>
     <string name="menu_refresh">새로 불러오기</string>
-    <string name="menu_mark_all_read">전체 읽음으로 표시</string>
-    <string name="menu_expand_all">글 목록 펴기</string>
-    <string name="menu_collapse_all">글 목록 접기</string>
-    <string name="menu_mark_unread">읽지 않음으로 표시</string>
+    <string name="menu_mark_all_read">모두 읽음 표시</string>
+    <string name="menu_expand_all">모두 펴기</string>
+    <string name="menu_collapse_all">모두 접기</string>
     <string name="menu_preferences">설정</string>
-    <string name="menu_toggle_expansion">글 접기/펴기 바꾸기</string>
+    <string name="menu_toggle_expansion">글 접기/펴기</string>
     <string name="menu_show_user">사용자별 글 보기</string>
 
 	<string name="settings_update">불러오기 기능 선택사항</string>

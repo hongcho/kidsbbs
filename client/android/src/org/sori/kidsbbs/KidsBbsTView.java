@@ -38,6 +38,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.view.MenuCompat;
 import android.util.TypedValue;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
@@ -217,23 +218,28 @@ public class KidsBbsTView extends ListActivity
 		item.setIcon(getResources().getIdentifier(
 				"android:drawable/ic_menu_refresh", null, null));
 		item.setShortcut('0', 'r');
+		MenuCompat.setShowAsAction(item, 1);
 
 		item = _menu.add(0, MENU_EXPAND_ALL, Menu.NONE,
 				R.string.menu_expand_all);
 		item.setIcon(getResources().getIdentifier(
 				"android:drawable/ic_menu_zoom", null, null));
 		item.setShortcut('1', 'e');
+		MenuCompat.setShowAsAction(item, 5);
 
 		item = _menu.add(0, MENU_COLLAPSE_ALL, Menu.NONE,
 				R.string.menu_collapse_all);
 		item.setIcon(getResources().getIdentifier(
-				"android:drawable/ic_menu_revert", null, null));
+				"android:drawable/ic_menu_block", null, null));
 		item.setShortcut('2', 'c');
+		MenuCompat.setShowAsAction(item, 5);
 
 		item = _menu.add(0, MENU_PREFERENCES, Menu.NONE,
 				R.string.menu_preferences);
 		item.setIcon(android.R.drawable.ic_menu_preferences);
 		item.setShortcut('3', 'p');
+		MenuCompat.setShowAsAction(item, 1);
+
 		return true;
 	}
 

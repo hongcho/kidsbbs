@@ -47,6 +47,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.view.MenuCompat;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -64,7 +65,7 @@ public abstract class KidsBbsAList extends ListActivity
 	protected static final int MENU_REFRESH = Menu.FIRST;
 	protected static final int MENU_SHOW = Menu.FIRST + 1;
 	protected static final int MENU_PREFERENCES = Menu.FIRST + 2;
-	protected static final int MENU_TOGGLE_READ = Menu.FIRST + 3;
+	protected static final int MENU_MARK_READ = Menu.FIRST + 3;
 	protected static final int MENU_MARK_ALL_READ = Menu.FIRST + 4;
 
 	protected ContentResolver mResolver;
@@ -104,7 +105,7 @@ public abstract class KidsBbsAList extends ListActivity
 	abstract protected void showItem(int _index);
 
 	// Marking articles read.
-	abstract protected void toggleRead(int _index);
+	abstract protected void markRead(int _index);
 
 	abstract protected void markAllRead();
 
@@ -215,17 +216,21 @@ public abstract class KidsBbsAList extends ListActivity
 		item.setIcon(getResources().getIdentifier(
 				"android:drawable/ic_menu_refresh", null, null));
 		item.setShortcut('0', 'r');
+		MenuCompat.setShowAsAction(item, 1);
 
 		item = _menu.add(0, MENU_MARK_ALL_READ, Menu.NONE,
 				R.string.menu_mark_all_read);
 		item.setIcon(getResources().getIdentifier(
 				"android:drawable/ic_menu_mark", null, null));
 		item.setShortcut('1', 't');
+		MenuCompat.setShowAsAction(item, 5);
 
 		item = _menu.add(0, MENU_PREFERENCES, Menu.NONE,
 				R.string.menu_preferences);
 		item.setIcon(android.R.drawable.ic_menu_preferences);
 		item.setShortcut('2', 'p');
+		MenuCompat.setShowAsAction(item, 1);
+
 		return true;
 	}
 
@@ -260,8 +265,8 @@ public abstract class KidsBbsAList extends ListActivity
 		mContextMenu = _menu;
 		setContextMenuTitle(getResources().getString(R.string.alist_cm_header));
 		mContextMenu.add(0, MENU_SHOW, Menu.NONE, R.string.read_text);
-		mContextMenu.add(1, MENU_TOGGLE_READ, Menu.NONE,
-				R.string.toggle_read_text);
+		mContextMenu.add(1, MENU_MARK_READ, Menu.NONE,
+				R.string.mark_read_text);
 	}
 
 	@Override
@@ -271,8 +276,8 @@ public abstract class KidsBbsAList extends ListActivity
 		case MENU_SHOW:
 			showItem(((AdapterView.AdapterContextMenuInfo) _item.getMenuInfo()).position);
 			return true;
-		case MENU_TOGGLE_READ:
-			toggleRead(((AdapterView.AdapterContextMenuInfo) _item
+		case MENU_MARK_READ:
+			markRead(((AdapterView.AdapterContextMenuInfo) _item
 					.getMenuInfo()).position);
 			return true;
 		}
@@ -343,14 +348,13 @@ public abstract class KidsBbsAList extends ListActivity
 		startActivity(intent);
 	}
 
-	protected int toggleReadOne(Cursor _c) {
-		final boolean read = _c.getInt(ArticlesAdapter.COLUMN_READ) != 0;
+	protected int markReadOne(Cursor _c) {
 		final int seq = _c.getInt(_c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
 		final String user = _c.getString(
 				_c.getColumnIndex(KidsBbsProvider.KEYA_USER));
 		final String thread = _c.getString(
 				_c.getColumnIndex(KidsBbsProvider.KEYA_THREAD));
-		if (KidsBbs.updateArticleRead(mResolver, mTabname, seq, !read)) {
+		if (KidsBbs.updateArticleRead(mResolver, mTabname, seq, true)) {
 			KidsBbs.announceArticleUpdated(KidsBbsAList.this, mTabname, seq,
 					user, thread);
 			return 1;

@@ -87,8 +87,8 @@ public class KidsBbsUser extends KidsBbsAList {
 				extras);
 	}
 
-	protected void toggleRead(int _index) {
-		toggleReadOne(getItem(_index));
+	protected void markRead(int _index) {
+		markReadOne(getItem(_index));
 	}
 
 	protected void markAllRead() {
