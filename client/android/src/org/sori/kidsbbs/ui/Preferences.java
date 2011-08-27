@@ -23,7 +23,9 @@
 // ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-package org.sori.kidsbbs;
+package org.sori.kidsbbs.ui;
+
+import org.sori.kidsbbs.R;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -117,15 +119,24 @@ public class Preferences extends PreferenceActivity {
 	}
 
 	private Dialog createAboutDialog(int _id_title, int _id_text) {
-		final String text = getResources().getString(_id_text);
-		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setTitle(_id_title);
 		final View v = mInflater.inflate(R.layout.about_dialog, null);
-		builder.setView(v);
-		final TextView tv = (TextView) v.findViewById(R.id.about_text);
-		tv.setText(text);
-		builder.setPositiveButton(android.R.string.ok, null);
-		return builder.create();
+		((TextView) v.findViewById(R.id.about_text)).setText(_id_text);
+		return new AlertDialog.Builder(this)
+			.setTitle(_id_title)
+			.setIcon(android.R.drawable.ic_dialog_info)
+			.setView(v)
+			.setPositiveButton(android.R.string.ok, null)
+			.create();
+		
+		//final String text = getResources().getString(_id_text);
+		//final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		//builder.setTitle(_id_title);
+		//final View v = mInflater.inflate(R.layout.about_dialog, null);
+		//builder.setView(v);
+		//final TextView tv = (TextView) v.findViewById(R.id.about_text);
+		//tv.setText(text);
+		//builder.setPositiveButton(android.R.string.ok, null);
+		//return builder.create();
 	}
 
 	@Override

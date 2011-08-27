@@ -1,4 +1,4 @@
-// Copyright (c) 2011, Younghong "Hong" Cho <hongcho@sori.org>.
+// Copyright (c) 2010-2011, Younghong "Hong" Cho <hongcho@sori.org>.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -23,32 +23,49 @@
 // ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-package org.sori.kidsbbs;
+package org.sori.kidsbbs.data;
 
-import android.content.Context;
-import android.util.AttributeSet;
-import android.widget.LinearLayout;
+public class ArticleInfo {
+	private String mTabname;
+	private int mSeq;
+	private String mAuthor;
+	private String mUser;
+	private String mTitle;
+	private String mThread;
+	private String mBody;
+	private int mCount;
+	private String mDateString;
+	private boolean mRead;
 
-public class KidsBbsTItem extends LinearLayout {
-	public long mId;
-	public int mSeq;
-	public String mUser;
-	public String mAuthor;
-	public String mDate;
-	public String mTitle;
-	public String mSummary;
-	public boolean mRead;
-	public String mThread;
-	public String mBody;
-	public boolean mExpanded;
-	public boolean mFirst;
-	public boolean mLast;
+	public final String getTabname() { return mTabname; }
+	public final int getSeq() { return mSeq; }
+	public final String getAuthor() { return mAuthor; }
+	public final String getUser() { return mUser; }
+	public final String getTitle() { return mTitle; }
+	public final String getThread() { return mThread; }
+	public final String getBody() { return mBody; }
+	public final int getCount() { return mCount; }
+	public final String getDateString() { return mDateString; }
+	public final boolean getRead() { return mRead; }
+	public final void setRead(boolean _read) { mRead = _read; }
 
-	public KidsBbsTItem(Context _context) {
-		super(_context);
+	public ArticleInfo(String _tabname, int _seq, String _user, String _author,
+			String _dateString, String _title, String _thread, String _body,
+			int _count, boolean _read) {
+		mTabname = _tabname;
+		mSeq = _seq;
+		mUser = _user;
+		mAuthor = _author;
+		mTitle = _title;
+		mThread = _thread;
+		mCount = _count;
+		mRead = _read;
+		mDateString = _dateString;
+		mBody = _body;
 	}
 
-	public KidsBbsTItem(Context _context, AttributeSet _attrs) {
-		super(_context, _attrs);
+	@Override
+	public String toString() {
+		return mTitle + " " + mAuthor + " " + mBody;
 	}
 }

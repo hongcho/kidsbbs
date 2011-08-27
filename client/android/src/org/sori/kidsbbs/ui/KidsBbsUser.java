@@ -23,26 +23,35 @@
 // ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-package org.sori.kidsbbs;
+package org.sori.kidsbbs.ui;
 
-import android.content.ContentValues;
+import org.sori.kidsbbs.KidsBbs;
+import org.sori.kidsbbs.R;
+import org.sori.kidsbbs.provider.KidsBbsProvider;
+
+import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.os.Bundle;
 
-public class KidsBbsTList extends KidsBbsAList {
-
-	private String mTitleTView;
+public class KidsBbsUser extends KidsBbsAList {
+	private String mBoardUser;
+	private String mTitleView;
 
 	@Override
 	public void onCreate(Bundle _state) {
 		super.onCreate(_state);
 
-		final Resources resources = getResources();
-		mTitleTView = resources.getString(R.string.title_tview);
+		final Intent intent = getIntent();
+		mBoardUser = intent.getStringExtra(
+				KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_USER);
 
-		setTitleCommon(resources.getString(R.string.title_tlist));
-		setQueryBase(KidsBbsProvider.CONTENT_URISTR_TLIST, FIELDS_TLIST, null);
+		final Resources resources = getResources();
+		mTitleView = resources.getString(R.string.title_view);
+
+		setTitleCommon(resources.getString(R.string.title_user));
+		setQueryBase(KidsBbsProvider.CONTENT_URISTR_LIST, FIELDS_LIST,
+				KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "'");
 
 		updateTitle();
 
@@ -57,57 +66,37 @@ public class KidsBbsTList extends KidsBbsAList {
 
 	protected void updateTitle() {
 		updateTitleCommon(getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
-				KidsBbsProvider.SELECTION_UNREAD), getCount(
-				KidsBbsProvider.CONTENT_URISTR_LIST, null));
+				KidsBbsProvider.SELECTION_UNREAD + " AND "
+						+ KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "'"),
+				getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
+						KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "'"));
 	}
 
 	protected boolean matchingBroadcast(int _seq, String _user, String _thread) {
-		return true;
+		return _user.equals(mBoardUser);
 	}
 
 	protected void showItem(int _index) {
 		final Cursor c = getItem(_index);
-		final int count = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_CNT));
-		final String title = c.getString(
-				c.getColumnIndex(KidsBbsProvider.KEYA_TITLE));
-		final String ttitle = count > 1 ? KidsBbs.getThreadTitle(title) : title;
 		Bundle extras = new Bundle();
 		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_VTITLE,
-				mTitleTView);
+				mTitleView);
 		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_THREAD,
 				c.getString(c.getColumnIndex(KidsBbsProvider.KEYA_THREAD)));
+		extras.putInt(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_SEQ,
+				c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_SEQ)));
 		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_TTITLE,
-				ttitle);
+				c.getString(c.getColumnIndex(KidsBbsProvider.KEYA_TITLE)));
 		showItemCommon(this, KidsBbsTView.class, KidsBbs.URI_INTENT_TVIEW,
 				extras);
 	}
 
 	protected void markRead(int _index) {
-		final Cursor c = getItem(_index);
-		final int count = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_CNT));
-		int nChanged;
-		// Change only one for Marking it unread.
-		if (count == 1) {
-			nChanged = markReadOne(c);
-		} else {
-			final int seq = c.getInt(
-					c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
-			final String thread = c.getString(
-					c.getColumnIndex(KidsBbsProvider.KEYA_THREAD));
-			final String where = KidsBbsProvider.KEYA_THREAD + "='" + thread
-					+ "' AND " + KidsBbsProvider.KEYA_SEQ + "<=" + seq
-					+ " AND " + KidsBbsProvider.KEYA_READ + "=0";
-			final ContentValues values = new ContentValues();
-			values.put(KidsBbsProvider.KEYA_READ, 1);
-			nChanged = mResolver.update(getUriList(), values, where, null);
-		}
-		if (nChanged > 0) {
-			KidsBbs.updateBoardCount(mResolver, mTabname);
-			refreshList();
-		}
+		markReadOne(getItem(_index));
 	}
 
 	protected void markAllRead() {
-		markAllReadCommon("");
+		markAllReadCommon(KidsBbsProvider.KEYA_USER + "='" + mBoardUser
+				+ "' AND ");
 	}
 }
