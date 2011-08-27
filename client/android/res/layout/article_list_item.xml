@@ -26,7 +26,7 @@
 	(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 	THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
-<org.sori.kidsbbs.KidsBbsAItem xmlns:android="http://schemas.android.com/apk/res/android"
+<org.sori.kidsbbs.ui.KidsBbsAItem xmlns:android="http://schemas.android.com/apk/res/android"
 	android:id="@+id/item"
 	android:layout_width="fill_parent"
 	android:layout_height="?android:attr/listPreferredItemHeight"
@@ -84,4 +84,4 @@
 		android:textAppearance="?android:attr/textAppearanceSmall"
 		android:text="summary"
 		/>
-</org.sori.kidsbbs.KidsBbsAItem>
+</org.sori.kidsbbs.ui.KidsBbsAItem>

@@ -23,19 +23,27 @@
 // ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-package org.sori.kidsbbs;
+package org.sori.kidsbbs.ui;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
+import android.util.AttributeSet;
+import android.widget.RelativeLayout;
 
-public class KidsBbsAlarmReceiver extends BroadcastReceiver {
-	public static final String UPDATE_BOARDS_ALARM = KidsBbs.ALARM_BASE
-			+ "UpdateBoards";
+public class KidsBbsBItem extends RelativeLayout {
+	public long mId;
+	public String mTabname;
+	public String mTitle;
+	public int mCount;
 
-	@Override
-	public void onReceive(Context _context, Intent _intent) {
-		// Start server from alarm...
-		_context.startService(new Intent(_context, KidsBbsService.class));
+	public KidsBbsBItem(Context _context) {
+		super(_context);
+	}
+
+	public KidsBbsBItem(Context _context, AttributeSet _attrs) {
+		super(_context, _attrs);
+	}
+
+	public KidsBbsBItem(Context _context, AttributeSet _attrs, int _defStyle) {
+		super(_context, _attrs, _defStyle);
 	}
 }

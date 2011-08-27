@@ -82,12 +82,12 @@
     <string name="notification_title_text">새 글이 올라왔습니다.</string>
     <string name="notification_message">보드 목록으로 가서 읽으세요.</string>
     
-    <string name="about_kidsbbs_text">- KIDS / Korea Internet Dream Space
-    	/ Korea Internet DataService System\n- 텔넷/SSH를 기반으로 하는
-    	BBS\n- 주소: kids.kornet.net
+    <string name="about_kidsbbs_text">KIDS (Korea Internet Dream Space
+    	/ Korea Internet DataService System): telnet/SSH를 기반으로 하는
+    	BBS\n\n주소: kids.kornet.net
     </string>
-    <string name="about_app_text">- 이 앱은 키즈와는 직접적으로는 관련이 전혀
-    	없습니다.\n- 단지 사용자로서 취미삼아 만들어봤습니다.\n- 프로젝트:
+    <string name="about_app_text">이 앱은 키즈와는 직접적으로는 관련이 전혀
+    	없습니다. 단지 사용자로서 취미삼아 만들어봤습니다.\n\n프로젝트:
     	http://kidsbbs.googlecode.com/
     </string>
     

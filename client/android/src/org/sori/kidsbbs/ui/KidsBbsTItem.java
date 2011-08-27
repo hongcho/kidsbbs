@@ -1,4 +1,4 @@
-// Copyright (c) 2010-2011, Younghong "Hong" Cho <hongcho@sori.org>.
+// Copyright (c) 2011, Younghong "Hong" Cho <hongcho@sori.org>.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -23,32 +23,32 @@
 // ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-package org.sori.kidsbbs;
+package org.sori.kidsbbs.ui;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.widget.RelativeLayout;
+import android.widget.LinearLayout;
 
-public class KidsBbsAItem extends RelativeLayout {
+public class KidsBbsTItem extends LinearLayout {
 	public long mId;
 	public int mSeq;
 	public String mUser;
+	public String mAuthor;
 	public String mDate;
 	public String mTitle;
-	public int mCount;
 	public String mSummary;
 	public boolean mRead;
 	public String mThread;
+	public String mBody;
+	public boolean mExpanded;
+	public boolean mFirst;
+	public boolean mLast;
 
-	public KidsBbsAItem(Context _context) {
+	public KidsBbsTItem(Context _context) {
 		super(_context);
 	}
 
-	public KidsBbsAItem(Context _context, AttributeSet _attrs) {
+	public KidsBbsTItem(Context _context, AttributeSet _attrs) {
 		super(_context, _attrs);
-	}
-
-	public KidsBbsAItem(Context _context, AttributeSet _attrs, int _defStyle) {
-		super(_context, _attrs, _defStyle);
 	}
 }

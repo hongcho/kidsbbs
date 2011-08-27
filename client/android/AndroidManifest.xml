@@ -20,7 +20,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".KidsBbsBList"
+        <activity android:name=".ui.KidsBbsBList"
             android:label="@string/title_blist"
             android:launchMode="singleTask"
             >
@@ -29,7 +29,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".KidsBbsTList"
+        <activity android:name=".ui.KidsBbsTList"
             android:label="@string/title_tlist"
             android:launchMode="singleTop"
             >
@@ -38,7 +38,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".KidsBbsUser"
+        <activity android:name=".ui.KidsBbsUser"
             android:label="@string/title_user"
             android:launchMode="singleTop"
             >
@@ -47,7 +47,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".KidsBbsTView"
+        <activity android:name=".ui.KidsBbsTView"
             android:label="@string/title_tview"
             android:launchMode="singleTop"
             >
@@ -56,18 +56,18 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".Preferences"
+        <activity android:name=".ui.Preferences"
             android:label="@string/title_pref"
             android:launchMode="singleTop"
             >
         </activity>
-        <provider android:name=".KidsBbsProvider"
+        <provider android:name=".provider.KidsBbsProvider"
             android:authorities="org.sori.kidsbbs.provider"
             />
-        <service android:name=".KidsBbsService"
+        <service android:name=".service.KidsBbsService"
             android:enabled="true"
             />
-        <receiver android:name=".KidsBbsAlarmReceiver">
+        <receiver android:name=".service.KidsBbsAlarmReceiver">
         	<intent-filter>
         		<action android:name="org.sori.kidsbbs.alarm.UpdateBoards" />
         	</intent-filter>

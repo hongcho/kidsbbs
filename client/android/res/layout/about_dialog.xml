@@ -26,20 +26,11 @@
 	(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 	THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:orientation="vertical"
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/about_text"
 	android:layout_width="fill_parent"
 	android:layout_height="fill_parent"
-	android:padding="8dp"
-	>
-	<TextView android:id="@+id/about_text"
-		android:layout_width="fill_parent"
-		android:layout_height="fill_parent"
-		android:background="#f0f0f0"
-		android:textColor="#000000"
-		android:typeface="monospace"
-		android:textSize="14sp"
-		android:autoLink="web"
-		/>
-</LinearLayout>
-    
+	android:padding="4dp"
+	android:textSize="16sp"
+	android:autoLink="web"
+	/>

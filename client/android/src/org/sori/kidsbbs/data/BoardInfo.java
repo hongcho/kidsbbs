@@ -23,49 +23,44 @@
 // ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-package org.sori.kidsbbs;
+package org.sori.kidsbbs.data;
 
-public class ArticleInfo {
+public class BoardInfo {
 	private String mTabname;
-	private int mSeq;
-	private String mAuthor;
-	private String mUser;
 	private String mTitle;
-	private String mThread;
-	private String mBody;
-	private int mCount;
-	private String mDateString;
-	private boolean mRead;
+	private int mType;
+	private String mBoard;
+	private int mUnreadCount;
 
-	public final String getTabname() { return mTabname; }
-	public final int getSeq() { return mSeq; }
-	public final String getAuthor() { return mAuthor; }
-	public final String getUser() { return mUser; }
-	public final String getTitle() { return mTitle; }
-	public final String getThread() { return mThread; }
-	public final String getBody() { return mBody; }
-	public final int getCount() { return mCount; }
-	public final String getDateString() { return mDateString; }
-	public final boolean getRead() { return mRead; }
-	public final void setRead(boolean _read) { mRead = _read; }
+	public String getTabname() { return mTabname; }
+	public String getTitle() { return mTitle; }
+	public int getType() { return mType; }
+	public String getBoard() { return mBoard; }
+	public int getUnreadCount() { return mUnreadCount; }
+	public void setUnreadCount(int _count) { mUnreadCount = _count; }
 
-	public ArticleInfo(String _tabname, int _seq, String _user, String _author,
-			String _dateString, String _title, String _thread, String _body,
-			int _count, boolean _read) {
+	public static final String buildTabname(String _board, int _type) {
+		return "b" + _type + "_" + _board;
+	}
+
+	public static final String[] parseTabname(String _tabname) {
+		final String[] parsed = _tabname.split("_");
+		parsed[0] = parsed[0].substring(1);
+		return parsed;
+	}
+
+	public BoardInfo(String _tabname, String _title) {
 		mTabname = _tabname;
-		mSeq = _seq;
-		mUser = _user;
-		mAuthor = _author;
 		mTitle = _title;
-		mThread = _thread;
-		mCount = _count;
-		mRead = _read;
-		mDateString = _dateString;
-		mBody = _body;
+		mUnreadCount = 0;
+
+		final String[] parsed = parseTabname(mTabname);
+		mType = Integer.parseInt(parsed[0]);
+		mBoard = parsed[1];
 	}
 
 	@Override
 	public String toString() {
-		return mTitle + " " + mAuthor + " " + mBody;
+		return mTitle;
 	}
 }

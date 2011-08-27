@@ -23,10 +23,14 @@
 // ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-package org.sori.kidsbbs;
+package org.sori.kidsbbs.provider;
 
 import java.util.HashMap;
 import java.util.List;
+
+import org.sori.kidsbbs.KidsBbs;
+import org.sori.kidsbbs.R;
+import org.sori.kidsbbs.data.BoardInfo;
 
 import android.content.ContentProvider;
 import android.content.ContentResolver;
