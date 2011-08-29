@@ -29,7 +29,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.widget.LinearLayout;
 
-public class KidsBbsTItem extends LinearLayout {
+public class ThreadItemView extends LinearLayout {
 	public long mId;
 	public int mSeq;
 	public String mUser;
@@ -44,11 +44,11 @@ public class KidsBbsTItem extends LinearLayout {
 	public boolean mFirst;
 	public boolean mLast;
 
-	public KidsBbsTItem(Context _context) {
+	public ThreadItemView(Context _context) {
 		super(_context);
 	}
 
-	public KidsBbsTItem(Context _context, AttributeSet _attrs) {
+	public ThreadItemView(Context _context, AttributeSet _attrs) {
 		super(_context, _attrs);
 	}
 }

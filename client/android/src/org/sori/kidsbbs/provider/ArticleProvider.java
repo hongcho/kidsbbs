@@ -50,8 +50,8 @@ import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 
-public class KidsBbsProvider extends ContentProvider {
-	private static final String TAG = "KidsBbsProvider";
+public class ArticleProvider extends ContentProvider {
+	private static final String TAG = "ArticleProvider";
 	private static final String PROVIDER = KidsBbs.PKG_BASE + "provider";
 	private static final String CONTENT_URI_BASE = "content://" + PROVIDER
 			+ "/";

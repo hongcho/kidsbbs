@@ -27,8 +27,8 @@ package org.sori.kidsbbs.ui;
 
 import org.sori.kidsbbs.KidsBbs;
 import org.sori.kidsbbs.R;
-import org.sori.kidsbbs.provider.KidsBbsProvider;
-import org.sori.kidsbbs.service.KidsBbsService;
+import org.sori.kidsbbs.provider.ArticleProvider;
+import org.sori.kidsbbs.service.UpdateService;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -62,7 +62,7 @@ import android.widget.FilterQueryProvider;
 import android.widget.ListView;
 import android.widget.TextView;
 
-public class KidsBbsBList extends ListActivity {
+public class BoardListActivity extends ListActivity {
 	private static final int MENU_REFRESH = Menu.FIRST;
 	private static final int MENU_PREFERENCES = Menu.FIRST + 1;
 	private static final int MENU_SHOW = Menu.FIRST + 2;
@@ -146,24 +146,20 @@ public class KidsBbsBList extends ListActivity {
 	public boolean onCreateOptionsMenu(Menu _menu) {
 		super.onCreateOptionsMenu(_menu);
 
-		MenuItem item;
-		item = _menu.add(0, MENU_SELECT, Menu.NONE, R.string.menu_select);
-		item.setIcon(getResources().getIdentifier(
-				"android:drawable/ic_menu_add", null, null));
-		item.setShortcut('0', 's');
-		MenuCompat.setShowAsAction(item, 5);
-
-		item = _menu.add(0, MENU_REFRESH, Menu.NONE, R.string.menu_refresh);
-		item.setIcon(getResources().getIdentifier(
-				"android:drawable/ic_menu_refresh", null, null));
-		item.setShortcut('1', 'r');
-		MenuCompat.setShowAsAction(item, 1);
-
-		item = _menu.add(0, MENU_PREFERENCES, Menu.NONE,
-				R.string.menu_preferences);
-		item.setIcon(android.R.drawable.ic_menu_preferences);
-		item.setShortcut('2', 'p');
-		MenuCompat.setShowAsAction(item, 1);
+		MenuCompat.setShowAsAction(
+				_menu.add(0, MENU_REFRESH, Menu.NONE, R.string.menu_refresh)
+					.setIcon(getResources().getIdentifier(
+							"android:drawable/ic_menu_refresh", null, null))
+					.setShortcut('0', 'r'), 1);
+		MenuCompat.setShowAsAction(
+				_menu.add(0, MENU_SELECT, Menu.NONE, R.string.menu_select)
+					.setIcon(android.R.drawable.ic_menu_add)
+					.setShortcut('1', 's'), 1);
+		MenuCompat.setShowAsAction(
+				_menu.add(0, MENU_PREFERENCES, Menu.NONE,
+						R.string.menu_preferences)
+					.setIcon(android.R.drawable.ic_menu_preferences)
+					.setShortcut('2', 'p'), 1);
 
 		return true;
 	}
@@ -172,8 +168,11 @@ public class KidsBbsBList extends ListActivity {
 	public void onCreateContextMenu(ContextMenu _menu, View _v,
 			ContextMenu.ContextMenuInfo _menuInfo) {
 		super.onCreateOptionsMenu(_menu);
+
 		_menu.setHeaderTitle(getResources().getString(
-				R.string.blist_cm_header));
+				R.string.blist_cm_header))
+			.setHeaderIcon(android.R.drawable.ic_dialog_info);
+
 		_menu.add(0, MENU_SHOW, Menu.NONE, R.string.read_text);
 	}
 
@@ -185,7 +184,7 @@ public class KidsBbsBList extends ListActivity {
 			selectBoards();
 			return true;
 		case MENU_REFRESH:
-			startService(new Intent(this, KidsBbsService.class));
+			KidsBbs.updateBoardTable(this, null);
 			refreshList();
 			return true;
 		case MENU_PREFERENCES:
@@ -216,10 +215,10 @@ public class KidsBbsBList extends ListActivity {
 
 		@Override
 		protected Cursor doInBackground(Void... _args) {
-			final String ORDERBY = KidsBbsProvider.ORDER_BY_COUNT_DESC + ","
-					+ KidsBbsProvider.ORDER_BY_TITLE;
-			return mResolver.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
-					KidsBbsProvider.SELECTION_STATE_ACTIVE, null, ORDERBY);
+			final String ORDERBY = ArticleProvider.ORDER_BY_COUNT_DESC + ","
+					+ ArticleProvider.ORDER_BY_TITLE;
+			return mResolver.query(ArticleProvider.CONTENT_URI_BOARDS, FIELDS,
+					ArticleProvider.SELECTION_STATE_ACTIVE, null, ORDERBY);
 		}
 
 		@Override
@@ -252,7 +251,7 @@ public class KidsBbsBList extends ListActivity {
 
 	private void showItem(int _index) {
 		final Cursor c = (Cursor) mAdapter.getItem(_index);
-		final Intent intent = new Intent(this, KidsBbsTList.class);
+		final Intent intent = new Intent(this, ThreadListActivity.class);
 		intent.setData(KidsBbs.URI_INTENT_TLIST);
 		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_TABNAME,
 				c.getString(BoardsAdapter.COLUMN_TABNAME));
@@ -262,12 +261,12 @@ public class KidsBbsBList extends ListActivity {
 	}
 
 	private void selectBoards() {
-		final String[] FIELDS = { KidsBbsProvider.KEYB_TABNAME,
-				KidsBbsProvider.KEYB_TITLE, KidsBbsProvider.KEYB_STATE, };
-		final String ORDERBY = KidsBbsProvider.ORDER_BY_STATE_DESC + ","
-				+ KidsBbsProvider.ORDER_BY_TITLE;
+		final String[] FIELDS = { ArticleProvider.KEYB_TABNAME,
+				ArticleProvider.KEYB_TITLE, ArticleProvider.KEYB_STATE, };
+		final String ORDERBY = ArticleProvider.ORDER_BY_STATE_DESC + ","
+				+ ArticleProvider.ORDER_BY_TITLE;
 		String[] titles = null;
-		final Cursor c = mResolver.query(KidsBbsProvider.CONTENT_URI_BOARDS,
+		final Cursor c = mResolver.query(ArticleProvider.CONTENT_URI_BOARDS,
 				FIELDS, null, null, ORDERBY);
 		if (c != null) {
 			final int size = c.getCount();
@@ -280,12 +279,12 @@ public class KidsBbsBList extends ListActivity {
 				c.moveToFirst();
 				do {
 					mTabnames[i] = c.getString(
-							c.getColumnIndex(KidsBbsProvider.KEYB_TABNAME));
+							c.getColumnIndex(ArticleProvider.KEYB_TABNAME));
 					titles[i] = c.getString(
-							c.getColumnIndex(KidsBbsProvider.KEYB_TITLE));
+							c.getColumnIndex(ArticleProvider.KEYB_TITLE));
 					mSelectedOld[i] = c.getInt(
-							c.getColumnIndex(KidsBbsProvider.KEYB_STATE))
-							!= KidsBbsProvider.STATE_PAUSED;
+							c.getColumnIndex(ArticleProvider.KEYB_STATE))
+							!= ArticleProvider.STATE_PAUSED;
 					mSelectedNew[i] = mSelectedOld[i];
 					++i;
 				} while (c.moveToNext());
@@ -312,18 +311,18 @@ public class KidsBbsBList extends ListActivity {
 								}
 								++nUpdated;
 								ContentValues values = new ContentValues();
-								values.put(KidsBbsProvider.KEYB_STATE,
-										mSelectedNew[i] ? KidsBbsProvider.STATE_SELECTED
-												: KidsBbsProvider.STATE_PAUSED);
+								values.put(ArticleProvider.KEYB_STATE,
+										mSelectedNew[i] ? ArticleProvider.STATE_SELECTED
+												: ArticleProvider.STATE_PAUSED);
 								mResolver.update(
-										KidsBbsProvider.CONTENT_URI_BOARDS,
+										ArticleProvider.CONTENT_URI_BOARDS,
 										values,
-										KidsBbsProvider.SELECTION_TABNAME,
+										ArticleProvider.SELECTION_TABNAME,
 										new String[] { mTabnames[i] });
 							}
 							if (nUpdated > 0) {
-								startService(new Intent(KidsBbsBList.this,
-										KidsBbsService.class));
+								startService(new Intent(BoardListActivity.this,
+										UpdateService.class));
 							}
 						}
 					});
@@ -418,10 +417,10 @@ public class KidsBbsBList extends ListActivity {
 	}
 
 	private static final String[] FIELDS = {
-		KidsBbsProvider.KEY_ID,
-		KidsBbsProvider.KEYB_TABNAME,
-		KidsBbsProvider.KEYB_TITLE,
-		KidsBbsProvider.KEYB_COUNT,
+		ArticleProvider.KEY_ID,
+		ArticleProvider.KEYB_TABNAME,
+		ArticleProvider.KEYB_TITLE,
+		ArticleProvider.KEYB_COUNT,
 	};
 
 	private class BoardsAdapter extends CursorAdapter implements
@@ -472,7 +471,7 @@ public class KidsBbsBList extends ListActivity {
 
 		@Override
 		public void bindView(View _v, Context _context, Cursor _c) {
-			final KidsBbsBItem itemView = (KidsBbsBItem) _v;
+			final BoardItemView itemView = (BoardItemView) _v;
 			itemView.mId = _c.getLong(COLUMN_ID);
 			itemView.mTabname = _c.getString(COLUMN_TABNAME);
 			itemView.mTitle = _c.getString(COLUMN_TITLE);
@@ -515,12 +514,12 @@ public class KidsBbsBList extends ListActivity {
 		}
 
 		public Cursor runQuery(CharSequence _constraint) {
-			final String WHERE = KidsBbsProvider.SELECTION_STATE_ACTIVE
-					+ " AND " + KidsBbsProvider.KEYB_TITLE + " LIKE '%"
+			final String WHERE = ArticleProvider.SELECTION_STATE_ACTIVE
+					+ " AND " + ArticleProvider.KEYB_TITLE + " LIKE '%"
 					+ _constraint + "%'";
-			final String ORDERBY = KidsBbsProvider.ORDER_BY_COUNT_DESC + ","
-					+ KidsBbsProvider.ORDER_BY_TITLE;
-			return mResolver.query(KidsBbsProvider.CONTENT_URI_BOARDS, FIELDS,
+			final String ORDERBY = ArticleProvider.ORDER_BY_COUNT_DESC + ","
+					+ ArticleProvider.ORDER_BY_TITLE;
+			return mResolver.query(ArticleProvider.CONTENT_URI_BOARDS, FIELDS,
 					WHERE, null, ORDERBY);
 		}
 	}

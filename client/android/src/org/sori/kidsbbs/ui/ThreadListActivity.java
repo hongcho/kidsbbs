@@ -27,14 +27,14 @@ package org.sori.kidsbbs.ui;
 
 import org.sori.kidsbbs.KidsBbs;
 import org.sori.kidsbbs.R;
-import org.sori.kidsbbs.provider.KidsBbsProvider;
+import org.sori.kidsbbs.provider.ArticleProvider;
 
 import android.content.ContentValues;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.os.Bundle;
 
-public class KidsBbsTList extends KidsBbsAList {
+public class ThreadListActivity extends ArticleListActivity {
 
 	private String mTitleTView;
 
@@ -46,7 +46,7 @@ public class KidsBbsTList extends KidsBbsAList {
 		mTitleTView = resources.getString(R.string.title_tview);
 
 		setTitleCommon(resources.getString(R.string.title_tlist));
-		setQueryBase(KidsBbsProvider.CONTENT_URISTR_TLIST, FIELDS_TLIST, null);
+		setQueryBase(ArticleProvider.CONTENT_URISTR_TLIST, FIELDS_TLIST, null);
 
 		updateTitle();
 
@@ -60,9 +60,9 @@ public class KidsBbsTList extends KidsBbsAList {
 	}
 
 	protected void updateTitle() {
-		updateTitleCommon(getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
-				KidsBbsProvider.SELECTION_UNREAD), getCount(
-				KidsBbsProvider.CONTENT_URISTR_LIST, null));
+		updateTitleCommon(getCount(ArticleProvider.CONTENT_URISTR_LIST,
+				ArticleProvider.SELECTION_UNREAD), getCount(
+				ArticleProvider.CONTENT_URISTR_LIST, null));
 	}
 
 	protected boolean matchingBroadcast(int _seq, String _user, String _thread) {
@@ -71,38 +71,38 @@ public class KidsBbsTList extends KidsBbsAList {
 
 	protected void showItem(int _index) {
 		final Cursor c = getItem(_index);
-		final int count = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_CNT));
+		final int count = c.getInt(c.getColumnIndex(ArticleProvider.KEYA_CNT));
 		final String title = c.getString(
-				c.getColumnIndex(KidsBbsProvider.KEYA_TITLE));
+				c.getColumnIndex(ArticleProvider.KEYA_TITLE));
 		final String ttitle = count > 1 ? KidsBbs.getThreadTitle(title) : title;
 		Bundle extras = new Bundle();
 		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_VTITLE,
 				mTitleTView);
 		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_THREAD,
-				c.getString(c.getColumnIndex(KidsBbsProvider.KEYA_THREAD)));
+				c.getString(c.getColumnIndex(ArticleProvider.KEYA_THREAD)));
 		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_TTITLE,
 				ttitle);
-		showItemCommon(this, KidsBbsTView.class, KidsBbs.URI_INTENT_TVIEW,
+		showItemCommon(this, ThreadedViewActivity.class, KidsBbs.URI_INTENT_TVIEW,
 				extras);
 	}
 
 	protected void markRead(int _index) {
 		final Cursor c = getItem(_index);
-		final int count = c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_CNT));
+		final int count = c.getInt(c.getColumnIndex(ArticleProvider.KEYA_CNT));
 		int nChanged;
 		// Change only one for Marking it unread.
 		if (count == 1) {
 			nChanged = markReadOne(c);
 		} else {
 			final int seq = c.getInt(
-					c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
+					c.getColumnIndex(ArticleProvider.KEYA_SEQ));
 			final String thread = c.getString(
-					c.getColumnIndex(KidsBbsProvider.KEYA_THREAD));
-			final String where = KidsBbsProvider.KEYA_THREAD + "='" + thread
-					+ "' AND " + KidsBbsProvider.KEYA_SEQ + "<=" + seq
-					+ " AND " + KidsBbsProvider.KEYA_READ + "=0";
+					c.getColumnIndex(ArticleProvider.KEYA_THREAD));
+			final String where = ArticleProvider.KEYA_THREAD + "='" + thread
+					+ "' AND " + ArticleProvider.KEYA_SEQ + "<=" + seq
+					+ " AND " + ArticleProvider.KEYA_READ + "=0";
 			final ContentValues values = new ContentValues();
-			values.put(KidsBbsProvider.KEYA_READ, 1);
+			values.put(ArticleProvider.KEYA_READ, 1);
 			nChanged = mResolver.update(getUriList(), values, where, null);
 		}
 		if (nChanged > 0) {

@@ -29,7 +29,7 @@ import java.util.HashMap;
 
 import org.sori.kidsbbs.KidsBbs;
 import org.sori.kidsbbs.R;
-import org.sori.kidsbbs.provider.KidsBbsProvider;
+import org.sori.kidsbbs.provider.ArticleProvider;
 
 import android.app.ListActivity;
 import android.content.ContentResolver;
@@ -57,7 +57,7 @@ import android.widget.FilterQueryProvider;
 import android.widget.ListView;
 import android.widget.TextView;
 
-public class KidsBbsTView extends ListActivity
+public class ThreadedViewActivity extends ListActivity
 		implements ListView.OnScrollListener {
 	//private static final String TAG = "KidsBbsTView";
 
@@ -72,7 +72,6 @@ public class KidsBbsTView extends ListActivity
 
 	private static final String KEY_SELECTED_ITEM = "KEY_SELECTED_ITEM";
 
-	private ContextMenu mContextMenu;
 	private ArticlesAdapter mAdapter;
 	private int mSavedItemPosition;
 
@@ -116,7 +115,7 @@ public class KidsBbsTView extends ListActivity
 		mSeq = intent.getIntExtra(
 				KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_SEQ, -1);
 
-		mUriList = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + mTabname);
+		mUriList = Uri.parse(ArticleProvider.CONTENT_URISTR_LIST + mTabname);
 
 		mResolver = getContentResolver();
 
@@ -126,11 +125,11 @@ public class KidsBbsTView extends ListActivity
 			mTitle = resources.getString(R.string.title_tview);
 		}
 
-		mUri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST + mTabname);
+		mUri = Uri.parse(ArticleProvider.CONTENT_URISTR_LIST + mTabname);
 		if (mSeq < 0) {
-			mWhere = KidsBbsProvider.KEYA_THREAD + "='" + mBoardThread + "'";
+			mWhere = ArticleProvider.KEYA_THREAD + "='" + mBoardThread + "'";
 		} else {
-			mWhere = KidsBbsProvider.KEYA_SEQ + "=" + mSeq;
+			mWhere = ArticleProvider.KEYA_SEQ + "=" + mSeq;
 		}
 		
 		final TextView titleView = (TextView) findViewById(R.id.title);
@@ -199,7 +198,7 @@ public class KidsBbsTView extends ListActivity
 		if (_seq >= 0) {
 			final int n = mListView.getChildCount();
 			for (int i = 0; i < n; ++i) {
-				final KidsBbsTItem vItem = (KidsBbsTItem) mListView.getChildAt(i);
+				final ThreadItemView vItem = (ThreadItemView) mListView.getChildAt(i);
 				if (vItem.mSeq == _seq) {
 					return vItem;
 				}
@@ -217,32 +216,26 @@ public class KidsBbsTView extends ListActivity
 	public boolean onCreateOptionsMenu(Menu _menu) {
 		super.onCreateOptionsMenu(_menu);
 
-		MenuItem item;
-		item = _menu.add(0, MENU_REFRESH, Menu.NONE, R.string.menu_refresh);
-		item.setIcon(getResources().getIdentifier(
-				"android:drawable/ic_menu_refresh", null, null));
-		item.setShortcut('0', 'r');
-		MenuCompat.setShowAsAction(item, 1);
-
-		item = _menu.add(0, MENU_EXPAND_ALL, Menu.NONE,
-				R.string.menu_expand_all);
-		item.setIcon(getResources().getIdentifier(
-				"android:drawable/ic_menu_zoom", null, null));
-		item.setShortcut('1', 'e');
-		MenuCompat.setShowAsAction(item, 5);
-
-		item = _menu.add(0, MENU_COLLAPSE_ALL, Menu.NONE,
-				R.string.menu_collapse_all);
-		item.setIcon(getResources().getIdentifier(
-				"android:drawable/ic_menu_block", null, null));
-		item.setShortcut('2', 'c');
-		MenuCompat.setShowAsAction(item, 5);
-
-		item = _menu.add(0, MENU_PREFERENCES, Menu.NONE,
-				R.string.menu_preferences);
-		item.setIcon(android.R.drawable.ic_menu_preferences);
-		item.setShortcut('3', 'p');
-		MenuCompat.setShowAsAction(item, 1);
+		MenuCompat.setShowAsAction(
+				_menu.add(0, MENU_REFRESH, Menu.NONE, R.string.menu_refresh)
+					.setIcon(getResources().getIdentifier(
+							"android:drawable/ic_menu_refresh", null, null))
+					.setShortcut('0', 'r'), 1);
+		MenuCompat.setShowAsAction(
+				_menu.add(0, MENU_EXPAND_ALL, Menu.NONE, R.string.menu_expand_all)
+					.setIcon(android.R.drawable.ic_menu_zoom)
+					.setShortcut('1', 'e'), 5);
+		MenuCompat.setShowAsAction(
+				_menu.add(0, MENU_COLLAPSE_ALL, Menu.NONE,
+						R.string.menu_collapse_all)
+					.setIcon(getResources().getIdentifier(
+							"android:drawable/ic_menu_block", null, null))
+					.setShortcut('2', 'c'), 5);
+		MenuCompat.setShowAsAction(
+				_menu.add(0, MENU_PREFERENCES, Menu.NONE,
+						R.string.menu_preferences)
+					.setIcon(android.R.drawable.ic_menu_preferences)
+					.setShortcut('3', 'p'), 1);
 
 		return true;
 	}
@@ -272,15 +265,13 @@ public class KidsBbsTView extends ListActivity
 			ContextMenu.ContextMenuInfo _menuInfo) {
 		super.onCreateOptionsMenu(_menu);
 
-		mContextMenu = _menu;
-		if (mContextMenu != null) {
-			mContextMenu.setHeaderTitle(
-					getResources().getString(R.string.tview_cm_header));
-		}
-		mContextMenu.add(0, MENU_TOGGLE_EXPANSION, Menu.NONE,
+		_menu.setHeaderTitle(
+				getResources().getString(R.string.tview_cm_header))
+			.setHeaderIcon(android.R.drawable.ic_dialog_info);
+
+		_menu.add(0, MENU_TOGGLE_EXPANSION, Menu.NONE,
 				R.string.menu_toggle_expansion);
-		mContextMenu.add(1, MENU_SHOW_USER, Menu.NONE,
-				R.string.menu_show_user);
+		_menu.add(1, MENU_SHOW_USER, Menu.NONE, R.string.menu_show_user);
 	}
 
 	@Override
@@ -292,14 +283,14 @@ public class KidsBbsTView extends ListActivity
 			toggleExpansion(v);
 			return true;
 		case MENU_SHOW_USER:
-			final Intent intent = new Intent(this, KidsBbsUser.class);
+			final Intent intent = new Intent(this, UserListActivity.class);
 			intent.setData(KidsBbs.URI_INTENT_USER);
 			intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_TABNAME,
 					mTabname);
 			intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_BTITLE,
 					mBoardTitle);
 			intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_USER,
-					((KidsBbsTItem) v).mUser);
+					((ThreadItemView) v).mUser);
 			startActivity(intent);
 			return true;
 		}
@@ -320,7 +311,7 @@ public class KidsBbsTView extends ListActivity
 	}
 	
 	private void updateHeader(AbsListView _v) {
-		KidsBbsTItem vItem = (KidsBbsTItem) getFirstVisibleView(_v);
+		ThreadItemView vItem = (ThreadItemView) getFirstVisibleView(_v);
 		if (null == vItem) {
 			return;
 		}
@@ -373,7 +364,7 @@ public class KidsBbsTView extends ListActivity
 		@Override
 		protected Cursor doInBackground(Void... _args) {
 			return mResolver.query(mUri, FIELDS, mWhere, null,
-					KidsBbsProvider.ORDER_BY_SEQ_ASC);
+					ArticleProvider.ORDER_BY_SEQ_ASC);
 		}
 
 		@Override
@@ -419,13 +410,13 @@ public class KidsBbsTView extends ListActivity
 	private void markAllRead() {
 		final Cursor c = getItem(getCount() - 1);
 		final int seq = c.getInt(
-				c.getColumnIndex(KidsBbsProvider.KEYA_SEQ));
+				c.getColumnIndex(ArticleProvider.KEYA_SEQ));
 		final String where =
-			KidsBbsProvider.KEYA_THREAD + "='" + mBoardThread
-			+ "' AND " + KidsBbsProvider.KEYA_SEQ + "<=" + seq
-			+ " AND " + KidsBbsProvider.KEYA_READ + "=0";
+			ArticleProvider.KEYA_THREAD + "='" + mBoardThread
+			+ "' AND " + ArticleProvider.KEYA_SEQ + "<=" + seq
+			+ " AND " + ArticleProvider.KEYA_READ + "=0";
 		final ContentValues values = new ContentValues();
-		values.put(KidsBbsProvider.KEYA_READ, 1);
+		values.put(ArticleProvider.KEYA_READ, 1);
 		final int nChanged = mResolver.update(mUriList,
 				values, where, null);
 		if (nChanged > 0) {
@@ -489,15 +480,15 @@ public class KidsBbsTView extends ListActivity
 	}
 
 	protected static final String[] FIELDS = {
-		KidsBbsProvider.KEY_ID,
-		KidsBbsProvider.KEYA_SEQ,
-		KidsBbsProvider.KEYA_USER,
-		KidsBbsProvider.KEYA_AUTHOR,
-		KidsBbsProvider.KEYA_DATE,
-		KidsBbsProvider.KEYA_TITLE,
-		KidsBbsProvider.KEYA_THREAD,
-		KidsBbsProvider.KEYA_BODY,
-		KidsBbsProvider.KEYA_READ,
+		ArticleProvider.KEY_ID,
+		ArticleProvider.KEYA_SEQ,
+		ArticleProvider.KEYA_USER,
+		ArticleProvider.KEYA_AUTHOR,
+		ArticleProvider.KEYA_DATE,
+		ArticleProvider.KEYA_TITLE,
+		ArticleProvider.KEYA_THREAD,
+		ArticleProvider.KEYA_BODY,
+		ArticleProvider.KEYA_READ,
 	};
 
 	protected class ArticlesAdapter extends CursorAdapter
@@ -582,7 +573,7 @@ public class KidsBbsTView extends ListActivity
 
 		@Override
 		public void bindView(View _v, Context _context, Cursor _c) {
-			final KidsBbsTItem itemView = (KidsBbsTItem) _v;
+			final ThreadItemView itemView = (ThreadItemView) _v;
 			itemView.mId = _c.getLong(COLUMN_ID);
 			itemView.mSeq = _c.getInt(COLUMN_SEQ);
 			itemView.mUser = _c.getString(COLUMN_USER);
@@ -638,8 +629,8 @@ public class KidsBbsTView extends ListActivity
 
 		public Cursor runQuery(CharSequence _constraint) {
 			return mResolver.query(mUri, FIELDS, mWhere + " AND ("
-					+ KidsBbsProvider.KEYA_USER + " LIKE '%" + _constraint
-					+ "%' OR " + KidsBbsProvider.KEYA_BODY + " LIKE '%"
+					+ ArticleProvider.KEYA_USER + " LIKE '%" + _constraint
+					+ "%' OR " + ArticleProvider.KEYA_BODY + " LIKE '%"
 					+ _constraint + "%')",
 					null, null);
 		}
@@ -671,7 +662,7 @@ public class KidsBbsTView extends ListActivity
 		}
 
 		public void setExpansion(View _v, boolean _state) {
-			final KidsBbsTItem itemView = (KidsBbsTItem) _v;
+			final ThreadItemView itemView = (ThreadItemView) _v;
 			final ViewHolder holder = (ViewHolder) _v.getTag();
 			ViewGroup.LayoutParams params = holder.item.getLayoutParams();
 			if (itemView.mLast || _state) {

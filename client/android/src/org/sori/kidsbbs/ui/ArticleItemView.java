@@ -29,7 +29,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.widget.RelativeLayout;
 
-public class KidsBbsAItem extends RelativeLayout {
+public class ArticleItemView extends RelativeLayout {
 	public long mId;
 	public int mSeq;
 	public String mUser;
@@ -40,15 +40,15 @@ public class KidsBbsAItem extends RelativeLayout {
 	public boolean mRead;
 	public String mThread;
 
-	public KidsBbsAItem(Context _context) {
+	public ArticleItemView(Context _context) {
 		super(_context);
 	}
 
-	public KidsBbsAItem(Context _context, AttributeSet _attrs) {
+	public ArticleItemView(Context _context, AttributeSet _attrs) {
 		super(_context, _attrs);
 	}
 
-	public KidsBbsAItem(Context _context, AttributeSet _attrs, int _defStyle) {
+	public ArticleItemView(Context _context, AttributeSet _attrs, int _defStyle) {
 		super(_context, _attrs, _defStyle);
 	}
 }
