@@ -48,25 +48,22 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.HttpConnectionParams;
 import org.sori.kidsbbs.data.ArticleInfo;
 import org.sori.kidsbbs.data.BoardInfo;
-import org.sori.kidsbbs.provider.KidsBbsProvider;
-import org.sori.kidsbbs.service.KidsBbsService;
-import org.sori.kidsbbs.ui.KidsBbsBList;
+import org.sori.kidsbbs.provider.ArticleProvider;
+import org.sori.kidsbbs.service.UpdateService;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Bundle;
 import android.util.Log;
 
-public class KidsBbs extends Activity {
+public class KidsBbs {
 	public static final String TAG = "KidsBbs";
 	public static final String PKG_BASE = "org.sori.kidsbbs.";
 	public static final String BCAST_BASE = PKG_BASE + "broadcast.";
@@ -132,21 +129,21 @@ public class KidsBbs extends Activity {
 	public static final String KST_DIFF = "'-9 hours'";
 	public static final String MAX_TIME = "'-" + MAX_DAYS + " days'";
 
-	private static final String[] F_SEQ = { KidsBbsProvider.KEYA_SEQ, };
-	private static final String[] F_TITLE = { KidsBbsProvider.KEYB_TITLE, };
+	private static final String[] F_SEQ = { ArticleProvider.KEYA_SEQ, };
+	private static final String[] F_TITLE = { ArticleProvider.KEYB_TITLE, };
 	private static final String[] F_CNT_FIELD = {
-		KidsBbsProvider.KEYA_CNT_FIELD,
+		ArticleProvider.KEYA_CNT_FIELD,
 	};
 	private static final String[] F_TOT_CNT = {
-		"TOTAL(" + KidsBbsProvider.KEYB_COUNT + ")",
+		"TOTAL(" + ArticleProvider.KEYB_COUNT + ")",
 	};
-	private static final String[] F_READ = { KidsBbsProvider.KEYA_READ, };
+	private static final String[] F_READ = { ArticleProvider.KEYA_READ, };
 	private static final String[] F_ALLREAD = {
-		KidsBbsProvider.KEYA_ALLREAD_FIELD,
+		ArticleProvider.KEYA_ALLREAD_FIELD,
 	};
 	private static final String R_EMPTY = "";
 	private static final String[] R_SUMMARY = { " ", " ", "", };
-	private static final String W_ACTIVE = KidsBbsProvider.SELECTION_STATE_ACTIVE;
+	private static final String W_ACTIVE = ArticleProvider.SELECTION_STATE_ACTIVE;
 
 	public static final Date KidsToLocalDate(String _dateString) {
 		try {
@@ -262,6 +259,14 @@ public class KidsBbs extends Activity {
 			_s = m.replaceAll(R_SUMMARY[i]);
 		}
 		return _s;
+	}
+
+	public static final void updateBoardTable(Context _context, String _tabname) {
+		Intent intent = new Intent(_context, UpdateService.class);
+		if (_tabname != null && _tabname.length() > 0) {
+			intent.putExtra(PARAM_BASE + PARAM_N_TABNAME, _tabname);
+		}
+		_context.startService(intent);
 	}
 
 	public static final ArticleInfo parseArticle(String _tabname, Element _item) {
@@ -432,10 +437,10 @@ public class KidsBbs extends Activity {
 
 	public static final int getBoardLastSeq(ContentResolver _cr, String _tabname) {
 		int seq = 0;
-		final Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST
+		final Uri uri = Uri.parse(ArticleProvider.CONTENT_URISTR_LIST
 				+ _tabname);
 		final Cursor c = _cr.query(uri, F_SEQ, null, null,
-				KidsBbsProvider.ORDER_BY_SEQ_DESC);
+				ArticleProvider.ORDER_BY_SEQ_DESC);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -449,8 +454,8 @@ public class KidsBbs extends Activity {
 	public static final String getBoardTitle(ContentResolver _cr,
 			String _tabname) {
 		String title = null;
-		final Cursor c = _cr.query(KidsBbsProvider.CONTENT_URI_BOARDS, F_TITLE,
-				KidsBbsProvider.SELECTION_TABNAME, new String[] { _tabname },
+		final Cursor c = _cr.query(ArticleProvider.CONTENT_URI_BOARDS, F_TITLE,
+				ArticleProvider.SELECTION_TABNAME, new String[] { _tabname },
 				null);
 		if (c != null) {
 			if (c.getCount() > 0) {
@@ -465,7 +470,7 @@ public class KidsBbs extends Activity {
 	public static final int getBoardTableSize(ContentResolver _cr,
 			String _tabname) {
 		int cnt = 0;
-		final Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST
+		final Uri uri = Uri.parse(ArticleProvider.CONTENT_URISTR_LIST
 				+ _tabname);
 		final Cursor c = _cr.query(uri, F_CNT_FIELD, null, null, null);
 		if (c != null) {
@@ -480,8 +485,8 @@ public class KidsBbs extends Activity {
 
 	public static final int getBoardUnreadCount(ContentResolver _cr,
 			String _tabname) {
-		return getTableCount(_cr, KidsBbsProvider.CONTENT_URISTR_LIST,
-				_tabname, KidsBbsProvider.SELECTION_UNREAD);
+		return getTableCount(_cr, ArticleProvider.CONTENT_URISTR_LIST,
+				_tabname, ArticleProvider.SELECTION_UNREAD);
 	}
 
 	public static final int getTableCount(ContentResolver _cr, String _uriBase,
@@ -501,7 +506,7 @@ public class KidsBbs extends Activity {
 
 	public static final int getTotalUnreadCount(ContentResolver _cr) {
 		int count = 0;
-		final Cursor c = _cr.query(KidsBbsProvider.CONTENT_URI_BOARDS,
+		final Cursor c = _cr.query(ArticleProvider.CONTENT_URI_BOARDS,
 				F_TOT_CNT, W_ACTIVE, null, null);
 		if (c != null) {
 			if (c.getCount() > 0) {
@@ -516,20 +521,20 @@ public class KidsBbs extends Activity {
 	public static final void updateBoardCount(ContentResolver _cr,
 			String _tabname) {
 		final ContentValues values = new ContentValues();
-		values.put(KidsBbsProvider.KEYB_COUNT,
+		values.put(ArticleProvider.KEYB_COUNT,
 				getBoardUnreadCount(_cr, _tabname));
-		_cr.update(KidsBbsProvider.CONTENT_URI_BOARDS, values,
-				KidsBbsProvider.SELECTION_TABNAME, new String[] { _tabname });
+		_cr.update(ArticleProvider.CONTENT_URI_BOARDS, values,
+				ArticleProvider.SELECTION_TABNAME, new String[] { _tabname });
 	}
 
 	public static final boolean updateArticleRead(ContentResolver _cr,
 			String _tabname, int _seq, boolean _read) {
-		final Uri uri = Uri.parse(KidsBbsProvider.CONTENT_URISTR_LIST
+		final Uri uri = Uri.parse(ArticleProvider.CONTENT_URISTR_LIST
 				+ _tabname);
 		final String[] args = new String[] { Integer.toString(_seq) };
 
 		boolean readOld = false;
-		final Cursor c = _cr.query(uri, F_READ, KidsBbsProvider.SELECTION_SEQ,
+		final Cursor c = _cr.query(uri, F_READ, ArticleProvider.SELECTION_SEQ,
 				args, null);
 		if (c != null) {
 			if (c.getCount() > 0) {
@@ -543,9 +548,9 @@ public class KidsBbs extends Activity {
 		}
 
 		final ContentValues values = new ContentValues();
-		values.put(KidsBbsProvider.KEYA_READ, _read ? 1 : 0);
+		values.put(ArticleProvider.KEYA_READ, _read ? 1 : 0);
 		final int count = _cr.update(uri, values,
-				KidsBbsProvider.SELECTION_SEQ, args);
+				ArticleProvider.SELECTION_SEQ, args);
 		return (count > 0);
 	}
 
@@ -591,7 +596,7 @@ public class KidsBbs extends Activity {
 		updateBoardCount(_context.getContentResolver(), _tabname);
 
 		final Intent intent = new Intent(BOARD_UPDATED);
-		intent.putExtra(PARAM_BASE + KidsBbsProvider.KEYB_TABNAME, _tabname);
+		intent.putExtra(PARAM_BASE + ArticleProvider.KEYB_TABNAME, _tabname);
 		_context.sendBroadcast(intent);
 	}
 
@@ -600,10 +605,10 @@ public class KidsBbs extends Activity {
 		updateBoardCount(_context.getContentResolver(), _tabname);
 
 		final Intent intent = new Intent(ARTICLE_UPDATED);
-		intent.putExtra(PARAM_BASE + KidsBbsProvider.KEYB_TABNAME, _tabname);
-		intent.putExtra(PARAM_BASE + KidsBbsProvider.KEYA_SEQ, _seq);
-		intent.putExtra(PARAM_BASE + KidsBbsProvider.KEYA_USER, _user);
-		intent.putExtra(PARAM_BASE + KidsBbsProvider.KEYA_THREAD, _thread);
+		intent.putExtra(PARAM_BASE + ArticleProvider.KEYB_TABNAME, _tabname);
+		intent.putExtra(PARAM_BASE + ArticleProvider.KEYA_SEQ, _seq);
+		intent.putExtra(PARAM_BASE + ArticleProvider.KEYA_USER, _user);
+		intent.putExtra(PARAM_BASE + ArticleProvider.KEYA_THREAD, _thread);
 		_context.sendBroadcast(intent);
 	}
 
@@ -612,15 +617,5 @@ public class KidsBbs extends Activity {
 		public KidsParseException(String _message) {
 			super(_message);
 		}
-	}
-
-	@Override
-	public void onCreate(Bundle _state) {
-		super.onCreate(_state);
-
-		startService(new Intent(this, KidsBbsService.class));
-
-		startActivity(new Intent(this, KidsBbsBList.class));
-		finish();
 	}
 }

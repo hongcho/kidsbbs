@@ -25,25 +25,22 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs.ui;
 
-import android.content.Context;
-import android.util.AttributeSet;
-import android.widget.RelativeLayout;
+import org.sori.kidsbbs.service.UpdateService;
 
-public class KidsBbsBItem extends RelativeLayout {
-	public long mId;
-	public String mTabname;
-	public String mTitle;
-	public int mCount;
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
 
-	public KidsBbsBItem(Context _context) {
-		super(_context);
+public class MainActivity extends Activity {
+
+	@Override
+	public void onCreate(Bundle _state) {
+		super.onCreate(_state);
+
+		startService(new Intent(this, UpdateService.class));
+
+		startActivity(new Intent(this, BoardListActivity.class));
+		finish();
 	}
 
-	public KidsBbsBItem(Context _context, AttributeSet _attrs) {
-		super(_context, _attrs);
-	}
-
-	public KidsBbsBItem(Context _context, AttributeSet _attrs, int _defStyle) {
-		super(_context, _attrs, _defStyle);
-	}
 }

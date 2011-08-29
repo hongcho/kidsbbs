@@ -31,13 +31,13 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-public class KidsBbsAlarmReceiver extends BroadcastReceiver {
+public class AlarmReceiver extends BroadcastReceiver {
 	public static final String UPDATE_BOARDS_ALARM = KidsBbs.ALARM_BASE
 			+ "UpdateBoards";
 
 	@Override
 	public void onReceive(Context _context, Intent _intent) {
 		// Start server from alarm...
-		_context.startService(new Intent(_context, KidsBbsService.class));
+		_context.startService(new Intent(_context, UpdateService.class));
 	}
 }

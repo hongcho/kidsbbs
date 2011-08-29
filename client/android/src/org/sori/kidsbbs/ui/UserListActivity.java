@@ -27,14 +27,14 @@ package org.sori.kidsbbs.ui;
 
 import org.sori.kidsbbs.KidsBbs;
 import org.sori.kidsbbs.R;
-import org.sori.kidsbbs.provider.KidsBbsProvider;
+import org.sori.kidsbbs.provider.ArticleProvider;
 
 import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.os.Bundle;
 
-public class KidsBbsUser extends KidsBbsAList {
+public class UserListActivity extends ArticleListActivity {
 	private String mBoardUser;
 	private String mTitleView;
 
@@ -50,8 +50,8 @@ public class KidsBbsUser extends KidsBbsAList {
 		mTitleView = resources.getString(R.string.title_view);
 
 		setTitleCommon(resources.getString(R.string.title_user));
-		setQueryBase(KidsBbsProvider.CONTENT_URISTR_LIST, FIELDS_LIST,
-				KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "'");
+		setQueryBase(ArticleProvider.CONTENT_URISTR_LIST, FIELDS_LIST,
+				ArticleProvider.KEYA_USER + "='" + mBoardUser + "'");
 
 		updateTitle();
 
@@ -65,11 +65,11 @@ public class KidsBbsUser extends KidsBbsAList {
 	}
 
 	protected void updateTitle() {
-		updateTitleCommon(getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
-				KidsBbsProvider.SELECTION_UNREAD + " AND "
-						+ KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "'"),
-				getCount(KidsBbsProvider.CONTENT_URISTR_LIST,
-						KidsBbsProvider.KEYA_USER + "='" + mBoardUser + "'"));
+		updateTitleCommon(getCount(ArticleProvider.CONTENT_URISTR_LIST,
+				ArticleProvider.SELECTION_UNREAD + " AND "
+						+ ArticleProvider.KEYA_USER + "='" + mBoardUser + "'"),
+				getCount(ArticleProvider.CONTENT_URISTR_LIST,
+						ArticleProvider.KEYA_USER + "='" + mBoardUser + "'"));
 	}
 
 	protected boolean matchingBroadcast(int _seq, String _user, String _thread) {
@@ -82,12 +82,12 @@ public class KidsBbsUser extends KidsBbsAList {
 		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_VTITLE,
 				mTitleView);
 		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_THREAD,
-				c.getString(c.getColumnIndex(KidsBbsProvider.KEYA_THREAD)));
+				c.getString(c.getColumnIndex(ArticleProvider.KEYA_THREAD)));
 		extras.putInt(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_SEQ,
-				c.getInt(c.getColumnIndex(KidsBbsProvider.KEYA_SEQ)));
+				c.getInt(c.getColumnIndex(ArticleProvider.KEYA_SEQ)));
 		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_TTITLE,
-				c.getString(c.getColumnIndex(KidsBbsProvider.KEYA_TITLE)));
-		showItemCommon(this, KidsBbsTView.class, KidsBbs.URI_INTENT_TVIEW,
+				c.getString(c.getColumnIndex(ArticleProvider.KEYA_TITLE)));
+		showItemCommon(this, ThreadedViewActivity.class, KidsBbs.URI_INTENT_TVIEW,
 				extras);
 	}
 
@@ -96,7 +96,7 @@ public class KidsBbsUser extends KidsBbsAList {
 	}
 
 	protected void markAllRead() {
-		markAllReadCommon(KidsBbsProvider.KEYA_USER + "='" + mBoardUser
+		markAllReadCommon(ArticleProvider.KEYA_USER + "='" + mBoardUser
 				+ "' AND ");
 	}
 }
