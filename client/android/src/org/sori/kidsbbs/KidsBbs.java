@@ -48,6 +48,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.HttpConnectionParams;
 import org.sori.kidsbbs.data.ArticleInfo;
 import org.sori.kidsbbs.data.BoardInfo;
+import org.sori.kidsbbs.provider.ArticleDatabase;
 import org.sori.kidsbbs.provider.ArticleProvider;
 import org.sori.kidsbbs.service.UpdateService;
 import org.w3c.dom.Document;
@@ -64,7 +65,8 @@ import android.net.Uri;
 import android.util.Log;
 
 public class KidsBbs {
-	public static final String TAG = "KidsBbs";
+	private static final String TAG = "KidsBbs";
+
 	public static final String PKG_BASE = "org.sori.kidsbbs.";
 	public static final String BCAST_BASE = PKG_BASE + "broadcast.";
 	public static final String PARAM_BASE = PKG_BASE + "param.";
@@ -74,31 +76,37 @@ public class KidsBbs {
 	public static final String ARTICLE_UPDATED = BCAST_BASE + "ArticleUpdated";
 	public static final String UPDATE_ERROR = BCAST_BASE + "UpdateError";
 
-	private static final String URL_BASE = "http://sori.org/kids/kids.php?_o=1&";
-	public static final String URL_BLIST = URL_BASE;
-	public static final String URL_PLIST = URL_BASE + "m=plist&";
-	public static final String URL_LIST = URL_BASE + "m=list&";
-	public static final String URL_TLIST = URL_BASE + "m=tlist&";
-	public static final String URL_THREAD = URL_BASE + "m=thread&";
-	public static final String URL_USER = URL_BASE + "m=user&";
+	public interface UrlString {
+		String BASE = "http://sori.org/kids/kids.php?_o=1&";
+		String BLIST = BASE;
+		String PLIST = BASE + "m=plist&";
+		String LIST = BASE + "m=list&";
+		String TLIST = BASE + "m=tlist&";
+		String THREAD = BASE + "m=thread&";
+		String USER = BASE + "m=user&";
+	}
 
-	private static final String URI_BASE_STRING = "content:/kidsbbs/";
-	public static final Uri URI_INTENT_TLIST = Uri.parse(URI_BASE_STRING + "tlist");
-	public static final Uri URI_INTENT_THREAD = Uri.parse(URI_BASE_STRING + "thread");
-	public static final Uri URI_INTENT_USER = Uri.parse(URI_BASE_STRING + "user");
-	public static final Uri URI_INTENT_TVIEW = Uri.parse(URI_BASE_STRING + "tview");
+	public interface IntentUri {
+		String BASE_STRING = "content:/kidsbbs/";
+		Uri TLIST = Uri.parse(BASE_STRING + "tlist");
+		Uri THREAD = Uri.parse(BASE_STRING + "thread");
+		Uri USER = Uri.parse(BASE_STRING + "user");
+		Uri TVIEW = Uri.parse(BASE_STRING + "tview");
+	}
 
-	public static final String PARAM_N_BTITLE = "bt";
-	public static final String PARAM_N_BOARD = "b";
-	public static final String PARAM_N_TYPE = "t";
-	public static final String PARAM_N_THREAD = "id";
-	public static final String PARAM_N_USER = "u";
-	public static final String PARAM_N_SEQ = "p";
-	public static final String PARAM_N_START = "s";
-	public static final String PARAM_N_COUNT = "n";
-	public static final String PARAM_N_TABNAME = "tn";
-	public static final String PARAM_N_TTITLE = "tt";
-	public static final String PARAM_N_VTITLE = "vt";
+	public interface ParamName {
+		String BTITLE = "bt";
+		String BOARD = "b";
+		String TYPE = "t";
+		String THREAD = "id";
+		String USER = "u";
+		String SEQ = "p";
+		String START = "s";
+		String COUNT = "n";
+		String TABNAME = "tn";
+		String TTITLE = "tt";
+		String VTITLE = "vt";
+	}
 
 	private static final String DATE_INVALID = "0000-00-00 00:00:00";
 	private static final String DATESHORT_INVALID = "0000-00-00";
@@ -119,7 +127,9 @@ public class KidsBbs {
 		DF_KIDS.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
 	}
 
-	public static final int NOTIFICATION_NEW_ARTICLE = 0;
+	public interface NotificationType {
+		int NEW_ARTICLE = 0;
+	}
 
 	private static final int CONN_TIMEOUT = 30 * 1000; // 30 seconds
 	private static final int MAX_DAYS = 7;
@@ -129,21 +139,26 @@ public class KidsBbs {
 	public static final String KST_DIFF = "'-9 hours'";
 	public static final String MAX_TIME = "'-" + MAX_DAYS + " days'";
 
-	private static final String[] F_SEQ = { ArticleProvider.KEYA_SEQ, };
-	private static final String[] F_TITLE = { ArticleProvider.KEYB_TITLE, };
-	private static final String[] F_CNT_FIELD = {
-		ArticleProvider.KEYA_CNT_FIELD,
-	};
-	private static final String[] F_TOT_CNT = {
-		"TOTAL(" + ArticleProvider.KEYB_COUNT + ")",
-	};
-	private static final String[] F_READ = { ArticleProvider.KEYA_READ, };
-	private static final String[] F_ALLREAD = {
-		ArticleProvider.KEYA_ALLREAD_FIELD,
-	};
-	private static final String R_EMPTY = "";
-	private static final String[] R_SUMMARY = { " ", " ", "", };
-	private static final String W_ACTIVE = ArticleProvider.SELECTION_STATE_ACTIVE;
+	private interface Projection {
+		String[] BOARD_TOTAL_COUNT = {
+				"TOTAL(" + ArticleDatabase.BoardColumn.COUNT + ")",
+		};
+		String[] SEQ = {
+				ArticleDatabase.ArticleColumn.SEQ,
+		};
+		String[] ARTICLE_TITLE = {
+				ArticleDatabase.ArticleColumn.TITLE,
+		};
+		String[] ARTICLE_CNT = {
+				ArticleDatabase.ArticleField.CNT,
+		};
+		String[] READ = {
+				ArticleDatabase.ArticleColumn.READ,
+		};
+		String[] ALLREAD = {
+				ArticleDatabase.ArticleField.ALLREAD,
+		};
+	}
 
 	public static final Date KidsToLocalDate(String _dateString) {
 		try {
@@ -204,7 +219,7 @@ public class KidsBbs {
 			};
 			for (int i = 0; i < PATTERNS.length; ++i) {
 				Matcher m = PATTERNS[i].matcher(_s);
-				_s = m.replaceAll(R_EMPTY);
+				_s = m.replaceAll("");
 			}
 		}
 		return _s;
@@ -216,7 +231,7 @@ public class KidsBbs {
 				Pattern.compile("^Re:\\s*", Pattern.CASE_INSENSITIVE);
 			final Matcher m = PATTERN.matcher(_s);
 			if (m.find()) {
-				return m.replaceFirst(R_EMPTY);
+				return m.replaceFirst("");
 			}
 		}
 		return _s;
@@ -246,17 +261,18 @@ public class KidsBbs {
 		};
 		for (int i = 0; i < P_QUOTES.length; ++i) {
 			Matcher m = P_QUOTES[i].matcher(_s);
-			_s = m.replaceAll(R_EMPTY);
+			_s = m.replaceAll("");
 		}
 		// Remove white spaces.
-		final Pattern[] P_SPACES= {
+		final Pattern[] P_SPACES = {
 				Pattern.compile("\n+"),
 				Pattern.compile("\\s+"),
 				Pattern.compile("^\\s+"),
 		};
+		final String[] R_SPACES = { " ", " ", "", };
 		for (int i = 0; i < P_SPACES.length; ++i) {
 			Matcher m = P_SPACES[i].matcher(_s);
-			_s = m.replaceAll(R_SUMMARY[i]);
+			_s = m.replaceAll(R_SPACES[i]);
 		}
 		return _s;
 	}
@@ -264,7 +280,7 @@ public class KidsBbs {
 	public static final void updateBoardTable(Context _context, String _tabname) {
 		Intent intent = new Intent(_context, UpdateService.class);
 		if (_tabname != null && _tabname.length() > 0) {
-			intent.putExtra(PARAM_BASE + PARAM_N_TABNAME, _tabname);
+			intent.putExtra(PARAM_BASE + ParamName.TABNAME, _tabname);
 		}
 		_context.startService(intent);
 	}
@@ -349,8 +365,10 @@ public class KidsBbs {
 			int _type, int _start) throws Exception {
 		final ArrayList<ArticleInfo> articles = new ArrayList<ArticleInfo>();
 		final String tabname = BoardInfo.buildTabname(_board, _type);
-		final String urlString = URL_PLIST + PARAM_N_BOARD + "=" + _board + "&"
-				+ PARAM_N_TYPE + "=" + _type + "&" + PARAM_N_SEQ + "=" + _start;
+		final String urlString = UrlString.PLIST
+			+ ParamName.BOARD + "=" + _board
+			+ "&" + ParamName.TYPE + "=" + _type
+			+ "&" + ParamName.SEQ + "=" + _start;
 		final HttpClient client = new DefaultHttpClient();
 		client.getParams().setParameter(
 				HttpConnectionParams.CONNECTION_TIMEOUT, CONN_TIMEOUT);
@@ -392,9 +410,11 @@ public class KidsBbs {
 
 	public static final int getArticlesLastSeq(String _board, int _type) {
 		final String tabname = BoardInfo.buildTabname(_board, _type);
-		final String urlString = URL_LIST + PARAM_N_BOARD + "=" + _board + "&"
-				+ PARAM_N_TYPE + "=" + _type + "&" + PARAM_N_START + "=0" + "&"
-				+ PARAM_N_COUNT + "=1";
+		final String urlString = UrlString.LIST
+			+ ParamName.BOARD + "=" + _board
+			+ "&" + ParamName.TYPE + "=" + _type
+			+ "&" + ParamName.START + "=0"
+			+ "&" + ParamName.COUNT + "=1";
 		final HttpClient client = new DefaultHttpClient();
 		client.getParams().setParameter(
 				HttpConnectionParams.CONNECTION_TIMEOUT, CONN_TIMEOUT);
@@ -437,10 +457,10 @@ public class KidsBbs {
 
 	public static final int getBoardLastSeq(ContentResolver _cr, String _tabname) {
 		int seq = 0;
-		final Uri uri = Uri.parse(ArticleProvider.CONTENT_URISTR_LIST
+		final Uri uri = Uri.parse(ArticleProvider.ContentUriString.LIST
 				+ _tabname);
-		final Cursor c = _cr.query(uri, F_SEQ, null, null,
-				ArticleProvider.ORDER_BY_SEQ_DESC);
+		final Cursor c = _cr.query(uri, Projection.SEQ, null, null,
+				ArticleProvider.OrderBy.SEQ_DESC);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -454,9 +474,9 @@ public class KidsBbs {
 	public static final String getBoardTitle(ContentResolver _cr,
 			String _tabname) {
 		String title = null;
-		final Cursor c = _cr.query(ArticleProvider.CONTENT_URI_BOARDS, F_TITLE,
-				ArticleProvider.SELECTION_TABNAME, new String[] { _tabname },
-				null);
+		final Cursor c = _cr.query(ArticleProvider.ContentUri.BOARDS,
+				Projection.ARTICLE_TITLE, ArticleProvider.Selection.TABNAME,
+				new String[] { _tabname }, null);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -470,9 +490,10 @@ public class KidsBbs {
 	public static final int getBoardTableSize(ContentResolver _cr,
 			String _tabname) {
 		int cnt = 0;
-		final Uri uri = Uri.parse(ArticleProvider.CONTENT_URISTR_LIST
+		final Uri uri = Uri.parse(ArticleProvider.ContentUriString.LIST
 				+ _tabname);
-		final Cursor c = _cr.query(uri, F_CNT_FIELD, null, null, null);
+		final Cursor c = _cr.query(uri, Projection.ARTICLE_CNT, null, null,
+				null);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -485,15 +506,16 @@ public class KidsBbs {
 
 	public static final int getBoardUnreadCount(ContentResolver _cr,
 			String _tabname) {
-		return getTableCount(_cr, ArticleProvider.CONTENT_URISTR_LIST,
-				_tabname, ArticleProvider.SELECTION_UNREAD);
+		return getTableCount(_cr, ArticleProvider.ContentUriString.LIST,
+				_tabname, ArticleProvider.Selection.UNREAD);
 	}
 
 	public static final int getTableCount(ContentResolver _cr, String _uriBase,
 			String _tabname, String _where) {
 		int count = 0;
 		final Uri uri = Uri.parse(_uriBase + _tabname);
-		final Cursor c = _cr.query(uri, F_CNT_FIELD, _where, null, null);
+		final Cursor c = _cr.query(uri, Projection.ARTICLE_CNT, _where, null,
+				null);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -506,8 +528,9 @@ public class KidsBbs {
 
 	public static final int getTotalUnreadCount(ContentResolver _cr) {
 		int count = 0;
-		final Cursor c = _cr.query(ArticleProvider.CONTENT_URI_BOARDS,
-				F_TOT_CNT, W_ACTIVE, null, null);
+		final Cursor c = _cr.query(ArticleProvider.ContentUri.BOARDS,
+				Projection.BOARD_TOTAL_COUNT,
+				ArticleProvider.Selection.STATE_ACTIVE, null, null);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -521,21 +544,21 @@ public class KidsBbs {
 	public static final void updateBoardCount(ContentResolver _cr,
 			String _tabname) {
 		final ContentValues values = new ContentValues();
-		values.put(ArticleProvider.KEYB_COUNT,
+		values.put(ArticleDatabase.BoardColumn.COUNT,
 				getBoardUnreadCount(_cr, _tabname));
-		_cr.update(ArticleProvider.CONTENT_URI_BOARDS, values,
-				ArticleProvider.SELECTION_TABNAME, new String[] { _tabname });
+		_cr.update(ArticleProvider.ContentUri.BOARDS, values,
+				ArticleProvider.Selection.TABNAME, new String[] { _tabname });
 	}
 
 	public static final boolean updateArticleRead(ContentResolver _cr,
 			String _tabname, int _seq, boolean _read) {
-		final Uri uri = Uri.parse(ArticleProvider.CONTENT_URISTR_LIST
+		final Uri uri = Uri.parse(ArticleProvider.ContentUriString.LIST
 				+ _tabname);
 		final String[] args = new String[] { Integer.toString(_seq) };
 
 		boolean readOld = false;
-		final Cursor c = _cr.query(uri, F_READ, ArticleProvider.SELECTION_SEQ,
-				args, null);
+		final Cursor c = _cr.query(uri, Projection.READ,
+				ArticleProvider.Selection.SEQ, args, null);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -548,16 +571,17 @@ public class KidsBbs {
 		}
 
 		final ContentValues values = new ContentValues();
-		values.put(ArticleProvider.KEYA_READ, _read ? 1 : 0);
+		values.put(ArticleDatabase.ArticleColumn.READ, _read ? 1 : 0);
 		final int count = _cr.update(uri, values,
-				ArticleProvider.SELECTION_SEQ, args);
+				ArticleProvider.Selection.SEQ, args);
 		return (count > 0);
 	}
 
 	public static final boolean getArticleRead(ContentResolver _cr, Uri _uri,
 			String _where, String[] _whereArgs) {
 		boolean read = false;
-		final Cursor c = _cr.query(_uri, F_ALLREAD, _where, _whereArgs, null);
+		final Cursor c = _cr.query(_uri, Projection.ALLREAD, _where,
+				_whereArgs, null);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -596,7 +620,8 @@ public class KidsBbs {
 		updateBoardCount(_context.getContentResolver(), _tabname);
 
 		final Intent intent = new Intent(BOARD_UPDATED);
-		intent.putExtra(PARAM_BASE + ArticleProvider.KEYB_TABNAME, _tabname);
+		intent.putExtra(PARAM_BASE + ArticleDatabase.BoardColumn.TABNAME,
+				_tabname);
 		_context.sendBroadcast(intent);
 	}
 
@@ -605,10 +630,14 @@ public class KidsBbs {
 		updateBoardCount(_context.getContentResolver(), _tabname);
 
 		final Intent intent = new Intent(ARTICLE_UPDATED);
-		intent.putExtra(PARAM_BASE + ArticleProvider.KEYB_TABNAME, _tabname);
-		intent.putExtra(PARAM_BASE + ArticleProvider.KEYA_SEQ, _seq);
-		intent.putExtra(PARAM_BASE + ArticleProvider.KEYA_USER, _user);
-		intent.putExtra(PARAM_BASE + ArticleProvider.KEYA_THREAD, _thread);
+		intent.putExtra(PARAM_BASE + ArticleDatabase.BoardColumn.TABNAME,
+				_tabname);
+		intent.putExtra(PARAM_BASE + ArticleDatabase.ArticleColumn.SEQ,
+				_seq);
+		intent.putExtra(PARAM_BASE + ArticleDatabase.ArticleColumn.USER,
+				_user);
+		intent.putExtra(PARAM_BASE + ArticleDatabase.ArticleColumn.THREAD,
+				_thread);
 		_context.sendBroadcast(intent);
 	}
 

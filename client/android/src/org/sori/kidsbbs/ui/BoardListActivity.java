@@ -27,6 +27,7 @@ package org.sori.kidsbbs.ui;
 
 import org.sori.kidsbbs.KidsBbs;
 import org.sori.kidsbbs.R;
+import org.sori.kidsbbs.provider.ArticleDatabase;
 import org.sori.kidsbbs.provider.ArticleProvider;
 import org.sori.kidsbbs.service.UpdateService;
 
@@ -49,6 +50,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.BaseColumns;
 import android.support.v4.view.MenuCompat;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
@@ -63,10 +65,13 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 public class BoardListActivity extends ListActivity {
-	private static final int MENU_REFRESH = Menu.FIRST;
-	private static final int MENU_PREFERENCES = Menu.FIRST + 1;
-	private static final int MENU_SHOW = Menu.FIRST + 2;
-	private static final int MENU_SELECT = Menu.FIRST + 3;
+
+	private interface MenuId {
+		int REFRESH = Menu.FIRST;
+		int PREFERENCES = Menu.FIRST + 1;
+		int SHOW = Menu.FIRST + 2;
+		int SELECT = Menu.FIRST + 3;
+	}
 
 	private static final String KEY_SELECTED_ITEM = "KEY_SELECTED_ITEM";
 
@@ -124,7 +129,7 @@ public class BoardListActivity extends ListActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		mNotificationManager.cancel(KidsBbs.NOTIFICATION_NEW_ARTICLE);
+		mNotificationManager.cancel(KidsBbs.NotificationType.NEW_ARTICLE);
 	}
 	
 	@Override
@@ -147,16 +152,16 @@ public class BoardListActivity extends ListActivity {
 		super.onCreateOptionsMenu(_menu);
 
 		MenuCompat.setShowAsAction(
-				_menu.add(0, MENU_REFRESH, Menu.NONE, R.string.menu_refresh)
+				_menu.add(0, MenuId.SELECT, Menu.NONE, R.string.menu_select)
+					.setIcon(android.R.drawable.ic_menu_add)
+					.setShortcut('0', 's'), 1);
+		MenuCompat.setShowAsAction(
+				_menu.add(0, MenuId.REFRESH, Menu.NONE, R.string.menu_refresh)
 					.setIcon(getResources().getIdentifier(
 							"android:drawable/ic_menu_refresh", null, null))
-					.setShortcut('0', 'r'), 1);
+					.setShortcut('1', 'r'), 1);
 		MenuCompat.setShowAsAction(
-				_menu.add(0, MENU_SELECT, Menu.NONE, R.string.menu_select)
-					.setIcon(android.R.drawable.ic_menu_add)
-					.setShortcut('1', 's'), 1);
-		MenuCompat.setShowAsAction(
-				_menu.add(0, MENU_PREFERENCES, Menu.NONE,
+				_menu.add(0, MenuId.PREFERENCES, Menu.NONE,
 						R.string.menu_preferences)
 					.setIcon(android.R.drawable.ic_menu_preferences)
 					.setShortcut('2', 'p'), 1);
@@ -173,21 +178,21 @@ public class BoardListActivity extends ListActivity {
 				R.string.blist_cm_header))
 			.setHeaderIcon(android.R.drawable.ic_dialog_info);
 
-		_menu.add(0, MENU_SHOW, Menu.NONE, R.string.read_text);
+		_menu.add(0, MenuId.SHOW, Menu.NONE, R.string.read_text);
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		super.onOptionsItemSelected(item);
 		switch (item.getItemId()) {
-		case MENU_SELECT:
+		case MenuId.SELECT:
 			selectBoards();
 			return true;
-		case MENU_REFRESH:
+		case MenuId.REFRESH:
 			KidsBbs.updateBoardTable(this, null);
 			refreshList();
 			return true;
-		case MENU_PREFERENCES:
+		case MenuId.PREFERENCES:
 			startActivity(new Intent(this, Preferences.class));
 			return true;
 		}
@@ -198,7 +203,7 @@ public class BoardListActivity extends ListActivity {
 	public boolean onContextItemSelected(MenuItem _item) {
 		super.onContextItemSelected(_item);
 		switch (_item.getItemId()) {
-		case MENU_SHOW:
+		case MenuId.SHOW:
 			showItem(((AdapterView.AdapterContextMenuInfo)
 					_item.getMenuInfo()).position);
 			return true;
@@ -215,10 +220,11 @@ public class BoardListActivity extends ListActivity {
 
 		@Override
 		protected Cursor doInBackground(Void... _args) {
-			final String ORDERBY = ArticleProvider.ORDER_BY_COUNT_DESC + ","
-					+ ArticleProvider.ORDER_BY_TITLE;
-			return mResolver.query(ArticleProvider.CONTENT_URI_BOARDS, FIELDS,
-					ArticleProvider.SELECTION_STATE_ACTIVE, null, ORDERBY);
+			final String ORDERBY = ArticleProvider.OrderBy.COUNT_DESC + ","
+					+ ArticleProvider.OrderBy.TITLE;
+			return mResolver.query(ArticleProvider.ContentUri.BOARDS,
+					COLUMNS, ArticleProvider.Selection.STATE_ACTIVE,
+					null, ORDERBY);
 		}
 
 		@Override
@@ -252,22 +258,25 @@ public class BoardListActivity extends ListActivity {
 	private void showItem(int _index) {
 		final Cursor c = (Cursor) mAdapter.getItem(_index);
 		final Intent intent = new Intent(this, ThreadListActivity.class);
-		intent.setData(KidsBbs.URI_INTENT_TLIST);
-		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_TABNAME,
-				c.getString(BoardsAdapter.COLUMN_TABNAME));
-		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_BTITLE,
-				c.getString(BoardsAdapter.COLUMN_TITLE));
+		intent.setData(KidsBbs.IntentUri.TLIST);
+		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.ParamName.TABNAME,
+				c.getString(ColumnIndex.TABNAME));
+		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.ParamName.BTITLE,
+				c.getString(ColumnIndex.TITLE));
 		startActivity(intent);
 	}
 
 	private void selectBoards() {
-		final String[] FIELDS = { ArticleProvider.KEYB_TABNAME,
-				ArticleProvider.KEYB_TITLE, ArticleProvider.KEYB_STATE, };
-		final String ORDERBY = ArticleProvider.ORDER_BY_STATE_DESC + ","
-				+ ArticleProvider.ORDER_BY_TITLE;
+		final String[] PROJECTION = {
+				ArticleDatabase.BoardColumn.TABNAME,
+				ArticleDatabase.BoardColumn.TITLE,
+				ArticleDatabase.BoardColumn.STATE,
+		};
+		final String ORDERBY = ArticleProvider.OrderBy.STATE_DESC + ","
+				+ ArticleProvider.OrderBy.TITLE;
 		String[] titles = null;
-		final Cursor c = mResolver.query(ArticleProvider.CONTENT_URI_BOARDS,
-				FIELDS, null, null, ORDERBY);
+		final Cursor c = mResolver.query(ArticleProvider.ContentUri.BOARDS,
+				PROJECTION, null, null, ORDERBY);
 		if (c != null) {
 			final int size = c.getCount();
 			if (size > 0) {
@@ -278,13 +287,13 @@ public class BoardListActivity extends ListActivity {
 				int i = 0;
 				c.moveToFirst();
 				do {
-					mTabnames[i] = c.getString(
-							c.getColumnIndex(ArticleProvider.KEYB_TABNAME));
-					titles[i] = c.getString(
-							c.getColumnIndex(ArticleProvider.KEYB_TITLE));
-					mSelectedOld[i] = c.getInt(
-							c.getColumnIndex(ArticleProvider.KEYB_STATE))
-							!= ArticleProvider.STATE_PAUSED;
+					mTabnames[i] = c.getString(c.getColumnIndex(
+							ArticleDatabase.BoardColumn.TABNAME));
+					titles[i] = c.getString(c.getColumnIndex(
+							ArticleDatabase.BoardColumn.TITLE));
+					mSelectedOld[i] = c.getInt(c.getColumnIndex(
+							ArticleDatabase.BoardColumn.STATE))
+							!= ArticleDatabase.BoardState.PAUSED;
 					mSelectedNew[i] = mSelectedOld[i];
 					++i;
 				} while (c.moveToNext());
@@ -311,13 +320,12 @@ public class BoardListActivity extends ListActivity {
 								}
 								++nUpdated;
 								ContentValues values = new ContentValues();
-								values.put(ArticleProvider.KEYB_STATE,
-										mSelectedNew[i] ? ArticleProvider.STATE_SELECTED
-												: ArticleProvider.STATE_PAUSED);
-								mResolver.update(
-										ArticleProvider.CONTENT_URI_BOARDS,
-										values,
-										ArticleProvider.SELECTION_TABNAME,
+								values.put(ArticleDatabase.BoardColumn.STATE,
+										mSelectedNew[i] ?
+												ArticleDatabase.BoardState.SELECTED
+												: ArticleDatabase.BoardState.PAUSED);
+								mResolver.update(ArticleProvider.ContentUri.BOARDS,
+										values, ArticleProvider.Selection.TABNAME,
 										new String[] { mTabnames[i] });
 							}
 							if (nUpdated > 0) {
@@ -416,19 +424,21 @@ public class BoardListActivity extends ListActivity {
 		unregisterReceiver(mReceiverBoard);
 	}
 
-	private static final String[] FIELDS = {
-		ArticleProvider.KEY_ID,
-		ArticleProvider.KEYB_TABNAME,
-		ArticleProvider.KEYB_TITLE,
-		ArticleProvider.KEYB_COUNT,
+	private interface ColumnIndex {
+		int _ID = 0;
+		int TABNAME = 1;
+		int TITLE = 2;
+		int COUNT = 3;
+	}
+	private static final String[] COLUMNS = {
+		BaseColumns._ID,
+		ArticleDatabase.BoardColumn.TABNAME,
+		ArticleDatabase.BoardColumn.TITLE,
+		ArticleDatabase.BoardColumn.COUNT,
 	};
 
 	private class BoardsAdapter extends CursorAdapter implements
 			FilterQueryProvider {
-		public static final int COLUMN_ID = 0;
-		public static final int COLUMN_TABNAME = 1;
-		public static final int COLUMN_TITLE = 2;
-		public static final int COLUMN_COUNT = 3;
 
 		private Context mContext;
 		private LayoutInflater mInflater;
@@ -472,10 +482,10 @@ public class BoardListActivity extends ListActivity {
 		@Override
 		public void bindView(View _v, Context _context, Cursor _c) {
 			final BoardItemView itemView = (BoardItemView) _v;
-			itemView.mId = _c.getLong(COLUMN_ID);
-			itemView.mTabname = _c.getString(COLUMN_TABNAME);
-			itemView.mTitle = _c.getString(COLUMN_TITLE);
-			itemView.mCount = _c.getInt(COLUMN_COUNT);
+			itemView.mId = _c.getLong(ColumnIndex._ID);
+			itemView.mTabname = _c.getString(ColumnIndex.TABNAME);
+			itemView.mTitle = _c.getString(ColumnIndex.TITLE);
+			itemView.mCount = _c.getInt(ColumnIndex.COUNT);
 
 			final ViewHolder holder = (ViewHolder) itemView.getTag();
 			holder.title.setText(itemView.mTitle);
@@ -514,13 +524,13 @@ public class BoardListActivity extends ListActivity {
 		}
 
 		public Cursor runQuery(CharSequence _constraint) {
-			final String WHERE = ArticleProvider.SELECTION_STATE_ACTIVE
-					+ " AND " + ArticleProvider.KEYB_TITLE + " LIKE '%"
-					+ _constraint + "%'";
-			final String ORDERBY = ArticleProvider.ORDER_BY_COUNT_DESC + ","
-					+ ArticleProvider.ORDER_BY_TITLE;
-			return mResolver.query(ArticleProvider.CONTENT_URI_BOARDS, FIELDS,
-					WHERE, null, ORDERBY);
+			final String WHERE = ArticleProvider.Selection.STATE_ACTIVE
+					+ " AND " + ArticleDatabase.BoardColumn.TITLE
+					+ " LIKE '%" + _constraint + "%'";
+			final String ORDERBY = ArticleProvider.OrderBy.COUNT_DESC + ","
+					+ ArticleProvider.OrderBy.TITLE;
+			return mResolver.query(ArticleProvider.ContentUri.BOARDS,
+					COLUMNS, WHERE, null, ORDERBY);
 		}
 	}
 }
