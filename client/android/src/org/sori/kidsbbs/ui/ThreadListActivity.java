@@ -27,6 +27,7 @@ package org.sori.kidsbbs.ui;
 
 import org.sori.kidsbbs.KidsBbs;
 import org.sori.kidsbbs.R;
+import org.sori.kidsbbs.provider.ArticleDatabase;
 import org.sori.kidsbbs.provider.ArticleProvider;
 
 import android.content.ContentValues;
@@ -46,7 +47,7 @@ public class ThreadListActivity extends ArticleListActivity {
 		mTitleTView = resources.getString(R.string.title_tview);
 
 		setTitleCommon(resources.getString(R.string.title_tlist));
-		setQueryBase(ArticleProvider.CONTENT_URISTR_TLIST, FIELDS_TLIST, null);
+		setQueryBase(ArticleProvider.ContentUriString.TLIST, COLUMNS_TLIST, null);
 
 		updateTitle();
 
@@ -60,9 +61,10 @@ public class ThreadListActivity extends ArticleListActivity {
 	}
 
 	protected void updateTitle() {
-		updateTitleCommon(getCount(ArticleProvider.CONTENT_URISTR_LIST,
-				ArticleProvider.SELECTION_UNREAD), getCount(
-				ArticleProvider.CONTENT_URISTR_LIST, null));
+		updateTitleCommon(
+				getCount(ArticleProvider.ContentUriString.LIST,
+						ArticleProvider.Selection.UNREAD),
+				getCount(ArticleProvider.ContentUriString.LIST, null));
 	}
 
 	protected boolean matchingBroadcast(int _seq, String _user, String _thread) {
@@ -71,38 +73,42 @@ public class ThreadListActivity extends ArticleListActivity {
 
 	protected void showItem(int _index) {
 		final Cursor c = getItem(_index);
-		final int count = c.getInt(c.getColumnIndex(ArticleProvider.KEYA_CNT));
-		final String title = c.getString(
-				c.getColumnIndex(ArticleProvider.KEYA_TITLE));
+		final int count = c.getInt(c.getColumnIndex(
+				ArticleDatabase.ArticleColumn.CNT));
+		final String title = c.getString(c.getColumnIndex(
+				ArticleDatabase.ArticleColumn.TITLE));
 		final String ttitle = count > 1 ? KidsBbs.getThreadTitle(title) : title;
 		Bundle extras = new Bundle();
-		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_VTITLE,
+		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.ParamName.VTITLE,
 				mTitleTView);
-		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_THREAD,
-				c.getString(c.getColumnIndex(ArticleProvider.KEYA_THREAD)));
-		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_TTITLE,
+		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.ParamName.THREAD,
+				c.getString(c.getColumnIndex(
+						ArticleDatabase.ArticleColumn.THREAD)));
+		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.ParamName.TTITLE,
 				ttitle);
-		showItemCommon(this, ThreadedViewActivity.class, KidsBbs.URI_INTENT_TVIEW,
-				extras);
+		showItemCommon(this, ThreadedViewActivity.class,
+				KidsBbs.IntentUri.TVIEW, extras);
 	}
 
 	protected void markRead(int _index) {
 		final Cursor c = getItem(_index);
-		final int count = c.getInt(c.getColumnIndex(ArticleProvider.KEYA_CNT));
+		final int count = c.getInt(c.getColumnIndex(
+				ArticleDatabase.ArticleColumn.CNT));
 		int nChanged;
 		// Change only one for Marking it unread.
 		if (count == 1) {
 			nChanged = markReadOne(c);
 		} else {
-			final int seq = c.getInt(
-					c.getColumnIndex(ArticleProvider.KEYA_SEQ));
-			final String thread = c.getString(
-					c.getColumnIndex(ArticleProvider.KEYA_THREAD));
-			final String where = ArticleProvider.KEYA_THREAD + "='" + thread
-					+ "' AND " + ArticleProvider.KEYA_SEQ + "<=" + seq
-					+ " AND " + ArticleProvider.KEYA_READ + "=0";
+			final int seq = c.getInt(c.getColumnIndex(
+					ArticleDatabase.ArticleColumn.SEQ));
+			final String thread = c.getString(c.getColumnIndex(
+					ArticleDatabase.ArticleColumn.THREAD));
+			final String where =
+				ArticleDatabase.ArticleColumn.THREAD + "='" + thread
+				+ "' AND " + ArticleDatabase.ArticleColumn.SEQ + "<=" + seq
+				+ " AND " + ArticleProvider.Selection.UNREAD;
 			final ContentValues values = new ContentValues();
-			values.put(ArticleProvider.KEYA_READ, 1);
+			values.put(ArticleDatabase.ArticleColumn.READ, 1);
 			nChanged = mResolver.update(getUriList(), values, where, null);
 		}
 		if (nChanged > 0) {

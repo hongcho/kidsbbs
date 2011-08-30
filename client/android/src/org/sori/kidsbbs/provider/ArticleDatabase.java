@@ -47,31 +47,31 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 
 	private static final String DATABASE_NAME = "kidsbbs.db";
 
-	private interface Versions {
+	private interface Version {
 		int FIRST = 1;
 		int BODY_AUTHOR_ADDED = 2;
 		int ARTICLE_VIEW_ADDED = 3;
 		int BOARD_COUNT_ADDED = 4;
 	}
-	private static final int DATABASE_VERSION = Versions.BOARD_COUNT_ADDED;
+	private static final int DATABASE_VERSION = Version.BOARD_COUNT_ADDED;
 
-	private interface Tables {
+	public interface Table {
 		String BOARDS = "boards";
 	}
 
-	public interface BoardColumns {
+	public interface BoardColumn {
 		String TABNAME = "tabname";
 		String TITLE = "title";
 		String COUNT = "count";
 		String STATE = "state";
 	}
 
-	public interface BoardStates {
-		int STATE_PAUSED = 0;	// no table or not updating
-		int STATE_SELECTED = 1;	// selected for updates
+	public interface BoardState {
+		int PAUSED = 0;	// no table or not updating
+		int SELECTED = 1;	// selected for updates
 	}
 
-	public interface ArticleColumns {
+	public interface ArticleColumn {
 		String SEQ = "seq";
 		String USER = "user";
 		String AUTHOR = "author";
@@ -86,49 +86,31 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 		String CNT = "cnt";
 	}
 
-	public interface ArticleFields {
+	public interface ArticleField {
 		String ALLREAD =
-			"MIN(" + ArticleColumns.READ + ") AS " + ArticleColumns.ALLREAD;
-		String READ_ALLREAD = ArticleColumns.READ +  " AS " + ArticleColumns.ALLREAD;
-		String CNT = "COUNT(*) AS " + ArticleColumns.CNT;
-	}
-
-	public interface Selections {
-		String TABNAME = BoardColumns.TABNAME + "=?";
-		String STATE_ACTIVE = BoardColumns.STATE + "!=" + BoardStates.STATE_PAUSED;
-		String SEQ = ArticleColumns.SEQ + "=?";
-		String UNREAD = ArticleColumns.READ + "=0";
-		String ALLUNREAD = ArticleColumns.ALLREAD + "=0";
-	}
-
-	public interface Orders {
-		String ID = BaseColumns._ID + " ASC";
-		String SEQ_DESC = ArticleColumns.SEQ + " DESC";
-		String SEQ_ASC = ArticleColumns.SEQ + " ASC";
-		String COUNT_DESC = BoardColumns.COUNT + " DESC";
-		String STATE_ASC = BoardColumns.STATE + " ASC";
-		String STATE_DESC = BoardColumns.STATE + " DESC";
-		String TITLE = "LOWER(" + BoardColumns.TITLE + ")";
+			"MIN(" + ArticleColumn.READ + ") AS " + ArticleColumn.ALLREAD;
+		String READ_ALLREAD = ArticleColumn.READ +  " AS " + ArticleColumn.ALLREAD;
+		String CNT = "COUNT(*) AS " + ArticleColumn.CNT;
 	}
 
 	private interface BaseColumnDef {
 		String _ID = BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT";
 	}
 	private interface BoardColumnDef {
-		String TABNAME = BoardColumns.TABNAME + " CHAR(36) NOT NULL UNIQUE";
-		String TITLE = BoardColumns.TITLE + " VARCHAR(40) NOT NULL";
-		String COUNT = BoardColumns.COUNT + " INTEGER DEFAULT 0";
-		String STATE = BoardColumns.STATE + " TINYINT DEFAULT 0";
+		String TABNAME = BoardColumn.TABNAME + " CHAR(36) NOT NULL UNIQUE";
+		String TITLE = BoardColumn.TITLE + " VARCHAR(40) NOT NULL";
+		String COUNT = BoardColumn.COUNT + " INTEGER DEFAULT 0";
+		String STATE = BoardColumn.STATE + " TINYINT DEFAULT 0";
 	}
 	private interface ArticleColumnDef {
-		String SEQ = ArticleColumns.SEQ + " INTEGER NOT NULL UNIQUE";
-		String USER = ArticleColumns.USER + " CHAR(12) NOT NULL";
-		String AUTHOR = ArticleColumns.AUTHOR + " VARCHAR(40) NOT NULL";
-		String DATE = ArticleColumns.DATE + " DATETIME NOT NULL";
-		String TITLE = ArticleColumns.TITLE + " VARCHAR(40) NOT NULL";
-		String THREAD = ArticleColumns.THREAD + " CHAR(32) NOT NULL";
-		String BODY = ArticleColumns.BODY + " TEXT";
-		String READ = ArticleColumns.READ + " TINYINT DEFAULT 0";
+		String SEQ = ArticleColumn.SEQ + " INTEGER NOT NULL UNIQUE";
+		String USER = ArticleColumn.USER + " CHAR(12) NOT NULL";
+		String AUTHOR = ArticleColumn.AUTHOR + " VARCHAR(40) NOT NULL";
+		String DATE = ArticleColumn.DATE + " DATETIME NOT NULL";
+		String TITLE = ArticleColumn.TITLE + " VARCHAR(40) NOT NULL";
+		String THREAD = ArticleColumn.THREAD + " CHAR(32) NOT NULL";
+		String BODY = ArticleColumn.BODY + " TEXT";
+		String READ = ArticleColumn.READ + " TINYINT DEFAULT 0";
 	}
 
 	private Resources mResources;
@@ -186,21 +168,21 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 			}
 			addBoard(_db, new BoardInfo(tabnames[i], title),
 					updateMap.get(tabnames[i])
-						? BoardStates.STATE_SELECTED : BoardStates.STATE_PAUSED);
+						? BoardState.SELECTED : BoardState.PAUSED);
 		}
 	}
 
 	@Override
 	public void onUpgrade(SQLiteDatabase _db, int _old, int _new) {
-		final String[] FIELDS = {
-			BoardColumns.TABNAME,
+		final String[] PROJECTION = {
+			BoardColumn.TABNAME,
 		};
 		Log.d(TAG, "Upgrading database from version " + _old + " to " + _new);
 
 		final SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
-		qb.setTables(Tables.BOARDS);
+		qb.setTables(Table.BOARDS);
 		try {
-			final Cursor c = qb.query(_db, FIELDS, null, null, null, null,
+			final Cursor c = qb.query(_db, PROJECTION, null, null, null, null,
 					null);
 			if (c != null) {
 				if (c.getCount() > 0) {
@@ -220,6 +202,15 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 		}
 	}
 
+	public static final String getViewName(final String _tabname) {
+		return _tabname + "_view";
+	}
+
+	private static final String getIndexName(final String _tabname,
+			final String _index) {
+		return _tabname + "_I" + _index;
+	}
+
 	private void upgradeArticleDB(SQLiteDatabase _db, String _tabname,
 			int _old) {
 		int version = _old;
@@ -227,22 +218,22 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 		// Cascading upgrade...
 		// Only use "break" to drop and re-create the table.
 		switch (version) {
-		case Versions.FIRST:
+		case Version.FIRST:
 			// "body" and "author" were added to the article tables.
 			// - Give up.
 			break;
 
-		case Versions.BODY_AUTHOR_ADDED:
+		case Version.BODY_AUTHOR_ADDED:
 			// Article view was added.
 			// - Re-create article view.
 			dropArticleViews(_db, _tabname);
 			createArticleViews(_db, _tabname);
-			version = Versions.ARTICLE_VIEW_ADDED;
+			version = Version.ARTICLE_VIEW_ADDED;
 
-		case Versions.ARTICLE_VIEW_ADDED:
+		case Version.ARTICLE_VIEW_ADDED:
 			// "count" was added to the board table.
 			// - Nothing to do.
-			version = Versions.BOARD_COUNT_ADDED;
+			version = Version.BOARD_COUNT_ADDED;
 		}
 
 		// If upgrade fails, re-create the table.
@@ -259,28 +250,28 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 		// Cascading upgrade...
 		// Only use "break" to drop and re-create the table.
 		switch (version) {
-		case Versions.FIRST:
+		case Version.FIRST:
 			// "body" and "author" were added to the article tables.
 			// - Nothing to do.
-			version = Versions.BODY_AUTHOR_ADDED;
+			version = Version.BODY_AUTHOR_ADDED;
 
-		case Versions.BODY_AUTHOR_ADDED:
+		case Version.BODY_AUTHOR_ADDED:
 			// Article view was added.
 			// - Nothing to do.
-			version = Versions.ARTICLE_VIEW_ADDED;
+			version = Version.ARTICLE_VIEW_ADDED;
 
-		case Versions.ARTICLE_VIEW_ADDED:
+		case Version.ARTICLE_VIEW_ADDED:
 			// "count" was added to the board table.
 			// - Add the column and fill it out.
-			_db.execSQL("ALTER TABLE " + Tables.BOARDS
+			_db.execSQL("ALTER TABLE " + Table.BOARDS
 					+ " ADD COLUMN " + BoardColumnDef.COUNT + ";");
 
-			final String[] FIELDS = {
-				BoardColumns.TABNAME,
+			final String[] PROJECTION = {
+				BoardColumn.TABNAME,
 			};
 			final SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
-			qb.setTables(Tables.BOARDS);
-			final Cursor c = qb.query(_db, FIELDS, null, null, null, null,
+			qb.setTables(Table.BOARDS);
+			final Cursor c = qb.query(_db, PROJECTION, null, null, null, null,
 					null);
 			if (c != null) {
 				if (c.getCount() > 0) {
@@ -295,12 +286,12 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 				}
 				c.close();
 			}
-			version = Versions.BOARD_COUNT_ADDED;
+			version = Version.BOARD_COUNT_ADDED;
 		}
 
 		// If upgrade fails, re-create the table.
 		if (version != DATABASE_VERSION) {
-			Log.w(TAG, "Destroying old \"" + Tables.BOARDS + "\" table during upgrade");
+			Log.w(TAG, "Destroying old \"" + Table.BOARDS + "\" table during upgrade");
 			dropMainTable(_db);
 			createMainTable(_db);
 		}
@@ -308,26 +299,26 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 
 	private void addBoard(SQLiteDatabase _db, BoardInfo _info, int _state) {
 		final ContentValues values = new ContentValues();
-		values.put(BoardColumns.TABNAME, _info.getTabname());
-		values.put(BoardColumns.TITLE, _info.getTitle());
-		values.put(BoardColumns.STATE, _state);
-		values.put(BoardColumns.COUNT, 0);
-		if (_db.insert(Tables.BOARDS, null, values) < 0) {
+		values.put(BoardColumn.TABNAME, _info.getTabname());
+		values.put(BoardColumn.TITLE, _info.getTitle());
+		values.put(BoardColumn.STATE, _state);
+		values.put(BoardColumn.COUNT, 0);
+		if (_db.insert(Table.BOARDS, null, values) < 0) {
 			throw new SQLException("addBoard: Failed to insert row into "
-					+ Tables.BOARDS);
+					+ Table.BOARDS);
 		}
 		createArticleTable(_db, _info.getTabname());
 	}
 
 	private static final int getUnreadCount(SQLiteDatabase _db, String _tabname) {
-		final String[] FIELDS1 = {
-				ArticleFields.CNT,
+		final String[] PROJECTION = {
+				ArticleField.CNT,
 		};
 		int count = 0;
 		final SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
 		qb.setTables(_tabname);
-		final Cursor c = qb.query(_db, FIELDS1, Selections.UNREAD, null, null,
-				null, null);
+		final Cursor c = qb.query(_db, PROJECTION,
+				ArticleProvider.Selection.UNREAD, null, null, null, null);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -341,13 +332,13 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 	private static final int setMainUnreadCount(SQLiteDatabase _db,
 			String _tabname, int count) {
 		final ContentValues values = new ContentValues();
-		values.put(BoardColumns.COUNT, count);
-		return _db.update(Tables.BOARDS, values, Selections.TABNAME,
-				new String[] { _tabname });
+		values.put(BoardColumn.COUNT, count);
+		return _db.update(Table.BOARDS, values,
+				ArticleProvider.Selection.TABNAME, new String[] { _tabname });
 	}
 
 	private void createMainTable(SQLiteDatabase _db) {
-		_db.execSQL("CREATE TABLE IF NOT EXISTS " + Tables.BOARDS + " ("
+		_db.execSQL("CREATE TABLE IF NOT EXISTS " + Table.BOARDS + " ("
 				+ BaseColumnDef._ID + ","
 				+ BoardColumnDef.TABNAME + ","
 				+ BoardColumnDef.TITLE + ","
@@ -356,25 +347,25 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 	}
 
 	private void dropMainTable(SQLiteDatabase _db) {
-		_db.execSQL("DROP TABLE IF EXISTS " + Tables.BOARDS);
+		_db.execSQL("DROP TABLE IF EXISTS " + Table.BOARDS);
 	}
 
 	private void createArticleViews(SQLiteDatabase _db, String _tabname) {
 		_db.execSQL("CREATE VIEW IF NOT EXISTS "
-				+ _tabname + "_view" + " AS SELECT "
+				+ getViewName(_tabname) + " AS SELECT "
 				+ BaseColumns._ID + ","
-				+ ArticleColumns.SEQ + ","
-				+ ArticleColumns.USER + ","
-				+ ArticleColumns.AUTHOR + ","
-				+ ArticleColumns.DATE + ","
-				+ ArticleColumns.TITLE + ","
-				+ ArticleColumns.THREAD + ","
-				+ ArticleColumns.BODY + ","
-				+ ArticleFields.ALLREAD + ","
-				+ ArticleFields.CNT
+				+ ArticleColumn.SEQ + ","
+				+ ArticleColumn.USER + ","
+				+ ArticleColumn.AUTHOR + ","
+				+ ArticleColumn.DATE + ","
+				+ ArticleColumn.TITLE + ","
+				+ ArticleColumn.THREAD + ","
+				+ ArticleColumn.BODY + ","
+				+ ArticleField.ALLREAD + ","
+				+ ArticleField.CNT
 				+ " FROM (SELECT * FROM " + _tabname
-				+ " ORDER BY " + Orders.SEQ_ASC
-				+ ") AS t GROUP BY " + ArticleColumns.THREAD + ";");
+				+ " ORDER BY " + ArticleProvider.OrderBy.SEQ_ASC
+				+ ") AS t GROUP BY " + ArticleColumn.THREAD + ";");
 	}
 
 	private void createArticleTable(SQLiteDatabase _db, String _tabname) {
@@ -390,19 +381,20 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 				+ ArticleColumnDef.BODY + ","
 				+ ArticleColumnDef.READ + ");");
 		_db.execSQL("CREATE INDEX IF NOT EXISTS "
-				+ _tabname + "_I" + ArticleColumns.SEQ
+				+ getIndexName(_tabname, ArticleColumn.SEQ)
 				+ " ON " + _tabname
-				+ " (" + ArticleColumns.SEQ + ")");
+				+ " (" + ArticleColumn.SEQ + ")");
 		createArticleViews(_db, _tabname);
 	}
 
 	private void dropArticleViews(SQLiteDatabase _db, String _tabname) {
-		_db.execSQL("DROP VIEW IF EXISTS " + _tabname + "_view");
+		_db.execSQL("DROP VIEW IF EXISTS " + getViewName(_tabname));
 	}
 
 	private void dropArticleTable(SQLiteDatabase _db, String _tabname) {
 		_db.execSQL("DROP TABLE IF EXISTS " + _tabname);
-		_db.execSQL("DROP INDEX IF EXISTS " + _tabname + "_I" + ArticleColumns.SEQ);
+		_db.execSQL("DROP INDEX IF EXISTS " + getIndexName(_tabname,
+				ArticleColumn.SEQ));
 		dropArticleViews(_db, _tabname);
 	}
 }

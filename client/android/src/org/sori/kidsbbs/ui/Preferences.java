@@ -40,17 +40,22 @@ import android.view.View;
 import android.widget.TextView;
 
 public class Preferences extends PreferenceActivity {
-	public static final String PREF_UPDATE_FREQ = "PREF_UPDATE_FREQ";
-	public static final String PREF_HIDE_READ = "PREF_HIDE_READ";
-	public static final String PREF_NOTIFICATION = "PREF_NOTIFICATION";
-	public static final String PREF_NOTIFICATION_LIGHTS = "PREF_NOTIFICATION_LIGHTS";
-	public static final String PREF_NOTIFICATION_SOUND = "PREF_NOTIFICATION_SOUND";
-	public static final String PREF_NOTIFICATION_VIBRATE = "PREF_NOTIFICATION_VIBRATE";
-	public static final String PREF_ABOUT_KIDSBBS = "PREF_ABOUT_KIDSBBS";
-	public static final String PREF_ABOUT_APP = "PREF_ABOUT_APP";
 
-	private static final int ABOUT_APP_ID = 0;
-	private static final int ABOUT_KIDSBBS_ID = 1;
+	public interface PrefKey {
+		String UPDATE_FREQ = "PREF_UPDATE_FREQ";
+		String HIDE_READ = "PREF_HIDE_READ";
+		String NOTIFICATION = "PREF_NOTIFICATION";
+		String NOTIFICATION_LIGHTS = "PREF_NOTIFICATION_LIGHTS";
+		String NOTIFICATION_SOUND = "PREF_NOTIFICATION_SOUND";
+		String NOTIFICATION_VIBRATE = "PREF_NOTIFICATION_VIBRATE";
+		String ABOUT_KIDSBBS = "PREF_ABOUT_KIDSBBS";
+		String ABOUT_APP = "PREF_ABOUT_APP";
+	}
+
+	private interface DialogId {
+		int ABOUT_APP = 0;
+		int ABOUT_KIDSBBS = 1;
+	}
 
 	private LayoutInflater mInflater;
 
@@ -85,37 +90,37 @@ public class Preferences extends PreferenceActivity {
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(
 				getApplicationContext());
-		mPrefNotification = findPreference(PREF_NOTIFICATION);
-		mPrefNotificationLights = findPreference(PREF_NOTIFICATION_LIGHTS);
-		mPrefNotificationSound = findPreference(PREF_NOTIFICATION_SOUND);
-		mPrefNotificationVibrate = findPreference(PREF_NOTIFICATION_VIBRATE);
+		mPrefNotification = findPreference(PrefKey.NOTIFICATION);
+		mPrefNotificationLights = findPreference(PrefKey.NOTIFICATION_LIGHTS);
+		mPrefNotificationSound = findPreference(PrefKey.NOTIFICATION_SOUND);
+		mPrefNotificationVibrate = findPreference(PrefKey.NOTIFICATION_VIBRATE);
 
 		mPrefNotification.setOnPreferenceClickListener(
 				new Preference.OnPreferenceClickListener() {
 					public boolean onPreferenceClick(Preference _preference) {
-						notificationEnable(mPrefs.getBoolean(PREF_NOTIFICATION,
-								true));
+						notificationEnable(mPrefs.getBoolean(
+								PrefKey.NOTIFICATION, true));
 						return true;
 					}
 				});
 
-		findPreference(PREF_ABOUT_KIDSBBS).setOnPreferenceClickListener(
+		findPreference(PrefKey.ABOUT_KIDSBBS).setOnPreferenceClickListener(
 				new Preference.OnPreferenceClickListener() {
 					public boolean onPreferenceClick(Preference _preference) {
-						showDialog(ABOUT_KIDSBBS_ID);
+						showDialog(DialogId.ABOUT_KIDSBBS);
 						return true;
 					}
 				});
 
-		findPreference(PREF_ABOUT_APP).setOnPreferenceClickListener(
+		findPreference(PrefKey.ABOUT_APP).setOnPreferenceClickListener(
 				new Preference.OnPreferenceClickListener() {
 					public boolean onPreferenceClick(Preference _preference) {
-						showDialog(ABOUT_APP_ID);
+						showDialog(DialogId.ABOUT_APP);
 						return true;
 					}
 				});
 
-		notificationEnable(mPrefs.getBoolean(PREF_NOTIFICATION, true));
+		notificationEnable(mPrefs.getBoolean(PrefKey.NOTIFICATION, true));
 	}
 
 	private Dialog createAboutDialog(int _id_title, int _id_text) {
@@ -127,25 +132,15 @@ public class Preferences extends PreferenceActivity {
 			.setView(v)
 			.setPositiveButton(android.R.string.ok, null)
 			.create();
-		
-		//final String text = getResources().getString(_id_text);
-		//final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		//builder.setTitle(_id_title);
-		//final View v = mInflater.inflate(R.layout.about_dialog, null);
-		//builder.setView(v);
-		//final TextView tv = (TextView) v.findViewById(R.id.about_text);
-		//tv.setText(text);
-		//builder.setPositiveButton(android.R.string.ok, null);
-		//return builder.create();
 	}
 
 	@Override
 	protected Dialog onCreateDialog(int _id) {
 		switch (_id) {
-		case ABOUT_KIDSBBS_ID:
+		case DialogId.ABOUT_KIDSBBS:
 			return createAboutDialog(R.string.about_kidsbbs_title,
 					R.string.about_kidsbbs_text);
-		case ABOUT_APP_ID:
+		case DialogId.ABOUT_APP:
 			return createAboutDialog(R.string.about_app_title,
 					R.string.about_app_text);
 		}

@@ -27,6 +27,7 @@ package org.sori.kidsbbs.ui;
 
 import org.sori.kidsbbs.KidsBbs;
 import org.sori.kidsbbs.R;
+import org.sori.kidsbbs.provider.ArticleDatabase;
 import org.sori.kidsbbs.provider.ArticleProvider;
 
 import android.app.AlertDialog;
@@ -51,6 +52,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.provider.BaseColumns;
 import android.support.v4.view.MenuCompat;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
@@ -66,11 +68,14 @@ import android.widget.TextView;
 
 public abstract class ArticleListActivity extends ListActivity
 		implements OnSharedPreferenceChangeListener {
-	protected static final int MENU_REFRESH = Menu.FIRST;
-	protected static final int MENU_SHOW = Menu.FIRST + 1;
-	protected static final int MENU_PREFERENCES = Menu.FIRST + 2;
-	protected static final int MENU_MARK_READ = Menu.FIRST + 3;
-	protected static final int MENU_MARK_ALL_READ = Menu.FIRST + 4;
+
+	protected interface MenuId {
+		int REFRESH = Menu.FIRST;
+		int SHOW = Menu.FIRST + 1;
+		int PREFERENCES = Menu.FIRST + 2;
+		int MARK_READ = Menu.FIRST + 3;
+		int MARK_ALL_READ = Menu.FIRST + 4;
+	}
 
 	protected ContentResolver mResolver;
 
@@ -80,7 +85,7 @@ public abstract class ArticleListActivity extends ListActivity
 	private int mSavedItemPosition;
 
 	private Uri mUri;
-	private String[] mFields;
+	private String[] mColumns;
 	private String mWhere;
 	private Uri mUriList;
 
@@ -147,11 +152,11 @@ public abstract class ArticleListActivity extends ListActivity
 
 		final Intent intent = getIntent();
 		mTabname = intent.getStringExtra(
-				KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_TABNAME);
+				KidsBbs.PARAM_BASE + KidsBbs.ParamName.TABNAME);
 		mBoardTitle = intent.getStringExtra(
-				KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_BTITLE);
+				KidsBbs.PARAM_BASE + KidsBbs.ParamName.BTITLE);
 
-		mUriList = Uri.parse(ArticleProvider.CONTENT_URISTR_LIST + mTabname);
+		mUriList = Uri.parse(ArticleProvider.ContentUriString.LIST + mTabname);
 
 		mResolver = getContentResolver();
 
@@ -168,7 +173,7 @@ public abstract class ArticleListActivity extends ListActivity
 		final SharedPreferences prefs =
 			PreferenceManager.getDefaultSharedPreferences(
 					getApplicationContext());
-		mHideRead = prefs.getBoolean(Preferences.PREF_HIDE_READ, false);
+		mHideRead = prefs.getBoolean(Preferences.PrefKey.HIDE_READ, false);
 		prefs.registerOnSharedPreferenceChangeListener(this);
 	}
 
@@ -194,7 +199,7 @@ public abstract class ArticleListActivity extends ListActivity
 	}
 
 	public void onSharedPreferenceChanged(SharedPreferences _prefs, String _key) {
-		if (_key.equals(Preferences.PREF_HIDE_READ)) {
+		if (_key.equals(Preferences.PrefKey.HIDE_READ)) {
 			boolean hideRead = _prefs.getBoolean(_key, false);
 			if (hideRead != mHideRead) {
 				mHideRead = hideRead;
@@ -214,18 +219,18 @@ public abstract class ArticleListActivity extends ListActivity
 		super.onCreateOptionsMenu(_menu);
 
 		MenuCompat.setShowAsAction(
-				_menu.add(0, MENU_REFRESH, Menu.NONE, R.string.menu_refresh)
+				_menu.add(0, MenuId.REFRESH, Menu.NONE, R.string.menu_refresh)
 					.setIcon(getResources().getIdentifier(
 							"android:drawable/ic_menu_refresh", null, null))
 					.setShortcut('0', 'r'), 1);
 		MenuCompat.setShowAsAction(
-				_menu.add(0, MENU_MARK_ALL_READ, Menu.NONE,
+				_menu.add(0, MenuId.MARK_ALL_READ, Menu.NONE,
 							R.string.menu_mark_all_read)
 					.setIcon(getResources().getIdentifier(
 							"android:drawable/ic_menu_mark", null, null))
 					.setShortcut('1', 't'), 1);
 		MenuCompat.setShowAsAction(
-				_menu.add(0, MENU_PREFERENCES, Menu.NONE,
+				_menu.add(0, MenuId.PREFERENCES, Menu.NONE,
 							R.string.menu_preferences)
 					.setIcon(android.R.drawable.ic_menu_preferences)
 					.setShortcut('2', 'p'), 1);
@@ -237,14 +242,14 @@ public abstract class ArticleListActivity extends ListActivity
 	public boolean onOptionsItemSelected(MenuItem item) {
 		super.onOptionsItemSelected(item);
 		switch (item.getItemId()) {
-		case MENU_REFRESH:
+		case MenuId.REFRESH:
 			KidsBbs.updateBoardTable(this, mTabname);
 			refreshList();
 			return true;
-		case MENU_MARK_ALL_READ:
+		case MenuId.MARK_ALL_READ:
 			markAllRead();
 			return true;
-		case MENU_PREFERENCES:
+		case MenuId.PREFERENCES:
 			showPreference();
 			return true;
 		}
@@ -260,18 +265,18 @@ public abstract class ArticleListActivity extends ListActivity
 				R.string.alist_cm_header))
 			.setHeaderIcon(android.R.drawable.ic_dialog_info);
 
-		_menu.add(0, MENU_SHOW, Menu.NONE, R.string.read_text);
-		_menu.add(1, MENU_MARK_READ, Menu.NONE, R.string.mark_read_text);
+		_menu.add(0, MenuId.SHOW, Menu.NONE, R.string.read_text);
+		_menu.add(1, MenuId.MARK_READ, Menu.NONE, R.string.mark_read_text);
 	}
 
 	@Override
 	public boolean onContextItemSelected(MenuItem _item) {
 		super.onContextItemSelected(_item);
 		switch (_item.getItemId()) {
-		case MENU_SHOW:
+		case MenuId.SHOW:
 			showItem(((AdapterView.AdapterContextMenuInfo) _item.getMenuInfo()).position);
 			return true;
-		case MENU_MARK_READ:
+		case MenuId.MARK_READ:
 			markRead(((AdapterView.AdapterContextMenuInfo) _item
 					.getMenuInfo()).position);
 			return true;
@@ -295,9 +300,9 @@ public abstract class ArticleListActivity extends ListActivity
 				} else {
 					where += " AND ";
 				}
-				where += mFields[ArticlesAdapter.COLUMN_READ] + "=0";
+				where += mColumns[ColumnIndex.READ] + "=0";
 			}
-			return mResolver.query(mUri, mFields, where, null, null);
+			return mResolver.query(mUri, mColumns, where, null, null);
 		}
 
 		@Override
@@ -327,7 +332,7 @@ public abstract class ArticleListActivity extends ListActivity
 	protected final void setQueryBase(String _uriBase, String[] _fields,
 			String _where) {
 		mUri = Uri.parse(_uriBase + mTabname);
-		mFields = _fields;
+		mColumns = _fields;
 		mWhere = _where;
 	}
 
@@ -335,20 +340,21 @@ public abstract class ArticleListActivity extends ListActivity
 			Uri _uri, Bundle _extras) {
 		final Intent intent = new Intent(_from, _to);
 		intent.setData(_uri);
-		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_TABNAME,
+		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.ParamName.TABNAME,
 				mTabname);
-		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_BTITLE,
+		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.ParamName.BTITLE,
 				mBoardTitle);
 		intent.putExtras(_extras);
 		startActivity(intent);
 	}
 
 	protected int markReadOne(Cursor _c) {
-		final int seq = _c.getInt(_c.getColumnIndex(ArticleProvider.KEYA_SEQ));
-		final String user = _c.getString(
-				_c.getColumnIndex(ArticleProvider.KEYA_USER));
-		final String thread = _c.getString(
-				_c.getColumnIndex(ArticleProvider.KEYA_THREAD));
+		final int seq = _c.getInt(_c.getColumnIndex(
+				ArticleDatabase.ArticleColumn.SEQ));
+		final String user = _c.getString(_c.getColumnIndex(
+				ArticleDatabase.ArticleColumn.USER));
+		final String thread = _c.getString(_c.getColumnIndex(
+				ArticleDatabase.ArticleColumn.THREAD));
 		if (KidsBbs.updateArticleRead(mResolver, mTabname, seq, true)) {
 			KidsBbs.announceArticleUpdated(ArticleListActivity.this, mTabname, seq,
 					user, thread);
@@ -366,13 +372,13 @@ public abstract class ArticleListActivity extends ListActivity
 					new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface _dialog, int _which) {
 					final Cursor c = getItem(0);
-					final int seq = c.getInt(
-							c.getColumnIndex(ArticleProvider.KEYA_SEQ));
-					final String where = _w + ArticleProvider.KEYA_SEQ
-							+ "<=" + seq + " AND "
-							+ ArticleProvider.KEYA_READ + "=0";
+					final int seq = c.getInt(c.getColumnIndex(
+							ArticleDatabase.ArticleColumn.SEQ));
+					final String where = _w
+						+ ArticleDatabase.ArticleColumn.SEQ + "<=" + seq
+						+ " AND " + ArticleProvider.Selection.UNREAD;
 					final ContentValues values = new ContentValues();
-					values.put(ArticleProvider.KEYA_READ, 1);
+					values.put(ArticleDatabase.ArticleColumn.READ, 1);
 					final int nChanged = mResolver.update(getUriList(),
 							values, where, null);
 					if (nChanged > 0) {
@@ -435,14 +441,14 @@ public abstract class ArticleListActivity extends ListActivity
 	private class ArticleUpdatedReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
-			final String tabname = _intent.getStringExtra(KidsBbs.PARAM_BASE
-					+ ArticleProvider.KEYB_TABNAME);
-			final int seq = _intent.getIntExtra(KidsBbs.PARAM_BASE
-					+ ArticleProvider.KEYA_SEQ, -1);
-			final String user = _intent.getStringExtra(KidsBbs.PARAM_BASE
-					+ ArticleProvider.KEYA_USER);
-			final String thread = _intent.getStringExtra(KidsBbs.PARAM_BASE
-					+ ArticleProvider.KEYA_THREAD);
+			final String tabname = _intent.getStringExtra(
+					KidsBbs.PARAM_BASE + ArticleDatabase.BoardColumn.TABNAME);
+			final int seq = _intent.getIntExtra(
+					KidsBbs.PARAM_BASE + ArticleDatabase.ArticleColumn.SEQ, -1);
+			final String user = _intent.getStringExtra(
+					KidsBbs.PARAM_BASE + ArticleDatabase.ArticleColumn.USER);
+			final String thread = _intent.getStringExtra(
+					KidsBbs.PARAM_BASE + ArticleDatabase.ArticleColumn.THREAD);
 			if (mTabname != null && tabname != null && mTabname.equals(tabname)
 					&& matchingBroadcast(seq, user, thread)) {
 				updateTitle();
@@ -453,8 +459,8 @@ public abstract class ArticleListActivity extends ListActivity
 	private class BoardUpdatedReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
-			final String tabname = _intent.getStringExtra(KidsBbs.PARAM_BASE
-					+ ArticleProvider.KEYB_TABNAME);
+			final String tabname = _intent.getStringExtra(
+					KidsBbs.PARAM_BASE + ArticleDatabase.BoardColumn.TABNAME);
 			if (mTabname != null && tabname != null && mTabname.equals(tabname)) {
 				updateTitle();
 			}
@@ -479,39 +485,41 @@ public abstract class ArticleListActivity extends ListActivity
 		unregisterReceiver(mReceiverBoardUpdated);
 	}
 
-	protected static final String[] FIELDS_TLIST = {
-		ArticleProvider.KEY_ID,
-		ArticleProvider.KEYA_SEQ,
-		ArticleProvider.KEYA_USER,
-		ArticleProvider.KEYA_DATE,
-		ArticleProvider.KEYA_TITLE,
-		ArticleProvider.KEYA_THREAD,
-		ArticleProvider.KEYA_BODY,
-		ArticleProvider.KEYA_ALLREAD,
-		ArticleProvider.KEYA_CNT,
+	private interface ColumnIndex {
+		int _ID = 0;
+		int SEQ = 1;
+		int USER = 2;
+		int DATE = 3;
+		int TITLE = 4;
+		int THREAD = 5;
+		int BODY = 6;
+		int READ = 7;
+		int COUNT = 8;
+	}
+	protected static final String[] COLUMNS_TLIST = {
+		BaseColumns._ID,
+		ArticleDatabase.ArticleColumn.SEQ,
+		ArticleDatabase.ArticleColumn.USER,
+		ArticleDatabase.ArticleColumn.DATE,
+		ArticleDatabase.ArticleColumn.TITLE,
+		ArticleDatabase.ArticleColumn.THREAD,
+		ArticleDatabase.ArticleColumn.BODY,
+		ArticleDatabase.ArticleColumn.ALLREAD,
+		ArticleDatabase.ArticleColumn.CNT,
 	};
-	protected static final String[] FIELDS_LIST = {
-		ArticleProvider.KEY_ID,
-		ArticleProvider.KEYA_SEQ,
-		ArticleProvider.KEYA_USER,
-		ArticleProvider.KEYA_DATE,
-		ArticleProvider.KEYA_TITLE,
-		ArticleProvider.KEYA_THREAD,
-		ArticleProvider.KEYA_BODY,
-		ArticleProvider.KEYA_READ,
+	protected static final String[] COLUMNS_LIST = {
+		BaseColumns._ID,
+		ArticleDatabase.ArticleColumn.SEQ,
+		ArticleDatabase.ArticleColumn.USER,
+		ArticleDatabase.ArticleColumn.DATE,
+		ArticleDatabase.ArticleColumn.TITLE,
+		ArticleDatabase.ArticleColumn.THREAD,
+		ArticleDatabase.ArticleColumn.BODY,
+		ArticleDatabase.ArticleColumn.READ,
 	};
 
 	protected class ArticlesAdapter extends CursorAdapter
 			implements FilterQueryProvider {
-		public static final int COLUMN_ID = 0;
-		public static final int COLUMN_SEQ = 1;
-		public static final int COLUMN_USER = 2;
-		public static final int COLUMN_DATE = 3;
-		public static final int COLUMN_TITLE = 4;
-		public static final int COLUMN_THREAD = 5;
-		public static final int COLUMN_BODY = 6;
-		public static final int COLUMN_READ = 7;
-		public static final int COLUMN_COUNT = 8;
 
 		private Context mContext;
 		private LayoutInflater mInflater;
@@ -558,16 +566,16 @@ public abstract class ArticleListActivity extends ListActivity
 		@Override
 		public void bindView(View _v, Context _context, Cursor _c) {
 			final ArticleItemView itemView = (ArticleItemView) _v;
-			itemView.mId = _c.getLong(COLUMN_ID);
-			itemView.mSeq = _c.getInt(COLUMN_SEQ);
-			itemView.mUser = _c.getString(COLUMN_USER);
-			itemView.mDate = _c.getString(COLUMN_DATE);
-			itemView.mTitle = _c.getString(COLUMN_TITLE);
-			itemView.mThread = _c.getString(COLUMN_THREAD);
-			final String body = _c.getString(COLUMN_BODY);
-			itemView.mRead = _c.getInt(COLUMN_READ) != 0;
-			if (mFields.length - 1 >= COLUMN_COUNT) {
-				itemView.mCount = _c.getInt(COLUMN_COUNT);
+			itemView.mId = _c.getLong(ColumnIndex._ID);
+			itemView.mSeq = _c.getInt(ColumnIndex.SEQ);
+			itemView.mUser = _c.getString(ColumnIndex.USER);
+			itemView.mDate = _c.getString(ColumnIndex.DATE);
+			itemView.mTitle = _c.getString(ColumnIndex.TITLE);
+			itemView.mThread = _c.getString(ColumnIndex.THREAD);
+			final String body = _c.getString(ColumnIndex.BODY);
+			itemView.mRead = _c.getInt(ColumnIndex.READ) != 0;
+			if (mColumns.length - 1 >= ColumnIndex.COUNT) {
+				itemView.mCount = _c.getInt(ColumnIndex.COUNT);
 			} else {
 				itemView.mCount = 1;
 			}
@@ -584,7 +592,8 @@ public abstract class ArticleListActivity extends ListActivity
 			itemView.mSummary = KidsBbs.generateSummary(body);
 
 			// Remove "RE:" for threaded list.
-			if (mFields[COLUMN_READ].equals(ArticleProvider.KEYA_ALLREAD)) {
+			if (mColumns[ColumnIndex.READ].equals(
+					ArticleDatabase.ArticleColumn.ALLREAD)) {
 				itemView.mTitle = KidsBbs.getThreadTitle(itemView.mTitle);
 			}
 
@@ -633,13 +642,14 @@ public abstract class ArticleListActivity extends ListActivity
 			} else {
 				where += " AND ";
 			}
-			where += "(" + ArticleProvider.KEYA_TITLE + " LIKE '%"
-					+ _constraint + "%' OR " + ArticleProvider.KEYA_USER
-					+ " LIKE '%" + _constraint + "%')";
+			where += "(" + ArticleDatabase.ArticleColumn.TITLE
+				+ " LIKE '%" + _constraint + "%' OR "
+				+ ArticleDatabase.ArticleColumn.USER
+				+ " LIKE '%" + _constraint + "%')";
 			if (mHideRead) {
-				where += " AND " + mFields[ArticlesAdapter.COLUMN_READ] + "=0";
+				where += " AND " + mColumns[ColumnIndex.READ] + "=0";
 			}
-			return mResolver.query(mUri, mFields, where, null, null);
+			return mResolver.query(mUri, mColumns, where, null, null);
 		}
 	}
 }

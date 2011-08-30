@@ -29,6 +29,7 @@ import java.util.HashMap;
 
 import org.sori.kidsbbs.KidsBbs;
 import org.sori.kidsbbs.R;
+import org.sori.kidsbbs.provider.ArticleDatabase;
 import org.sori.kidsbbs.provider.ArticleProvider;
 
 import android.app.ListActivity;
@@ -42,6 +43,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.BaseColumns;
 import android.support.v4.view.MenuCompat;
 import android.util.TypedValue;
 import android.view.ContextMenu;
@@ -59,14 +61,16 @@ import android.widget.TextView;
 
 public class ThreadedViewActivity extends ListActivity
 		implements ListView.OnScrollListener {
-	//private static final String TAG = "KidsBbsTView";
+	//private static final String TAG = "ThreadedViewActivity";
 
-	private static final int MENU_REFRESH = Menu.FIRST;
-	private static final int MENU_PREFERENCES = Menu.FIRST + 1;
-	private static final int MENU_EXPAND_ALL = Menu.FIRST + 2;
-	private static final int MENU_COLLAPSE_ALL = Menu.FIRST + 3;
-	private static final int MENU_TOGGLE_EXPANSION = Menu.FIRST + 4;
-	private static final int MENU_SHOW_USER = Menu.FIRST + 5;
+	private interface MenuId {
+		int REFRESH = Menu.FIRST;
+		int PREFERENCES = Menu.FIRST + 1;
+		int EXPAND_ALL = Menu.FIRST + 2;
+		int COLLAPSE_ALL = Menu.FIRST + 3;
+		int TOGGLE_EXPANSION = Menu.FIRST + 4;
+		int SHOW_USER = Menu.FIRST + 5;
+	}
 
 	private ContentResolver mResolver;
 
@@ -103,19 +107,19 @@ public class ThreadedViewActivity extends ListActivity
 
 		final Intent intent = getIntent();
 		mTabname = intent.getStringExtra(
-				KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_TABNAME);
+				KidsBbs.PARAM_BASE + KidsBbs.ParamName.TABNAME);
 		mBoardTitle = intent.getStringExtra(
-				KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_BTITLE);
+				KidsBbs.PARAM_BASE + KidsBbs.ParamName.BTITLE);
 		mBoardThread = intent.getStringExtra(
-				KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_THREAD);
+				KidsBbs.PARAM_BASE + KidsBbs.ParamName.THREAD);
 		mThreadTitle = intent.getStringExtra(
-				KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_TTITLE);
+				KidsBbs.PARAM_BASE + KidsBbs.ParamName.TTITLE);
 		mTitle = intent.getStringExtra(
-				KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_VTITLE);
+				KidsBbs.PARAM_BASE + KidsBbs.ParamName.VTITLE);
 		mSeq = intent.getIntExtra(
-				KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_SEQ, -1);
+				KidsBbs.PARAM_BASE + KidsBbs.ParamName.SEQ, -1);
 
-		mUriList = Uri.parse(ArticleProvider.CONTENT_URISTR_LIST + mTabname);
+		mUriList = Uri.parse(ArticleProvider.ContentUriString.LIST + mTabname);
 
 		mResolver = getContentResolver();
 
@@ -125,12 +129,10 @@ public class ThreadedViewActivity extends ListActivity
 			mTitle = resources.getString(R.string.title_tview);
 		}
 
-		mUri = Uri.parse(ArticleProvider.CONTENT_URISTR_LIST + mTabname);
-		if (mSeq < 0) {
-			mWhere = ArticleProvider.KEYA_THREAD + "='" + mBoardThread + "'";
-		} else {
-			mWhere = ArticleProvider.KEYA_SEQ + "=" + mSeq;
-		}
+		mUri = Uri.parse(ArticleProvider.ContentUriString.LIST + mTabname);
+		mWhere = (mSeq < 0) ?
+				ArticleDatabase.ArticleColumn.THREAD + "='" + mBoardThread + "'"
+				: ArticleDatabase.ArticleColumn.SEQ + "=" + mSeq;
 		
 		final TextView titleView = (TextView) findViewById(R.id.title);
 		titleView.setText(mThreadTitle);
@@ -217,22 +219,22 @@ public class ThreadedViewActivity extends ListActivity
 		super.onCreateOptionsMenu(_menu);
 
 		MenuCompat.setShowAsAction(
-				_menu.add(0, MENU_REFRESH, Menu.NONE, R.string.menu_refresh)
+				_menu.add(0, MenuId.REFRESH, Menu.NONE, R.string.menu_refresh)
 					.setIcon(getResources().getIdentifier(
 							"android:drawable/ic_menu_refresh", null, null))
 					.setShortcut('0', 'r'), 1);
 		MenuCompat.setShowAsAction(
-				_menu.add(0, MENU_EXPAND_ALL, Menu.NONE, R.string.menu_expand_all)
+				_menu.add(0, MenuId.EXPAND_ALL, Menu.NONE, R.string.menu_expand_all)
 					.setIcon(android.R.drawable.ic_menu_zoom)
 					.setShortcut('1', 'e'), 5);
 		MenuCompat.setShowAsAction(
-				_menu.add(0, MENU_COLLAPSE_ALL, Menu.NONE,
+				_menu.add(0, MenuId.COLLAPSE_ALL, Menu.NONE,
 						R.string.menu_collapse_all)
 					.setIcon(getResources().getIdentifier(
 							"android:drawable/ic_menu_block", null, null))
 					.setShortcut('2', 'c'), 5);
 		MenuCompat.setShowAsAction(
-				_menu.add(0, MENU_PREFERENCES, Menu.NONE,
+				_menu.add(0, MenuId.PREFERENCES, Menu.NONE,
 						R.string.menu_preferences)
 					.setIcon(android.R.drawable.ic_menu_preferences)
 					.setShortcut('3', 'p'), 1);
@@ -244,16 +246,16 @@ public class ThreadedViewActivity extends ListActivity
 	public boolean onOptionsItemSelected(MenuItem item) {
 		super.onOptionsItemSelected(item);
 		switch (item.getItemId()) {
-		case MENU_REFRESH:
+		case MenuId.REFRESH:
 			refreshList();
 			return true;
-		case MENU_EXPAND_ALL:
+		case MenuId.EXPAND_ALL:
 			expandAll(true);
 			return true;
-		case MENU_COLLAPSE_ALL:
+		case MenuId.COLLAPSE_ALL:
 			expandAll(false);
 			return true;
-		case MENU_PREFERENCES:
+		case MenuId.PREFERENCES:
 			showPreference();
 			return true;
 		}
@@ -269,9 +271,9 @@ public class ThreadedViewActivity extends ListActivity
 				getResources().getString(R.string.tview_cm_header))
 			.setHeaderIcon(android.R.drawable.ic_dialog_info);
 
-		_menu.add(0, MENU_TOGGLE_EXPANSION, Menu.NONE,
+		_menu.add(0, MenuId.TOGGLE_EXPANSION, Menu.NONE,
 				R.string.menu_toggle_expansion);
-		_menu.add(1, MENU_SHOW_USER, Menu.NONE, R.string.menu_show_user);
+		_menu.add(1, MenuId.SHOW_USER, Menu.NONE, R.string.menu_show_user);
 	}
 
 	@Override
@@ -279,17 +281,17 @@ public class ThreadedViewActivity extends ListActivity
 		super.onContextItemSelected(_item);
 		View v = ((AdapterView.AdapterContextMenuInfo) _item.getMenuInfo()).targetView;
 		switch (_item.getItemId()) {
-		case MENU_TOGGLE_EXPANSION:
+		case MenuId.TOGGLE_EXPANSION:
 			toggleExpansion(v);
 			return true;
-		case MENU_SHOW_USER:
+		case MenuId.SHOW_USER:
 			final Intent intent = new Intent(this, UserListActivity.class);
-			intent.setData(KidsBbs.URI_INTENT_USER);
-			intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_TABNAME,
+			intent.setData(KidsBbs.IntentUri.USER);
+			intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.ParamName.TABNAME,
 					mTabname);
-			intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_BTITLE,
+			intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.ParamName.BTITLE,
 					mBoardTitle);
-			intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_USER,
+			intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.ParamName.USER,
 					((ThreadItemView) v).mUser);
 			startActivity(intent);
 			return true;
@@ -363,8 +365,8 @@ public class ThreadedViewActivity extends ListActivity
 
 		@Override
 		protected Cursor doInBackground(Void... _args) {
-			return mResolver.query(mUri, FIELDS, mWhere, null,
-					ArticleProvider.ORDER_BY_SEQ_ASC);
+			return mResolver.query(mUri, COLUMNS, mWhere, null,
+					ArticleProvider.OrderBy.SEQ_ASC);
 		}
 
 		@Override
@@ -409,16 +411,15 @@ public class ThreadedViewActivity extends ListActivity
 
 	private void markAllRead() {
 		final Cursor c = getItem(getCount() - 1);
-		final int seq = c.getInt(
-				c.getColumnIndex(ArticleProvider.KEYA_SEQ));
+		final int seq = c.getInt(c.getColumnIndex(
+				ArticleDatabase.ArticleColumn.SEQ));
 		final String where =
-			ArticleProvider.KEYA_THREAD + "='" + mBoardThread
-			+ "' AND " + ArticleProvider.KEYA_SEQ + "<=" + seq
-			+ " AND " + ArticleProvider.KEYA_READ + "=0";
+			ArticleDatabase.ArticleColumn.THREAD + "='" + mBoardThread
+			+ "' AND " + ArticleDatabase.ArticleColumn.SEQ + "<=" + seq
+			+ " AND " + ArticleProvider.Selection.UNREAD;
 		final ContentValues values = new ContentValues();
-		values.put(ArticleProvider.KEYA_READ, 1);
-		final int nChanged = mResolver.update(mUriList,
-				values, where, null);
+		values.put(ArticleDatabase.ArticleColumn.READ, 1);
+		final int nChanged = mResolver.update(mUriList, values, where, null);
 		if (nChanged > 0) {
 			KidsBbs.updateBoardCount(mResolver, mTabname);
 		}
@@ -479,29 +480,31 @@ public class ThreadedViewActivity extends ListActivity
 	private void unregisterReceivers() {
 	}
 
-	protected static final String[] FIELDS = {
-		ArticleProvider.KEY_ID,
-		ArticleProvider.KEYA_SEQ,
-		ArticleProvider.KEYA_USER,
-		ArticleProvider.KEYA_AUTHOR,
-		ArticleProvider.KEYA_DATE,
-		ArticleProvider.KEYA_TITLE,
-		ArticleProvider.KEYA_THREAD,
-		ArticleProvider.KEYA_BODY,
-		ArticleProvider.KEYA_READ,
+	protected interface ColumnIndex {
+		int _ID = 0;
+		int SEQ = 1;
+		int USER = 2;
+		int AUTHOR = 3;
+		int DATE = 4;
+		int TITLE = 5;
+		int THREAD = 6;
+		int BODY = 7;
+		int READ = 8;
+	}
+	protected static final String[] COLUMNS = {
+		BaseColumns._ID,
+		ArticleDatabase.ArticleColumn.SEQ,
+		ArticleDatabase.ArticleColumn.USER,
+		ArticleDatabase.ArticleColumn.AUTHOR,
+		ArticleDatabase.ArticleColumn.DATE,
+		ArticleDatabase.ArticleColumn.TITLE,
+		ArticleDatabase.ArticleColumn.THREAD,
+		ArticleDatabase.ArticleColumn.BODY,
+		ArticleDatabase.ArticleColumn.READ,
 	};
 
 	protected class ArticlesAdapter extends CursorAdapter
 			implements FilterQueryProvider {
-		public static final int COLUMN_ID = 0;
-		public static final int COLUMN_SEQ = 1;
-		public static final int COLUMN_USER = 2;
-		public static final int COLUMN_AUTHOR = 3;
-		public static final int COLUMN_DATE = 4;
-		public static final int COLUMN_TITLE = 5;
-		public static final int COLUMN_THREAD = 6;
-		public static final int COLUMN_BODY = 7;
-		public static final int COLUMN_READ = 8;
 
 		private Context mContext;
 		private LayoutInflater mInflater;
@@ -574,15 +577,15 @@ public class ThreadedViewActivity extends ListActivity
 		@Override
 		public void bindView(View _v, Context _context, Cursor _c) {
 			final ThreadItemView itemView = (ThreadItemView) _v;
-			itemView.mId = _c.getLong(COLUMN_ID);
-			itemView.mSeq = _c.getInt(COLUMN_SEQ);
-			itemView.mUser = _c.getString(COLUMN_USER);
-			itemView.mAuthor = _c.getString(COLUMN_AUTHOR);
-			itemView.mDate = _c.getString(COLUMN_DATE);
-			itemView.mTitle = _c.getString(COLUMN_TITLE);
-			itemView.mThread = _c.getString(COLUMN_THREAD);
-			itemView.mBody = _c.getString(COLUMN_BODY);
-			itemView.mRead = _c.getInt(COLUMN_READ) != 0;
+			itemView.mId = _c.getLong(ColumnIndex._ID);
+			itemView.mSeq = _c.getInt(ColumnIndex.SEQ);
+			itemView.mUser = _c.getString(ColumnIndex.USER);
+			itemView.mAuthor = _c.getString(ColumnIndex.AUTHOR);
+			itemView.mDate = _c.getString(ColumnIndex.DATE);
+			itemView.mTitle = _c.getString(ColumnIndex.TITLE);
+			itemView.mThread = _c.getString(ColumnIndex.THREAD);
+			itemView.mBody = _c.getString(ColumnIndex.BODY);
+			itemView.mRead = _c.getInt(ColumnIndex.READ) != 0;
 			itemView.mFirst = _c.isFirst();
 			itemView.mLast = _c.isLast();
 
@@ -628,10 +631,11 @@ public class ThreadedViewActivity extends ListActivity
 		}
 
 		public Cursor runQuery(CharSequence _constraint) {
-			return mResolver.query(mUri, FIELDS, mWhere + " AND ("
-					+ ArticleProvider.KEYA_USER + " LIKE '%" + _constraint
-					+ "%' OR " + ArticleProvider.KEYA_BODY + " LIKE '%"
-					+ _constraint + "%')",
+			return mResolver.query(mUri, COLUMNS, mWhere + " AND ("
+					+ ArticleDatabase.ArticleColumn.USER
+					+ " LIKE '%" + _constraint + "%' OR "
+					+ ArticleDatabase.ArticleColumn.BODY
+					+ " LIKE '%" + _constraint + "%')",
 					null, null);
 		}
 
@@ -642,12 +646,12 @@ public class ThreadedViewActivity extends ListActivity
 			int pos = -1;
 			_c.moveToFirst();
 			do {
-				final boolean read = _c.getInt(COLUMN_READ) != 0;
+				final boolean read = _c.getInt(ColumnIndex.READ) != 0;
 				if (pos == -1 && !read) {
 					pos = _c.getPosition();
 				}
 				synchronized(mExpansionStates) {
-					mExpansionStates.put(_c.getInt(COLUMN_SEQ), !read);
+					mExpansionStates.put(_c.getInt(ColumnIndex.SEQ), !read);
 				}
 			} while (_c.moveToNext());
 			if (pos == -1) {
@@ -699,7 +703,7 @@ public class ThreadedViewActivity extends ListActivity
 			c.moveToFirst();
 			do {
 				synchronized(mExpansionStates) {
-					mExpansionStates.put(c.getInt(COLUMN_SEQ), _state);
+					mExpansionStates.put(c.getInt(ColumnIndex.SEQ), _state);
 				}
 			} while (c.moveToNext());
 			c.moveToPosition(saved);

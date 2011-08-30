@@ -31,6 +31,7 @@ import org.sori.kidsbbs.KidsBbs;
 import org.sori.kidsbbs.R;
 import org.sori.kidsbbs.data.ArticleInfo;
 import org.sori.kidsbbs.data.BoardInfo;
+import org.sori.kidsbbs.provider.ArticleDatabase;
 import org.sori.kidsbbs.provider.ArticleProvider;
 import org.sori.kidsbbs.ui.BoardListActivity;
 import org.sori.kidsbbs.ui.Preferences;
@@ -62,7 +63,7 @@ import android.util.Log;
 
 public class UpdateService extends Service
 		implements OnSharedPreferenceChangeListener {
-	private static final String TAG = "KidsBbsService";
+	private static final String TAG = "UpdateService";
 
 	private int mUpdateFreq;
 	private UpdateTask mLastUpdate = null;
@@ -90,32 +91,32 @@ public class UpdateService extends Service
 	public void onStart(Intent _intent, int _startId) {
 		setupAlarm(mUpdateFreq,
 				_intent.getStringExtra(
-						KidsBbs.PARAM_BASE + KidsBbs.PARAM_N_TABNAME));
+						KidsBbs.PARAM_BASE + KidsBbs.ParamName.TABNAME));
 	}
 
 	public void onSharedPreferenceChanged(SharedPreferences _prefs, String _key) {
-		if (_key.equals(Preferences.PREF_UPDATE_FREQ)) {
+		if (_key.equals(Preferences.PrefKey.UPDATE_FREQ)) {
 			final int updateFreqNew = Integer.parseInt(_prefs.getString(_key,
 					Preferences.getDefaultUpdateFreq(this)));
 			if (updateFreqNew != mUpdateFreq) {
 				mUpdateFreq = updateFreqNew;
 				setupAlarm(mUpdateFreq, null);
 			}
-		} else if (_key.equals(Preferences.PREF_NOTIFICATION)) {
+		} else if (_key.equals(Preferences.PrefKey.NOTIFICATION)) {
 			mNotificationOn = _prefs.getBoolean(_key, true);
-		} else if (_key.equals(Preferences.PREF_NOTIFICATION_LIGHTS)) {
+		} else if (_key.equals(Preferences.PrefKey.NOTIFICATION_LIGHTS)) {
 			if (_prefs.getBoolean(_key, true)) {
 				mNotificationDefaults |= Notification.DEFAULT_LIGHTS;
 			} else {
 				mNotificationDefaults &= ~Notification.DEFAULT_LIGHTS;
 			}
-		} else if (_key.equals(Preferences.PREF_NOTIFICATION_SOUND)) {
+		} else if (_key.equals(Preferences.PrefKey.NOTIFICATION_SOUND)) {
 			if (_prefs.getBoolean(_key, true)) {
 				mNotificationDefaults |= Notification.DEFAULT_SOUND;
 			} else {
 				mNotificationDefaults &= ~Notification.DEFAULT_SOUND;
 			}
-		} else if (_key.equals(Preferences.PREF_NOTIFICATION_VIBRATE)) {
+		} else if (_key.equals(Preferences.PrefKey.NOTIFICATION_VIBRATE)) {
 			if (_prefs.getBoolean(_key, true)) {
 				mNotificationDefaults |= Notification.DEFAULT_VIBRATE;
 			} else {
@@ -166,17 +167,17 @@ public class UpdateService extends Service
 		final SharedPreferences prefs =
 			PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		mUpdateFreq = Integer.parseInt(prefs.getString(
-				Preferences.PREF_UPDATE_FREQ,
+				Preferences.PrefKey.UPDATE_FREQ,
 				Preferences.getDefaultUpdateFreq(this)));
-		mNotificationOn = prefs.getBoolean(Preferences.PREF_NOTIFICATION, true);
+		mNotificationOn = prefs.getBoolean(Preferences.PrefKey.NOTIFICATION, true);
 		mNotificationDefaults = 0;
-		if (prefs.getBoolean(Preferences.PREF_NOTIFICATION_LIGHTS, true)) {
+		if (prefs.getBoolean(Preferences.PrefKey.NOTIFICATION_LIGHTS, true)) {
 			mNotificationDefaults |= Notification.DEFAULT_LIGHTS;
 		}
-		if (prefs.getBoolean(Preferences.PREF_NOTIFICATION_SOUND, true)) {
+		if (prefs.getBoolean(Preferences.PrefKey.NOTIFICATION_SOUND, true)) {
 			mNotificationDefaults |= Notification.DEFAULT_SOUND;
 		}
-		if (prefs.getBoolean(Preferences.PREF_NOTIFICATION_VIBRATE, true)) {
+		if (prefs.getBoolean(Preferences.PrefKey.NOTIFICATION_VIBRATE, true)) {
 			mNotificationDefaults |= Notification.DEFAULT_VIBRATE;
 		}
 		prefs.registerOnSharedPreferenceChangeListener(this);
@@ -207,17 +208,19 @@ public class UpdateService extends Service
 		}
 
 		private int getTableState(String _tabname) {
-			final String[] FIELDS = { ArticleProvider.KEYB_STATE, };
-			int result = ArticleProvider.STATE_PAUSED;
+			final String[] PROJECTIONS = {
+					ArticleDatabase.BoardColumn.STATE,
+			};
+			int result = ArticleDatabase.BoardState.PAUSED;
 			final Cursor c = mResolver.query(
-					ArticleProvider.CONTENT_URI_BOARDS, FIELDS,
-					ArticleProvider.SELECTION_TABNAME,
+					ArticleProvider.ContentUri.BOARDS, PROJECTIONS,
+					ArticleProvider.Selection.TABNAME,
 					new String[] { _tabname }, null);
 			if (c != null) {
 				if (c.getCount() > 0) {
 					c.moveToFirst();
 					result = c.getInt(
-							c.getColumnIndex(ArticleProvider.KEYB_STATE));
+							c.getColumnIndex(ArticleDatabase.BoardColumn.STATE));
 				}
 				c.close();
 			}
@@ -226,21 +229,25 @@ public class UpdateService extends Service
 
 		private boolean setTableState(String _tabname, int _state) {
 			final ContentValues values = new ContentValues();
-			values.put(ArticleProvider.KEYB_STATE, _state);
+			values.put(ArticleDatabase.BoardColumn.STATE, _state);
 			final int count = mResolver.update(
-					ArticleProvider.CONTENT_URI_BOARDS, values,
-					ArticleProvider.SELECTION_TABNAME,
+					ArticleProvider.ContentUri.BOARDS, values,
+					ArticleProvider.Selection.TABNAME,
 					new String[] { _tabname });
 			return count > 0;
 		}
 
 		private synchronized int refreshTable(String _tabname) {
-			final String[] FIELDS = { ArticleProvider.KEYA_SEQ,
-					ArticleProvider.KEYA_USER, ArticleProvider.KEYA_DATE,
-					ArticleProvider.KEYA_TITLE, ArticleProvider.KEYA_READ, };
+			final String[] PROJECTION = {
+					ArticleDatabase.ArticleColumn.SEQ,
+					ArticleDatabase.ArticleColumn.USER,
+					ArticleDatabase.ArticleColumn.DATE,
+					ArticleDatabase.ArticleColumn.TITLE,
+					ArticleDatabase.ArticleColumn.READ,
+			};
 
 			final int tabState = getTableState(_tabname);
-			if (tabState == ArticleProvider.STATE_PAUSED) {
+			if (tabState == ArticleDatabase.BoardState.PAUSED) {
 				return 0;
 			}
 
@@ -249,7 +256,7 @@ public class UpdateService extends Service
 			final String[] parsed = BoardInfo.parseTabname(_tabname);
 			final String board = parsed[1];
 			final int type = Integer.parseInt(parsed[0]);
-			final Uri uri = Uri.parse(ArticleProvider.CONTENT_URISTR_LIST
+			final Uri uri = Uri.parse(ArticleProvider.ContentUriString.LIST
 					+ _tabname);
 
 			// Where to begin
@@ -292,22 +299,22 @@ public class UpdateService extends Service
 					final String[] args = new String[] { Integer.toString(
 							info.getSeq()) };
 					ArticleInfo old = null;
-					final Cursor c = mResolver.query(uri, FIELDS,
-							ArticleProvider.SELECTION_SEQ, args, null);
+					final Cursor c = mResolver.query(uri, PROJECTION,
+							ArticleProvider.Selection.SEQ, args, null);
 					if (c != null) {
 						if (c.getCount() > 0) {
 							c.moveToFirst();
 							// Cache the old entry.
-							final int seq = c.getInt(
-									c.getColumnIndex(ArticleProvider.KEYA_SEQ));
-							final String user = c.getString(
-									c.getColumnIndex(ArticleProvider.KEYA_USER));
-							final String date = c.getString(
-									c.getColumnIndex(ArticleProvider.KEYA_DATE));
-							final String title = c.getString(
-									c.getColumnIndex(ArticleProvider.KEYA_TITLE));
-							final boolean read = c.getInt(
-									c.getColumnIndex(ArticleProvider.KEYA_READ))
+							final int seq = c.getInt(c.getColumnIndex(
+									ArticleDatabase.ArticleColumn.SEQ));
+							final String user = c.getString(c.getColumnIndex(
+									ArticleDatabase.ArticleColumn.USER));
+							final String date = c.getString(c.getColumnIndex(
+									ArticleDatabase.ArticleColumn.DATE));
+							final String title = c.getString(c.getColumnIndex(
+									ArticleDatabase.ArticleColumn.TITLE));
+							final boolean read = c.getInt(c.getColumnIndex(
+									ArticleDatabase.ArticleColumn.READ))
 									!= 0;
 							old = new ArticleInfo(_tabname, seq, user, null,
 									date, title, null, null, 1, read);
@@ -323,18 +330,26 @@ public class UpdateService extends Service
 					}
 
 					final ContentValues values = new ContentValues();
-					values.put(ArticleProvider.KEYA_SEQ, info.getSeq());
-					values.put(ArticleProvider.KEYA_USER, info.getUser());
-					values.put(ArticleProvider.KEYA_AUTHOR, info.getAuthor());
-					values.put(ArticleProvider.KEYA_DATE, info.getDateString());
-					values.put(ArticleProvider.KEYA_TITLE, info.getTitle());
-					values.put(ArticleProvider.KEYA_THREAD, info.getThread());
-					values.put(ArticleProvider.KEYA_BODY, info.getBody());
+					values.put(ArticleDatabase.ArticleColumn.SEQ,
+							info.getSeq());
+					values.put(ArticleDatabase.ArticleColumn.USER,
+							info.getUser());
+					values.put(ArticleDatabase.ArticleColumn.AUTHOR,
+							info.getAuthor());
+					values.put(ArticleDatabase.ArticleColumn.DATE,
+							info.getDateString());
+					values.put(ArticleDatabase.ArticleColumn.TITLE,
+							info.getTitle());
+					values.put(ArticleDatabase.ArticleColumn.THREAD,
+							info.getThread());
+					values.put(ArticleDatabase.ArticleColumn.BODY,
+							info.getBody());
 					boolean read = info.getRead();
 					if (old != null && old.getRead()) {
 						read = true;
 					}
-					values.put(ArticleProvider.KEYA_READ, read ? 1 : 0);
+					values.put(ArticleDatabase.ArticleColumn.READ,
+							read ? 1 : 0);
 
 					boolean result = true;
 					if (old == null) {
@@ -354,7 +369,7 @@ public class UpdateService extends Service
 						} else {
 							try {
 								mResolver.update(uri, values,
-										ArticleProvider.SELECTION_SEQ, args);
+										ArticleProvider.Selection.SEQ, args);
 							} catch (SQLException e) {
 								result = false;
 							}
@@ -381,7 +396,7 @@ public class UpdateService extends Service
 						+ " articles");
 				KidsBbs.announceUpdateError(UpdateService.this);
 			}
-			setTableState(_tabname, ArticleProvider.STATE_SELECTED);
+			setTableState(_tabname, ArticleDatabase.BoardState.SELECTED);
 			return count;
 		}
 
@@ -411,30 +426,31 @@ public class UpdateService extends Service
 					mNotificationTitleString, mNotificationMessage,
 					pendingIntent);
 
-			mNotificationManager.notify(KidsBbs.NOTIFICATION_NEW_ARTICLE,
+			mNotificationManager.notify(KidsBbs.NotificationType.NEW_ARTICLE,
 					mNewArticlesNotification);
 		}
 
 		private int refreshTables(String _tabname) {
-			final String[] FIELDS = { ArticleProvider.KEYB_TABNAME };
-			final String WHERE = ArticleProvider.KEYB_STATE + "!="
-					+ ArticleProvider.STATE_PAUSED;
-			final String ORDERBY = ArticleProvider.ORDER_BY_STATE_ASC + ","
-					+ ArticleProvider.ORDER_BY_ID;
+			final String[] PROJECTION = {
+					ArticleDatabase.BoardColumn.TABNAME
+			};
+			final String ORDERBY = ArticleProvider.OrderBy.STATE_ASC + ","
+					+ ArticleProvider.OrderBy._ID;
 
 			int total_count = 0;
 			final ArrayList<String> tabnames = new ArrayList<String>();
 			if (TextUtils.isEmpty(_tabname)) {
 				// Get all the boards...
 				final Cursor c = mResolver.query(
-						ArticleProvider.CONTENT_URI_BOARDS, FIELDS, WHERE, null,
+						ArticleProvider.ContentUri.BOARDS, PROJECTION,
+						ArticleProvider.Selection.STATE_ACTIVE, null,
 						ORDERBY);
 				if (c != null) {
 					if (c.getCount() > 0) {
 						c.moveToFirst();
 						do {
-							tabnames.add(c.getString(c
-									.getColumnIndex(ArticleProvider.KEYB_TABNAME)));
+							tabnames.add(c.getString(c.getColumnIndex(
+									ArticleDatabase.BoardColumn.TABNAME)));
 						} while (c.moveToNext());
 					}
 					c.close();
@@ -483,13 +499,14 @@ public class UpdateService extends Service
 	}
 
 	private int deleteArticles(Uri _uri, Cursor _c, int _max) {
-		final int col_index = _c.getColumnIndex(ArticleProvider.KEYA_SEQ);
+		final int col_index = _c.getColumnIndex(
+				ArticleDatabase.ArticleColumn.SEQ);
 		int count = 0;
 		_c.moveToFirst();
 		do {
 			final int seq = _c.getInt(col_index);
 			if (seq > 0) {
-				count += mResolver.delete(_uri, ArticleProvider.SELECTION_SEQ,
+				count += mResolver.delete(_uri, ArticleProvider.Selection.SEQ,
 						new String[] { Integer.toString(seq) });
 			}
 		} while (--_max > 0 && _c.moveToNext());
@@ -497,9 +514,11 @@ public class UpdateService extends Service
 	}
 
 	private int trimBoardTable(String _tabname) {
-		final String[] FIELDS = { ArticleProvider.KEYA_SEQ, };
-		final String WHERE = "DATE(" + ArticleProvider.KEYA_DATE
-				+ ")!='' AND JULIANDAY(" + ArticleProvider.KEYA_DATE
+		final String[] PROJECTION = {
+				ArticleDatabase.ArticleColumn.SEQ,
+		};
+		final String WHERE = "DATE(" + ArticleDatabase.ArticleColumn.DATE
+				+ ")!='' AND JULIANDAY(" + ArticleDatabase.ArticleColumn.DATE
 				+ ")<=JULIANDAY('now'," + KidsBbs.KST_DIFF + ","
 				+ KidsBbs.MAX_TIME + ")";
 
@@ -509,13 +528,13 @@ public class UpdateService extends Service
 			return 0;
 		}
 
-		final Uri uri = Uri.parse(ArticleProvider.CONTENT_URISTR_LIST
+		final Uri uri = Uri.parse(ArticleProvider.ContentUriString.LIST
 				+ _tabname);
 
 		// Find the trim point.
 		int seq = 0;
-		Cursor c = mResolver.query(uri, FIELDS, WHERE, null,
-				ArticleProvider.ORDER_BY_SEQ_DESC);
+		Cursor c = mResolver.query(uri, PROJECTION, WHERE, null,
+				ArticleProvider.OrderBy.SEQ_DESC);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -527,8 +546,9 @@ public class UpdateService extends Service
 		// Now delete old stuff...
 		int count = 0;
 		if (seq > 0) {
-			c = mResolver.query(uri, FIELDS, ArticleProvider.KEYA_SEQ + "<="
-					+ seq, null, ArticleProvider.ORDER_BY_SEQ_ASC);
+			c = mResolver.query(uri, PROJECTION,
+					ArticleDatabase.ArticleColumn.SEQ + "<=" + seq, null,
+					ArticleProvider.OrderBy.SEQ_ASC);
 			if (c != null) {
 				count += deleteArticles(uri, c, size - KidsBbs.MIN_ARTICLES);
 				c.close();
@@ -538,8 +558,8 @@ public class UpdateService extends Service
 		// Reduce the size to a manageable size.
 		size = KidsBbs.getBoardTableSize(mResolver, _tabname);
 		if (size > KidsBbs.MAX_ARTICLES) {
-			c = mResolver.query(uri, FIELDS, null, null,
-					ArticleProvider.ORDER_BY_SEQ_ASC);
+			c = mResolver.query(uri, PROJECTION, null, null,
+					ArticleProvider.OrderBy.SEQ_ASC);
 			if (c != null) {
 				count += deleteArticles(uri, c, size - KidsBbs.MAX_ARTICLES);
 				c.close();
@@ -552,8 +572,8 @@ public class UpdateService extends Service
 	private class ArticleUpdatedReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
-			final String tabname = _intent.getStringExtra(KidsBbs.PARAM_BASE
-					+ ArticleProvider.KEYB_TABNAME);
+			final String tabname = _intent.getStringExtra(
+					KidsBbs.PARAM_BASE + ArticleDatabase.BoardColumn.TABNAME);
 			KidsBbs.updateBoardCount(mResolver, tabname);
 		}
 	}
