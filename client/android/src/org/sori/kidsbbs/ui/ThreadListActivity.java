@@ -25,10 +25,15 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs.ui;
 
-import org.sori.kidsbbs.KidsBbs;
 import org.sori.kidsbbs.R;
-import org.sori.kidsbbs.provider.ArticleDatabase;
-import org.sori.kidsbbs.provider.ArticleProvider;
+import org.sori.kidsbbs.KidsBbs.IntentUri;
+import org.sori.kidsbbs.KidsBbs.PackageBase;
+import org.sori.kidsbbs.KidsBbs.ParamName;
+import org.sori.kidsbbs.provider.ArticleDatabase.ArticleColumn;
+import org.sori.kidsbbs.provider.ArticleProvider.ContentUriString;
+import org.sori.kidsbbs.provider.ArticleProvider.Selection;
+import org.sori.kidsbbs.util.ArticleUtils;
+import org.sori.kidsbbs.util.DBUtils;
 
 import android.content.ContentValues;
 import android.content.res.Resources;
@@ -47,7 +52,7 @@ public class ThreadListActivity extends ArticleListActivity {
 		mTitleTView = resources.getString(R.string.title_tview);
 
 		setTitleCommon(resources.getString(R.string.title_tlist));
-		setQueryBase(ArticleProvider.ContentUriString.TLIST, COLUMNS_TLIST, null);
+		setQueryBase(ContentUriString.TLIST, COLUMNS_TLIST, null);
 
 		updateTitle();
 
@@ -61,10 +66,8 @@ public class ThreadListActivity extends ArticleListActivity {
 	}
 
 	protected void updateTitle() {
-		updateTitleCommon(
-				getCount(ArticleProvider.ContentUriString.LIST,
-						ArticleProvider.Selection.UNREAD),
-				getCount(ArticleProvider.ContentUriString.LIST, null));
+		updateTitleCommon(getCount(ContentUriString.LIST, Selection.UNREAD),
+				getCount(ContentUriString.LIST, null));
 	}
 
 	protected boolean matchingBroadcast(int _seq, String _user, String _thread) {
@@ -73,46 +76,39 @@ public class ThreadListActivity extends ArticleListActivity {
 
 	protected void showItem(int _index) {
 		final Cursor c = getItem(_index);
-		final int count = c.getInt(c.getColumnIndex(
-				ArticleDatabase.ArticleColumn.CNT));
-		final String title = c.getString(c.getColumnIndex(
-				ArticleDatabase.ArticleColumn.TITLE));
-		final String ttitle = count > 1 ? KidsBbs.getThreadTitle(title) : title;
+		final int count = c.getInt(c.getColumnIndex(ArticleColumn.CNT));
+		final String title = c.getString(c.getColumnIndex(ArticleColumn.TITLE));
+		final String ttitle = count > 1 ?
+				ArticleUtils.getThreadTitle(title) : title;
 		Bundle extras = new Bundle();
-		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.ParamName.VTITLE,
-				mTitleTView);
-		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.ParamName.THREAD,
-				c.getString(c.getColumnIndex(
-						ArticleDatabase.ArticleColumn.THREAD)));
-		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.ParamName.TTITLE,
-				ttitle);
-		showItemCommon(this, ThreadedViewActivity.class,
-				KidsBbs.IntentUri.TVIEW, extras);
+		extras.putString(PackageBase.PARAM + ParamName.VTITLE, mTitleTView);
+		extras.putString(PackageBase.PARAM + ParamName.THREAD,
+				c.getString(c.getColumnIndex(ArticleColumn.THREAD)));
+		extras.putString(PackageBase.PARAM + ParamName.TTITLE, ttitle);
+		showItemCommon(this, ThreadedViewActivity.class, IntentUri.TVIEW, extras);
 	}
 
 	protected void markRead(int _index) {
 		final Cursor c = getItem(_index);
-		final int count = c.getInt(c.getColumnIndex(
-				ArticleDatabase.ArticleColumn.CNT));
+		final int count = c.getInt(c.getColumnIndex(ArticleColumn.CNT));
 		int nChanged;
 		// Change only one for Marking it unread.
 		if (count == 1) {
 			nChanged = markReadOne(c);
 		} else {
-			final int seq = c.getInt(c.getColumnIndex(
-					ArticleDatabase.ArticleColumn.SEQ));
+			final int seq = c.getInt(c.getColumnIndex(ArticleColumn.SEQ));
 			final String thread = c.getString(c.getColumnIndex(
-					ArticleDatabase.ArticleColumn.THREAD));
+					ArticleColumn.THREAD));
 			final String where =
-				ArticleDatabase.ArticleColumn.THREAD + "='" + thread
-				+ "' AND " + ArticleDatabase.ArticleColumn.SEQ + "<=" + seq
-				+ " AND " + ArticleProvider.Selection.UNREAD;
+				ArticleColumn.THREAD + "='" + thread
+				+ "' AND " + ArticleColumn.SEQ + "<=" + seq
+				+ " AND " + Selection.UNREAD;
 			final ContentValues values = new ContentValues();
-			values.put(ArticleDatabase.ArticleColumn.READ, 1);
+			values.put(ArticleColumn.READ, 1);
 			nChanged = mResolver.update(getUriList(), values, where, null);
 		}
 		if (nChanged > 0) {
-			KidsBbs.updateBoardCount(mResolver, mTabname);
+			DBUtils.updateBoardCount(mResolver, mTabname);
 			refreshList();
 		}
 	}

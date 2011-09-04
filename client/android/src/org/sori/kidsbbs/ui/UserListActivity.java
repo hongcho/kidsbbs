@@ -27,8 +27,11 @@ package org.sori.kidsbbs.ui;
 
 import org.sori.kidsbbs.KidsBbs;
 import org.sori.kidsbbs.R;
-import org.sori.kidsbbs.provider.ArticleDatabase;
-import org.sori.kidsbbs.provider.ArticleProvider;
+import org.sori.kidsbbs.KidsBbs.PackageBase;
+import org.sori.kidsbbs.KidsBbs.ParamName;
+import org.sori.kidsbbs.provider.ArticleDatabase.ArticleColumn;
+import org.sori.kidsbbs.provider.ArticleProvider.ContentUriString;
+import org.sori.kidsbbs.provider.ArticleProvider.Selection;
 
 import android.content.Intent;
 import android.content.res.Resources;
@@ -44,15 +47,14 @@ public class UserListActivity extends ArticleListActivity {
 		super.onCreate(_state);
 
 		final Intent intent = getIntent();
-		mBoardUser = intent.getStringExtra(
-				KidsBbs.PARAM_BASE + KidsBbs.ParamName.USER);
+		mBoardUser = intent.getStringExtra(PackageBase.PARAM + ParamName.USER);
 
 		final Resources resources = getResources();
 		mTitleView = resources.getString(R.string.title_view);
 
 		setTitleCommon(resources.getString(R.string.title_user));
-		setQueryBase(ArticleProvider.ContentUriString.LIST, COLUMNS_LIST,
-				ArticleDatabase.ArticleColumn.USER + "='" + mBoardUser + "'");
+		setQueryBase(ContentUriString.LIST, COLUMNS_LIST,
+				ArticleColumn.USER + "='" + mBoardUser + "'");
 
 		updateTitle();
 
@@ -67,13 +69,10 @@ public class UserListActivity extends ArticleListActivity {
 
 	protected void updateTitle() {
 		updateTitleCommon(
-				getCount(ArticleProvider.ContentUriString.LIST,
-						ArticleProvider.Selection.UNREAD + " AND "
-						+ ArticleDatabase.ArticleColumn.USER + "='"
-						+ mBoardUser + "'"),
-				getCount(ArticleProvider.ContentUriString.LIST,
-						ArticleDatabase.ArticleColumn.USER + "='"
-						+ mBoardUser + "'"));
+				getCount(ContentUriString.LIST, Selection.UNREAD + " AND "
+						+ ArticleColumn.USER + "='" + mBoardUser + "'"),
+				getCount(ContentUriString.LIST,
+						ArticleColumn.USER + "='" + mBoardUser + "'"));
 	}
 
 	protected boolean matchingBroadcast(int _seq, String _user, String _thread) {
@@ -83,16 +82,13 @@ public class UserListActivity extends ArticleListActivity {
 	protected void showItem(int _index) {
 		final Cursor c = getItem(_index);
 		Bundle extras = new Bundle();
-		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.ParamName.VTITLE,
-				mTitleView);
-		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.ParamName.THREAD,
-				c.getString(c.getColumnIndex(
-						ArticleDatabase.ArticleColumn.THREAD)));
-		extras.putInt(KidsBbs.PARAM_BASE + KidsBbs.ParamName.SEQ,
-				c.getInt(c.getColumnIndex(ArticleDatabase.ArticleColumn.SEQ)));
-		extras.putString(KidsBbs.PARAM_BASE + KidsBbs.ParamName.TTITLE,
-				c.getString(c.getColumnIndex(
-						ArticleDatabase.ArticleColumn.TITLE)));
+		extras.putString(PackageBase.PARAM + ParamName.VTITLE, mTitleView);
+		extras.putString(PackageBase.PARAM + ParamName.THREAD,
+				c.getString(c.getColumnIndex(ArticleColumn.THREAD)));
+		extras.putInt(PackageBase.PARAM + ParamName.SEQ,
+				c.getInt(c.getColumnIndex(ArticleColumn.SEQ)));
+		extras.putString(PackageBase.PARAM + ParamName.TTITLE,
+				c.getString(c.getColumnIndex(ArticleColumn.TITLE)));
 		showItemCommon(this, ThreadedViewActivity.class,
 				KidsBbs.IntentUri.TVIEW, extras);
 	}
@@ -102,7 +98,6 @@ public class UserListActivity extends ArticleListActivity {
 	}
 
 	protected void markAllRead() {
-		markAllReadCommon(ArticleDatabase.ArticleColumn.USER + "='"
-				+ mBoardUser + "' AND ");
+		markAllReadCommon(ArticleColumn.USER + "='" + mBoardUser + "' AND ");
 	}
 }

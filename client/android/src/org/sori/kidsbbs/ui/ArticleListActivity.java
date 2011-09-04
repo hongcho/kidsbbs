@@ -25,10 +25,20 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs.ui;
 
-import org.sori.kidsbbs.KidsBbs;
 import org.sori.kidsbbs.R;
-import org.sori.kidsbbs.provider.ArticleDatabase;
-import org.sori.kidsbbs.provider.ArticleProvider;
+import org.sori.kidsbbs.KidsBbs.PackageBase;
+import org.sori.kidsbbs.KidsBbs.ParamName;
+import org.sori.kidsbbs.provider.ArticleDatabase.ArticleColumn;
+import org.sori.kidsbbs.provider.ArticleDatabase.BoardColumn;
+import org.sori.kidsbbs.provider.ArticleProvider.ContentUriString;
+import org.sori.kidsbbs.provider.ArticleProvider.Selection;
+import org.sori.kidsbbs.ui.prefernce.MainSettings;
+import org.sori.kidsbbs.ui.prefernce.MainSettings.PrefKey;
+import org.sori.kidsbbs.util.ArticleUtils;
+import org.sori.kidsbbs.util.BroadcastUtils;
+import org.sori.kidsbbs.util.DBUtils;
+import org.sori.kidsbbs.util.DateUtils;
+import org.sori.kidsbbs.util.BroadcastUtils.BroadcastType;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -129,7 +139,7 @@ public abstract class ArticleListActivity extends ListActivity
 	}
 
 	protected final int getCount(String _uriBase, String _where) {
-		return KidsBbs.getTableCount(mResolver, _uriBase, mTabname, _where);
+		return DBUtils.getTableCount(mResolver, _uriBase, mTabname, _where);
 	}
 
 	protected final void setTitleCommon(String _title) {
@@ -151,12 +161,10 @@ public abstract class ArticleListActivity extends ListActivity
 		setContentView(R.layout.article_list);
 
 		final Intent intent = getIntent();
-		mTabname = intent.getStringExtra(
-				KidsBbs.PARAM_BASE + KidsBbs.ParamName.TABNAME);
-		mBoardTitle = intent.getStringExtra(
-				KidsBbs.PARAM_BASE + KidsBbs.ParamName.BTITLE);
+		mTabname = intent.getStringExtra(PackageBase.PARAM + ParamName.TABNAME);
+		mBoardTitle = intent.getStringExtra(PackageBase.PARAM + ParamName.BTITLE);
 
-		mUriList = Uri.parse(ArticleProvider.ContentUriString.LIST + mTabname);
+		mUriList = Uri.parse(ContentUriString.LIST + mTabname);
 
 		mResolver = getContentResolver();
 
@@ -173,7 +181,7 @@ public abstract class ArticleListActivity extends ListActivity
 		final SharedPreferences prefs =
 			PreferenceManager.getDefaultSharedPreferences(
 					getApplicationContext());
-		mHideRead = prefs.getBoolean(Preferences.PrefKey.HIDE_READ, false);
+		mHideRead = prefs.getBoolean(PrefKey.HIDE_READ, false);
 		prefs.registerOnSharedPreferenceChangeListener(this);
 	}
 
@@ -199,7 +207,7 @@ public abstract class ArticleListActivity extends ListActivity
 	}
 
 	public void onSharedPreferenceChanged(SharedPreferences _prefs, String _key) {
-		if (_key.equals(Preferences.PrefKey.HIDE_READ)) {
+		if (_key.equals(PrefKey.HIDE_READ)) {
 			boolean hideRead = _prefs.getBoolean(_key, false);
 			if (hideRead != mHideRead) {
 				mHideRead = hideRead;
@@ -243,7 +251,7 @@ public abstract class ArticleListActivity extends ListActivity
 		super.onOptionsItemSelected(item);
 		switch (item.getItemId()) {
 		case MenuId.REFRESH:
-			KidsBbs.updateBoardTable(this, mTabname);
+			DBUtils.updateBoardTable(this, mTabname);
 			refreshList();
 			return true;
 		case MenuId.MARK_ALL_READ:
@@ -340,24 +348,21 @@ public abstract class ArticleListActivity extends ListActivity
 			Uri _uri, Bundle _extras) {
 		final Intent intent = new Intent(_from, _to);
 		intent.setData(_uri);
-		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.ParamName.TABNAME,
+		intent.putExtra(PackageBase.PARAM + ParamName.TABNAME,
 				mTabname);
-		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.ParamName.BTITLE,
+		intent.putExtra(PackageBase.PARAM + ParamName.BTITLE,
 				mBoardTitle);
 		intent.putExtras(_extras);
 		startActivity(intent);
 	}
 
 	protected int markReadOne(Cursor _c) {
-		final int seq = _c.getInt(_c.getColumnIndex(
-				ArticleDatabase.ArticleColumn.SEQ));
-		final String user = _c.getString(_c.getColumnIndex(
-				ArticleDatabase.ArticleColumn.USER));
-		final String thread = _c.getString(_c.getColumnIndex(
-				ArticleDatabase.ArticleColumn.THREAD));
-		if (KidsBbs.updateArticleRead(mResolver, mTabname, seq, true)) {
-			KidsBbs.announceArticleUpdated(ArticleListActivity.this, mTabname, seq,
-					user, thread);
+		final int seq = _c.getInt(_c.getColumnIndex(ArticleColumn.SEQ));
+		final String user = _c.getString(_c.getColumnIndex(ArticleColumn.USER));
+		final String thread = _c.getString(_c.getColumnIndex(ArticleColumn.THREAD));
+		if (DBUtils.updateArticleRead(mResolver, mTabname, seq, true)) {
+			BroadcastUtils.announceArticleUpdated(
+					ArticleListActivity.this, mTabname, seq, user, thread);
 			return 1;
 		}
 		return 0;
@@ -372,17 +377,16 @@ public abstract class ArticleListActivity extends ListActivity
 					new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface _dialog, int _which) {
 					final Cursor c = getItem(0);
-					final int seq = c.getInt(c.getColumnIndex(
-							ArticleDatabase.ArticleColumn.SEQ));
+					final int seq = c.getInt(c.getColumnIndex(ArticleColumn.SEQ));
 					final String where = _w
-						+ ArticleDatabase.ArticleColumn.SEQ + "<=" + seq
-						+ " AND " + ArticleProvider.Selection.UNREAD;
+						+ ArticleColumn.SEQ + "<=" + seq
+						+ " AND " + Selection.UNREAD;
 					final ContentValues values = new ContentValues();
-					values.put(ArticleDatabase.ArticleColumn.READ, 1);
+					values.put(ArticleColumn.READ, 1);
 					final int nChanged = mResolver.update(getUriList(),
 							values, where, null);
 					if (nChanged > 0) {
-						KidsBbs.updateBoardCount(mResolver, mTabname);
+						DBUtils.updateBoardCount(mResolver, mTabname);
 						refreshList();
 					}
 				}
@@ -393,7 +397,7 @@ public abstract class ArticleListActivity extends ListActivity
 	}
 
 	protected void showPreference() {
-		startActivity(new Intent(this, Preferences.class));
+		startActivity(new Intent(this, MainSettings.class));
 	}
 
 	@Override
@@ -442,13 +446,13 @@ public abstract class ArticleListActivity extends ListActivity
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
 			final String tabname = _intent.getStringExtra(
-					KidsBbs.PARAM_BASE + ArticleDatabase.BoardColumn.TABNAME);
+					PackageBase.PARAM + BoardColumn.TABNAME);
 			final int seq = _intent.getIntExtra(
-					KidsBbs.PARAM_BASE + ArticleDatabase.ArticleColumn.SEQ, -1);
+					PackageBase.PARAM + ArticleColumn.SEQ, -1);
 			final String user = _intent.getStringExtra(
-					KidsBbs.PARAM_BASE + ArticleDatabase.ArticleColumn.USER);
+					PackageBase.PARAM + ArticleColumn.USER);
 			final String thread = _intent.getStringExtra(
-					KidsBbs.PARAM_BASE + ArticleDatabase.ArticleColumn.THREAD);
+					PackageBase.PARAM + ArticleColumn.THREAD);
 			if (mTabname != null && tabname != null && mTabname.equals(tabname)
 					&& matchingBroadcast(seq, user, thread)) {
 				updateTitle();
@@ -460,7 +464,7 @@ public abstract class ArticleListActivity extends ListActivity
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
 			final String tabname = _intent.getStringExtra(
-					KidsBbs.PARAM_BASE + ArticleDatabase.BoardColumn.TABNAME);
+					PackageBase.PARAM + BoardColumn.TABNAME);
 			if (mTabname != null && tabname != null && mTabname.equals(tabname)) {
 				updateTitle();
 			}
@@ -473,10 +477,10 @@ public abstract class ArticleListActivity extends ListActivity
 	private void registerReceivers() {
 		IntentFilter filter;
 		mReceiverArticleUpdated = new ArticleUpdatedReceiver();
-		filter = new IntentFilter(KidsBbs.ARTICLE_UPDATED);
+		filter = new IntentFilter(BroadcastType.ARTICLE_UPDATED);
 		registerReceiver(mReceiverArticleUpdated, filter);
 		mReceiverBoardUpdated = new BoardUpdatedReceiver();
-		filter = new IntentFilter(KidsBbs.BOARD_UPDATED);
+		filter = new IntentFilter(BroadcastType.BOARD_UPDATED);
 		registerReceiver(mReceiverBoardUpdated, filter);
 	}
 
@@ -498,24 +502,24 @@ public abstract class ArticleListActivity extends ListActivity
 	}
 	protected static final String[] COLUMNS_TLIST = {
 		BaseColumns._ID,
-		ArticleDatabase.ArticleColumn.SEQ,
-		ArticleDatabase.ArticleColumn.USER,
-		ArticleDatabase.ArticleColumn.DATE,
-		ArticleDatabase.ArticleColumn.TITLE,
-		ArticleDatabase.ArticleColumn.THREAD,
-		ArticleDatabase.ArticleColumn.BODY,
-		ArticleDatabase.ArticleColumn.ALLREAD,
-		ArticleDatabase.ArticleColumn.CNT,
+		ArticleColumn.SEQ,
+		ArticleColumn.USER,
+		ArticleColumn.DATE,
+		ArticleColumn.TITLE,
+		ArticleColumn.THREAD,
+		ArticleColumn.BODY,
+		ArticleColumn.ALLREAD,
+		ArticleColumn.CNT,
 	};
 	protected static final String[] COLUMNS_LIST = {
 		BaseColumns._ID,
-		ArticleDatabase.ArticleColumn.SEQ,
-		ArticleDatabase.ArticleColumn.USER,
-		ArticleDatabase.ArticleColumn.DATE,
-		ArticleDatabase.ArticleColumn.TITLE,
-		ArticleDatabase.ArticleColumn.THREAD,
-		ArticleDatabase.ArticleColumn.BODY,
-		ArticleDatabase.ArticleColumn.READ,
+		ArticleColumn.SEQ,
+		ArticleColumn.USER,
+		ArticleColumn.DATE,
+		ArticleColumn.TITLE,
+		ArticleColumn.THREAD,
+		ArticleColumn.BODY,
+		ArticleColumn.READ,
 	};
 
 	protected class ArticlesAdapter extends CursorAdapter
@@ -586,15 +590,14 @@ public abstract class ArticleListActivity extends ListActivity
 				user += " (+" + cnt + ")";
 			}
 
-			itemView.mDate = KidsBbs.KidsToLocalDateString(itemView.mDate);
-			itemView.mDate = KidsBbs.GetShortDateString(itemView.mDate);
+			itemView.mDate = DateUtils.KidsToLocalDateString(itemView.mDate);
+			itemView.mDate = DateUtils.GetShortDateString(itemView.mDate);
 
-			itemView.mSummary = KidsBbs.generateSummary(body);
+			itemView.mSummary = ArticleUtils.generateSummary(body);
 
 			// Remove "RE:" for threaded list.
-			if (mColumns[ColumnIndex.READ].equals(
-					ArticleDatabase.ArticleColumn.ALLREAD)) {
-				itemView.mTitle = KidsBbs.getThreadTitle(itemView.mTitle);
+			if (mColumns[ColumnIndex.READ].equals(ArticleColumn.ALLREAD)) {
+				itemView.mTitle = ArticleUtils.getThreadTitle(itemView.mTitle);
 			}
 
 			final ViewHolder holder = (ViewHolder) itemView.getTag();
@@ -642,10 +645,9 @@ public abstract class ArticleListActivity extends ListActivity
 			} else {
 				where += " AND ";
 			}
-			where += "(" + ArticleDatabase.ArticleColumn.TITLE
+			where += "(" + ArticleColumn.TITLE
 				+ " LIKE '%" + _constraint + "%' OR "
-				+ ArticleDatabase.ArticleColumn.USER
-				+ " LIKE '%" + _constraint + "%')";
+				+ ArticleColumn.USER + " LIKE '%" + _constraint + "%')";
 			if (mHideRead) {
 				where += " AND " + mColumns[ColumnIndex.READ] + "=0";
 			}

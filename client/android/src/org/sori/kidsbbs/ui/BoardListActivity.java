@@ -25,11 +25,20 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs.ui;
 
-import org.sori.kidsbbs.KidsBbs;
 import org.sori.kidsbbs.R;
-import org.sori.kidsbbs.provider.ArticleDatabase;
-import org.sori.kidsbbs.provider.ArticleProvider;
+import org.sori.kidsbbs.KidsBbs.IntentUri;
+import org.sori.kidsbbs.KidsBbs.NotificationType;
+import org.sori.kidsbbs.KidsBbs.PackageBase;
+import org.sori.kidsbbs.KidsBbs.ParamName;
+import org.sori.kidsbbs.provider.ArticleDatabase.BoardColumn;
+import org.sori.kidsbbs.provider.ArticleDatabase.BoardState;
+import org.sori.kidsbbs.provider.ArticleProvider.ContentUri;
+import org.sori.kidsbbs.provider.ArticleProvider.OrderBy;
+import org.sori.kidsbbs.provider.ArticleProvider.Selection;
 import org.sori.kidsbbs.service.UpdateService;
+import org.sori.kidsbbs.ui.prefernce.MainSettings;
+import org.sori.kidsbbs.util.DBUtils;
+import org.sori.kidsbbs.util.BroadcastUtils.BroadcastType;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -129,7 +138,7 @@ public class BoardListActivity extends ListActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		mNotificationManager.cancel(KidsBbs.NotificationType.NEW_ARTICLE);
+		mNotificationManager.cancel(NotificationType.NEW_ARTICLE);
 	}
 	
 	@Override
@@ -189,11 +198,11 @@ public class BoardListActivity extends ListActivity {
 			selectBoards();
 			return true;
 		case MenuId.REFRESH:
-			KidsBbs.updateBoardTable(this, null);
+			DBUtils.updateBoardTable(this, null);
 			refreshList();
 			return true;
 		case MenuId.PREFERENCES:
-			startActivity(new Intent(this, Preferences.class));
+			startActivity(new Intent(this, MainSettings.class));
 			return true;
 		}
 		return false;
@@ -220,11 +229,9 @@ public class BoardListActivity extends ListActivity {
 
 		@Override
 		protected Cursor doInBackground(Void... _args) {
-			final String ORDERBY = ArticleProvider.OrderBy.COUNT_DESC + ","
-					+ ArticleProvider.OrderBy.TITLE;
-			return mResolver.query(ArticleProvider.ContentUri.BOARDS,
-					COLUMNS, ArticleProvider.Selection.STATE_ACTIVE,
-					null, ORDERBY);
+			final String ORDERBY = OrderBy.COUNT_DESC + "," + OrderBy.TITLE;
+			return mResolver.query(ContentUri.BOARDS, COLUMNS,
+					Selection.STATE_ACTIVE, null, ORDERBY);
 		}
 
 		@Override
@@ -258,25 +265,24 @@ public class BoardListActivity extends ListActivity {
 	private void showItem(int _index) {
 		final Cursor c = (Cursor) mAdapter.getItem(_index);
 		final Intent intent = new Intent(this, ThreadListActivity.class);
-		intent.setData(KidsBbs.IntentUri.TLIST);
-		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.ParamName.TABNAME,
+		intent.setData(IntentUri.TLIST);
+		intent.putExtra(PackageBase.PARAM + ParamName.TABNAME,
 				c.getString(ColumnIndex.TABNAME));
-		intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.ParamName.BTITLE,
+		intent.putExtra(PackageBase.PARAM + ParamName.BTITLE,
 				c.getString(ColumnIndex.TITLE));
 		startActivity(intent);
 	}
 
 	private void selectBoards() {
 		final String[] PROJECTION = {
-				ArticleDatabase.BoardColumn.TABNAME,
-				ArticleDatabase.BoardColumn.TITLE,
-				ArticleDatabase.BoardColumn.STATE,
+				BoardColumn.TABNAME,
+				BoardColumn.TITLE,
+				BoardColumn.STATE,
 		};
-		final String ORDERBY = ArticleProvider.OrderBy.STATE_DESC + ","
-				+ ArticleProvider.OrderBy.TITLE;
+		final String ORDERBY = OrderBy.STATE_DESC + "," + OrderBy.TITLE;
 		String[] titles = null;
-		final Cursor c = mResolver.query(ArticleProvider.ContentUri.BOARDS,
-				PROJECTION, null, null, ORDERBY);
+		final Cursor c = mResolver.query(ContentUri.BOARDS, PROJECTION,
+				null, null, ORDERBY);
 		if (c != null) {
 			final int size = c.getCount();
 			if (size > 0) {
@@ -288,12 +294,11 @@ public class BoardListActivity extends ListActivity {
 				c.moveToFirst();
 				do {
 					mTabnames[i] = c.getString(c.getColumnIndex(
-							ArticleDatabase.BoardColumn.TABNAME));
+							BoardColumn.TABNAME));
 					titles[i] = c.getString(c.getColumnIndex(
-							ArticleDatabase.BoardColumn.TITLE));
+							BoardColumn.TITLE));
 					mSelectedOld[i] = c.getInt(c.getColumnIndex(
-							ArticleDatabase.BoardColumn.STATE))
-							!= ArticleDatabase.BoardState.PAUSED;
+							BoardColumn.STATE)) != BoardState.PAUSED;
 					mSelectedNew[i] = mSelectedOld[i];
 					++i;
 				} while (c.moveToNext());
@@ -320,12 +325,11 @@ public class BoardListActivity extends ListActivity {
 								}
 								++nUpdated;
 								ContentValues values = new ContentValues();
-								values.put(ArticleDatabase.BoardColumn.STATE,
-										mSelectedNew[i] ?
-												ArticleDatabase.BoardState.SELECTED
-												: ArticleDatabase.BoardState.PAUSED);
-								mResolver.update(ArticleProvider.ContentUri.BOARDS,
-										values, ArticleProvider.Selection.TABNAME,
+								values.put(BoardColumn.STATE,
+										mSelectedNew[i] ? BoardState.SELECTED
+												: BoardState.PAUSED);
+								mResolver.update(ContentUri.BOARDS, values,
+										Selection.TABNAME,
 										new String[] { mTabnames[i] });
 							}
 							if (nUpdated > 0) {
@@ -412,10 +416,10 @@ public class BoardListActivity extends ListActivity {
 	private void registerReceivers() {
 		IntentFilter filter;
 		mReceiverError = new UpdateErrorReceiver();
-		filter = new IntentFilter(KidsBbs.UPDATE_ERROR);
+		filter = new IntentFilter(BroadcastType.UPDATE_ERROR);
 		registerReceiver(mReceiverError, filter);
 		mReceiverBoard = new BoardUpdatedReceiver();
-		filter = new IntentFilter(KidsBbs.BOARD_UPDATED);
+		filter = new IntentFilter(BroadcastType.BOARD_UPDATED);
 		registerReceiver(mReceiverBoard, filter);
 	}
 
@@ -432,9 +436,9 @@ public class BoardListActivity extends ListActivity {
 	}
 	private static final String[] COLUMNS = {
 		BaseColumns._ID,
-		ArticleDatabase.BoardColumn.TABNAME,
-		ArticleDatabase.BoardColumn.TITLE,
-		ArticleDatabase.BoardColumn.COUNT,
+		BoardColumn.TABNAME,
+		BoardColumn.TITLE,
+		BoardColumn.COUNT,
 	};
 
 	private class BoardsAdapter extends CursorAdapter implements
@@ -524,13 +528,11 @@ public class BoardListActivity extends ListActivity {
 		}
 
 		public Cursor runQuery(CharSequence _constraint) {
-			final String WHERE = ArticleProvider.Selection.STATE_ACTIVE
-					+ " AND " + ArticleDatabase.BoardColumn.TITLE
-					+ " LIKE '%" + _constraint + "%'";
-			final String ORDERBY = ArticleProvider.OrderBy.COUNT_DESC + ","
-					+ ArticleProvider.OrderBy.TITLE;
-			return mResolver.query(ArticleProvider.ContentUri.BOARDS,
-					COLUMNS, WHERE, null, ORDERBY);
+			final String WHERE = Selection.STATE_ACTIVE
+					+ " AND " + BoardColumn.TITLE + " LIKE '%" + _constraint + "%'";
+			final String ORDERBY = OrderBy.COUNT_DESC + "," + OrderBy.TITLE;
+			return mResolver.query(ContentUri.BOARDS, COLUMNS, WHERE, null,
+					ORDERBY);
 		}
 	}
 }

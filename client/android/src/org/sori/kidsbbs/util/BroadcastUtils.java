@@ -23,21 +23,45 @@
 // ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-package org.sori.kidsbbs.service;
+package org.sori.kidsbbs.util;
 
 import org.sori.kidsbbs.KidsBbs.PackageBase;
+import org.sori.kidsbbs.provider.ArticleDatabase.ArticleColumn;
+import org.sori.kidsbbs.provider.ArticleDatabase.BoardColumn;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-public class AlarmReceiver extends BroadcastReceiver {
-	public static final String UPDATE_BOARDS_ALARM =
-		PackageBase.ALARM + "UpdateBoards";
+public class BroadcastUtils {
 
-	@Override
-	public void onReceive(Context _context, Intent _intent) {
-		// Start server from alarm...
-		_context.startService(new Intent(_context, UpdateService.class));
+	public interface BroadcastType {
+		String BOARD_UPDATED = PackageBase.BCAST + "BoardUpdated";
+		String ARTICLE_UPDATED = PackageBase.BCAST + "ArticleUpdated";
+		String UPDATE_ERROR = PackageBase.BCAST + "UpdateError";
+	}
+
+	public static final void announceUpdateError(Context _context) {
+		_context.sendBroadcast(new Intent(BroadcastType.UPDATE_ERROR));
+	}
+
+	public static final void announceBoardUpdated(Context _context,
+			String _tabname) {
+		DBUtils.updateBoardCount(_context.getContentResolver(), _tabname);
+
+		final Intent intent = new Intent(BroadcastType.BOARD_UPDATED);
+		intent.putExtra(PackageBase.PARAM + BoardColumn.TABNAME, _tabname);
+		_context.sendBroadcast(intent);
+	}
+
+	public static void announceArticleUpdated(Context _context,
+			String _tabname, int _seq, String _user, String _thread) {
+		DBUtils.updateBoardCount(_context.getContentResolver(), _tabname);
+
+		final Intent intent = new Intent(BroadcastType.ARTICLE_UPDATED);
+		intent.putExtra(PackageBase.PARAM + BoardColumn.TABNAME, _tabname);
+		intent.putExtra(PackageBase.PARAM + ArticleColumn.SEQ, _seq);
+		intent.putExtra(PackageBase.PARAM + ArticleColumn.USER, _user);
+		intent.putExtra(PackageBase.PARAM + ArticleColumn.THREAD, _thread);
+		_context.sendBroadcast(intent);
 	}
 }

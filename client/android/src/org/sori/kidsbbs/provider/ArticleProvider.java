@@ -27,10 +27,11 @@ package org.sori.kidsbbs.provider;
 
 import java.util.List;
 
-import org.sori.kidsbbs.KidsBbs;
+import org.sori.kidsbbs.KidsBbs.PackageBase;
 import org.sori.kidsbbs.provider.ArticleDatabase.ArticleColumn;
 import org.sori.kidsbbs.provider.ArticleDatabase.BoardColumn;
 import org.sori.kidsbbs.provider.ArticleDatabase.BoardState;
+import org.sori.kidsbbs.provider.ArticleDatabase.Table;
 
 import android.content.ContentProvider;
 import android.content.ContentResolver;
@@ -49,10 +50,8 @@ import android.util.Log;
 public class ArticleProvider extends ContentProvider {
 	private static final String TAG = "ArticleProvider";
 
-	private static final String PROVIDER = KidsBbs.PKG_BASE + "provider";
-
 	public interface ContentUriString {
-		String BASE = "content://" + PROVIDER + "/";
+		String BASE = "content://" + PackageBase.PROVIDER + "/";
 		String LIST = BASE + "list/";
 		String TLIST = BASE + "tlist/";
 	}
@@ -88,9 +87,9 @@ public class ArticleProvider extends ContentProvider {
 	private static final UriMatcher sUriMatcher;
 	static {
 		sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-		sUriMatcher.addURI(PROVIDER, "boards", Type.BOARDS);
-		sUriMatcher.addURI(PROVIDER, "list/*", Type.LIST);
-		sUriMatcher.addURI(PROVIDER, "tlist/*", Type.TLIST);
+		sUriMatcher.addURI(PackageBase.PROVIDER, "boards", Type.BOARDS);
+		sUriMatcher.addURI(PackageBase.PROVIDER, "list/*", Type.LIST);
+		sUriMatcher.addURI(PackageBase.PROVIDER, "tlist/*", Type.TLIST);
 	}
 
 	private interface TypeString {
@@ -218,7 +217,7 @@ public class ArticleProvider extends ContentProvider {
 			}
 			break;
 		case Type.BOARDS:
-			return ArticleDatabase.Table.BOARDS;
+			return Table.BOARDS;
 		}
 		Log.e(TAG, "getTableName: Unsupported URI (" + type + "): " + _uri);
 		return null;

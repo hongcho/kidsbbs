@@ -23,7 +23,7 @@
 // ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-package org.sori.kidsbbs.ui;
+package org.sori.kidsbbs.ui.prefernce;
 
 import org.sori.kidsbbs.R;
 
@@ -39,7 +39,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
 
-public class Preferences extends PreferenceActivity {
+public class MainSettings extends PreferenceActivity {
 
 	public interface PrefKey {
 		String UPDATE_FREQ = "PREF_UPDATE_FREQ";
@@ -84,7 +84,7 @@ public class Preferences extends PreferenceActivity {
 	@Override
 	public void onCreate(Bundle _state) {
 		super.onCreate(_state);
-		addPreferencesFromResource(R.xml.userpreferences);
+		addPreferencesFromResource(R.xml.mainsettings);
 
 		mInflater = LayoutInflater.from(this);
 

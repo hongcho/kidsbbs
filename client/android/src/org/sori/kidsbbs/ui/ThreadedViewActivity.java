@@ -27,10 +27,18 @@ package org.sori.kidsbbs.ui;
 
 import java.util.HashMap;
 
-import org.sori.kidsbbs.KidsBbs;
 import org.sori.kidsbbs.R;
-import org.sori.kidsbbs.provider.ArticleDatabase;
-import org.sori.kidsbbs.provider.ArticleProvider;
+import org.sori.kidsbbs.KidsBbs.IntentUri;
+import org.sori.kidsbbs.KidsBbs.PackageBase;
+import org.sori.kidsbbs.KidsBbs.ParamName;
+import org.sori.kidsbbs.provider.ArticleDatabase.ArticleColumn;
+import org.sori.kidsbbs.provider.ArticleProvider.ContentUriString;
+import org.sori.kidsbbs.provider.ArticleProvider.OrderBy;
+import org.sori.kidsbbs.provider.ArticleProvider.Selection;
+import org.sori.kidsbbs.ui.prefernce.MainSettings;
+import org.sori.kidsbbs.util.ArticleUtils;
+import org.sori.kidsbbs.util.DBUtils;
+import org.sori.kidsbbs.util.DateUtils;
 
 import android.app.ListActivity;
 import android.content.ContentResolver;
@@ -106,20 +114,14 @@ public class ThreadedViewActivity extends ListActivity
 		setContentView(R.layout.threaded_view);
 
 		final Intent intent = getIntent();
-		mTabname = intent.getStringExtra(
-				KidsBbs.PARAM_BASE + KidsBbs.ParamName.TABNAME);
-		mBoardTitle = intent.getStringExtra(
-				KidsBbs.PARAM_BASE + KidsBbs.ParamName.BTITLE);
-		mBoardThread = intent.getStringExtra(
-				KidsBbs.PARAM_BASE + KidsBbs.ParamName.THREAD);
-		mThreadTitle = intent.getStringExtra(
-				KidsBbs.PARAM_BASE + KidsBbs.ParamName.TTITLE);
-		mTitle = intent.getStringExtra(
-				KidsBbs.PARAM_BASE + KidsBbs.ParamName.VTITLE);
-		mSeq = intent.getIntExtra(
-				KidsBbs.PARAM_BASE + KidsBbs.ParamName.SEQ, -1);
+		mTabname = intent.getStringExtra(PackageBase.PARAM + ParamName.TABNAME);
+		mBoardTitle = intent.getStringExtra(PackageBase.PARAM + ParamName.BTITLE);
+		mBoardThread = intent.getStringExtra(PackageBase.PARAM + ParamName.THREAD);
+		mThreadTitle = intent.getStringExtra(PackageBase.PARAM + ParamName.TTITLE);
+		mTitle = intent.getStringExtra(PackageBase.PARAM + ParamName.VTITLE);
+		mSeq = intent.getIntExtra(PackageBase.PARAM + ParamName.SEQ, -1);
 
-		mUriList = Uri.parse(ArticleProvider.ContentUriString.LIST + mTabname);
+		mUriList = Uri.parse(ContentUriString.LIST + mTabname);
 
 		mResolver = getContentResolver();
 
@@ -129,10 +131,9 @@ public class ThreadedViewActivity extends ListActivity
 			mTitle = resources.getString(R.string.title_tview);
 		}
 
-		mUri = Uri.parse(ArticleProvider.ContentUriString.LIST + mTabname);
-		mWhere = (mSeq < 0) ?
-				ArticleDatabase.ArticleColumn.THREAD + "='" + mBoardThread + "'"
-				: ArticleDatabase.ArticleColumn.SEQ + "=" + mSeq;
+		mUri = Uri.parse(ContentUriString.LIST + mTabname);
+		mWhere = (mSeq < 0) ? ArticleColumn.THREAD + "='" + mBoardThread + "'"
+				: ArticleColumn.SEQ + "=" + mSeq;
 		
 		final TextView titleView = (TextView) findViewById(R.id.title);
 		titleView.setText(mThreadTitle);
@@ -286,12 +287,10 @@ public class ThreadedViewActivity extends ListActivity
 			return true;
 		case MenuId.SHOW_USER:
 			final Intent intent = new Intent(this, UserListActivity.class);
-			intent.setData(KidsBbs.IntentUri.USER);
-			intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.ParamName.TABNAME,
-					mTabname);
-			intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.ParamName.BTITLE,
-					mBoardTitle);
-			intent.putExtra(KidsBbs.PARAM_BASE + KidsBbs.ParamName.USER,
+			intent.setData(IntentUri.USER);
+			intent.putExtra(PackageBase.PARAM + ParamName.TABNAME, mTabname);
+			intent.putExtra(PackageBase.PARAM + ParamName.BTITLE, mBoardTitle);
+			intent.putExtra(PackageBase.PARAM + ParamName.USER,
 					((ThreadItemView) v).mUser);
 			startActivity(intent);
 			return true;
@@ -365,8 +364,7 @@ public class ThreadedViewActivity extends ListActivity
 
 		@Override
 		protected Cursor doInBackground(Void... _args) {
-			return mResolver.query(mUri, COLUMNS, mWhere, null,
-					ArticleProvider.OrderBy.SEQ_ASC);
+			return mResolver.query(mUri, COLUMNS, mWhere, null, OrderBy.SEQ_ASC);
 		}
 
 		@Override
@@ -411,22 +409,21 @@ public class ThreadedViewActivity extends ListActivity
 
 	private void markAllRead() {
 		final Cursor c = getItem(getCount() - 1);
-		final int seq = c.getInt(c.getColumnIndex(
-				ArticleDatabase.ArticleColumn.SEQ));
+		final int seq = c.getInt(c.getColumnIndex(ArticleColumn.SEQ));
 		final String where =
-			ArticleDatabase.ArticleColumn.THREAD + "='" + mBoardThread
-			+ "' AND " + ArticleDatabase.ArticleColumn.SEQ + "<=" + seq
-			+ " AND " + ArticleProvider.Selection.UNREAD;
+			ArticleColumn.THREAD + "='" + mBoardThread
+			+ "' AND " + ArticleColumn.SEQ + "<=" + seq
+			+ " AND " + Selection.UNREAD;
 		final ContentValues values = new ContentValues();
-		values.put(ArticleDatabase.ArticleColumn.READ, 1);
+		values.put(ArticleColumn.READ, 1);
 		final int nChanged = mResolver.update(mUriList, values, where, null);
 		if (nChanged > 0) {
-			KidsBbs.updateBoardCount(mResolver, mTabname);
+			DBUtils.updateBoardCount(mResolver, mTabname);
 		}
 	}
 
 	private void showPreference() {
-		startActivity(new Intent(this, Preferences.class));
+		startActivity(new Intent(this, MainSettings.class));
 	}
 
 	@Override
@@ -493,14 +490,14 @@ public class ThreadedViewActivity extends ListActivity
 	}
 	protected static final String[] COLUMNS = {
 		BaseColumns._ID,
-		ArticleDatabase.ArticleColumn.SEQ,
-		ArticleDatabase.ArticleColumn.USER,
-		ArticleDatabase.ArticleColumn.AUTHOR,
-		ArticleDatabase.ArticleColumn.DATE,
-		ArticleDatabase.ArticleColumn.TITLE,
-		ArticleDatabase.ArticleColumn.THREAD,
-		ArticleDatabase.ArticleColumn.BODY,
-		ArticleDatabase.ArticleColumn.READ,
+		ArticleColumn.SEQ,
+		ArticleColumn.USER,
+		ArticleColumn.AUTHOR,
+		ArticleColumn.DATE,
+		ArticleColumn.TITLE,
+		ArticleColumn.THREAD,
+		ArticleColumn.BODY,
+		ArticleColumn.READ,
 	};
 
 	protected class ArticlesAdapter extends CursorAdapter
@@ -589,11 +586,11 @@ public class ThreadedViewActivity extends ListActivity
 			itemView.mFirst = _c.isFirst();
 			itemView.mLast = _c.isLast();
 
-			itemView.mDate = KidsBbs.KidsToLocalDateString(itemView.mDate);
-			itemView.mDate = KidsBbs.GetLongDateString(itemView.mDate);
+			itemView.mDate = DateUtils.KidsToLocalDateString(itemView.mDate);
+			itemView.mDate = DateUtils.GetLongDateString(itemView.mDate);
 
-			itemView.mBody = KidsBbs.trimText(itemView.mBody);
-			itemView.mSummary = KidsBbs.generateSummary(itemView.mBody);
+			itemView.mBody = itemView.mBody.trim();
+			itemView.mSummary = ArticleUtils.generateSummary(itemView.mBody);
 
 			final ViewHolder holder = (ViewHolder) itemView.getTag();
 			holder.date.setText(itemView.mDate);
@@ -632,10 +629,8 @@ public class ThreadedViewActivity extends ListActivity
 
 		public Cursor runQuery(CharSequence _constraint) {
 			return mResolver.query(mUri, COLUMNS, mWhere + " AND ("
-					+ ArticleDatabase.ArticleColumn.USER
-					+ " LIKE '%" + _constraint + "%' OR "
-					+ ArticleDatabase.ArticleColumn.BODY
-					+ " LIKE '%" + _constraint + "%')",
+					+ ArticleColumn.USER + " LIKE '%" + _constraint + "%' OR "
+					+ ArticleColumn.BODY + " LIKE '%" + _constraint + "%')",
 					null, null);
 		}
 

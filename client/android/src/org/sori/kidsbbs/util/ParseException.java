@@ -23,21 +23,11 @@
 // ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-package org.sori.kidsbbs.service;
+package org.sori.kidsbbs.util;
 
-import org.sori.kidsbbs.KidsBbs.PackageBase;
-
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-
-public class AlarmReceiver extends BroadcastReceiver {
-	public static final String UPDATE_BOARDS_ALARM =
-		PackageBase.ALARM + "UpdateBoards";
-
-	@Override
-	public void onReceive(Context _context, Intent _intent) {
-		// Start server from alarm...
-		_context.startService(new Intent(_context, UpdateService.class));
+@SuppressWarnings("serial")
+public class ParseException extends Exception {
+	public ParseException(String _message) {
+		super(_message);
 	}
 }
