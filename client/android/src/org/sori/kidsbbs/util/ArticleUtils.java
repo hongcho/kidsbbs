@@ -38,7 +38,7 @@ import android.util.Log;
 public class ArticleUtils {
 	private static final String TAG = "ArticleUtils";
 
-	public static final String getThreadTitle(String _s) {
+	public static final String getThreadTitle(final String _s) {
 		if (_s != null && _s.length() > 0) {
 			final Pattern PATTERN =
 				Pattern.compile("^Re:\\s*", Pattern.CASE_INSENSITIVE);
@@ -90,7 +90,8 @@ public class ArticleUtils {
 		return _s;
 	}
 
-	public static final ArticleInfo parseArticle(String _tabname, Element _item) {
+	public static final ArticleInfo parseArticle(final String _tabname,
+			final Element _item) {
 		NodeList nl;
 		Node n;
 		try {

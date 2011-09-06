@@ -39,17 +39,17 @@ public class BoardInfo {
 	public int getUnreadCount() { return mUnreadCount; }
 	public void setUnreadCount(int _count) { mUnreadCount = _count; }
 
-	public static final String buildTabname(String _board, int _type) {
+	public static final String buildTabname(final String _board, final int _type) {
 		return "b" + _type + "_" + _board;
 	}
 
-	public static final String[] parseTabname(String _tabname) {
+	public static final String[] parseTabname(final String _tabname) {
 		final String[] parsed = _tabname.split("_");
 		parsed[0] = parsed[0].substring(1);
 		return parsed;
 	}
 
-	public BoardInfo(String _tabname, String _title) {
+	public BoardInfo(final String _tabname, final String _title) {
 		mTabname = _tabname;
 		mTitle = _title;
 		mUnreadCount = 0;

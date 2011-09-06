@@ -58,7 +58,7 @@ public class DateUtils {
 		DF_KIDS.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
 	}
 
-	public static final Date KidsToLocalDate(String _dateString) {
+	public static final Date KidsToLocalDate(final String _dateString) {
 		try {
 			return DF_FULL.parse(KidsToLocalDateString(_dateString));
 		} catch (Exception e) {
@@ -66,7 +66,7 @@ public class DateUtils {
 		}
 	}
 
-	public static final String GetShortDateString(String _dateString) {
+	public static final String GetShortDateString(final String _dateString) {
 		try {
 			final Date local = DF_FULL.parse(_dateString);
 			final Date now = new Date();
@@ -82,7 +82,7 @@ public class DateUtils {
 		}
 	}
 	
-	public static final String GetLongDateString(String _dateString) {
+	public static final String GetLongDateString(final String _dateString) {
 		try {
 			final Date local = DF_FULL.parse(_dateString);
 			return DF_MEDIUM.format(local);
@@ -91,7 +91,7 @@ public class DateUtils {
 		}
 	}
 
-	public static final String KidsToLocalDateString(String _dateString) {
+	public static final String KidsToLocalDateString(final String _dateString) {
 		try {
 			Date date = DF_KIDS.parse(_dateString);
 			return DF_FULL.format(date);
@@ -100,7 +100,7 @@ public class DateUtils {
 		}
 	}
 
-	public static final String LocalToKidsDateString(String _dateString) {
+	public static final String LocalToKidsDateString(final String _dateString) {
 		try {
 			final Date date = DF_FULL.parse(_dateString);
 			return DF_KIDS.format(date);
@@ -109,7 +109,7 @@ public class DateUtils {
 		}
 	}
 
-	public static final boolean isRecent(String _dateString) {
+	public static final boolean isRecent(final String _dateString) {
 		boolean result = true;
 		final Date local = DateUtils.KidsToLocalDate(_dateString);
 		if (local != null) {

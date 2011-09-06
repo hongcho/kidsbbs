@@ -40,12 +40,12 @@ public class BroadcastUtils {
 		String UPDATE_ERROR = PackageBase.BCAST + "UpdateError";
 	}
 
-	public static final void announceUpdateError(Context _context) {
+	public static final void announceUpdateError(final Context _context) {
 		_context.sendBroadcast(new Intent(BroadcastType.UPDATE_ERROR));
 	}
 
-	public static final void announceBoardUpdated(Context _context,
-			String _tabname) {
+	public static final void announceBoardUpdated(final Context _context,
+			final String _tabname) {
 		DBUtils.updateBoardCount(_context.getContentResolver(), _tabname);
 
 		final Intent intent = new Intent(BroadcastType.BOARD_UPDATED);
@@ -53,8 +53,9 @@ public class BroadcastUtils {
 		_context.sendBroadcast(intent);
 	}
 
-	public static void announceArticleUpdated(Context _context,
-			String _tabname, int _seq, String _user, String _thread) {
+	public static void announceArticleUpdated(final Context _context,
+			final String _tabname, final int _seq, final String _user,
+			final String _thread) {
 		DBUtils.updateBoardCount(_context.getContentResolver(), _tabname);
 
 		final Intent intent = new Intent(BroadcastType.ARTICLE_UPDATED);

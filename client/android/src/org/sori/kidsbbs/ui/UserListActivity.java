@@ -75,11 +75,12 @@ public class UserListActivity extends ArticleListActivity {
 						ArticleColumn.USER + "='" + mBoardUser + "'"));
 	}
 
-	protected boolean matchingBroadcast(int _seq, String _user, String _thread) {
+	protected boolean matchingBroadcast(final int _seq, final String _user,
+			final String _thread) {
 		return _user.equals(mBoardUser);
 	}
 
-	protected void showItem(int _index) {
+	protected void showItem(final int _index) {
 		final Cursor c = getItem(_index);
 		Bundle extras = new Bundle();
 		extras.putString(PackageBase.PARAM + ParamName.VTITLE, mTitleView);
@@ -93,7 +94,7 @@ public class UserListActivity extends ArticleListActivity {
 				KidsBbs.IntentUri.TVIEW, extras);
 	}
 
-	protected void markRead(int _index) {
+	protected void markRead(final int _index) {
 		markReadOne(getItem(_index));
 	}
 

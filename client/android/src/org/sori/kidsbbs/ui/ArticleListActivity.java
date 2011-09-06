@@ -127,8 +127,8 @@ public abstract class ArticleListActivity extends ListActivity
 	abstract protected void markAllRead();
 
 	// A matching broadcast?
-	abstract protected boolean matchingBroadcast(int _seq, String _user,
-			String _thread);
+	abstract protected boolean matchingBroadcast(final int _seq,
+			final String _user, final String _thread);
 
 	protected final String getBoardTitle() {
 		return mBoardTitle;
@@ -138,20 +138,20 @@ public abstract class ArticleListActivity extends ListActivity
 		return mUriList;
 	}
 
-	protected final int getCount(String _uriBase, String _where) {
+	protected final int getCount(final String _uriBase, final String _where) {
 		return DBUtils.getTableCount(mResolver, _uriBase, mTabname, _where);
 	}
 
-	protected final void setTitleCommon(String _title) {
+	protected final void setTitleCommon(final String _title) {
 		mTitle = _title;
 	}
 
-	protected final void updateTitleCommon(int _unread, int _total) {
+	protected final void updateTitleCommon(final int _unread, final int _total) {
 		setTitle("[" + mBoardTitle + "] " + mTitle + " (" + _unread + "/"
 				+ _total + ")");
 	}
 
-	protected final Cursor getItem(int _index) {
+	protected final Cursor getItem(final int _index) {
 		return (Cursor) getListView().getItemAtPosition(_index);
 	}
 
@@ -337,15 +337,15 @@ public abstract class ArticleListActivity extends ListActivity
 		}
 	}
 
-	protected final void setQueryBase(String _uriBase, String[] _fields,
-			String _where) {
+	protected final void setQueryBase(final String _uriBase,
+			final String[] _fields, final String _where) {
 		mUri = Uri.parse(_uriBase + mTabname);
 		mColumns = _fields;
 		mWhere = _where;
 	}
 
-	protected final void showItemCommon(Context _from, Class<?> _to,
-			Uri _uri, Bundle _extras) {
+	protected final void showItemCommon(final Context _from, final Class<?> _to,
+			final Uri _uri, final Bundle _extras) {
 		final Intent intent = new Intent(_from, _to);
 		intent.setData(_uri);
 		intent.putExtra(PackageBase.PARAM + ParamName.TABNAME,
@@ -356,7 +356,7 @@ public abstract class ArticleListActivity extends ListActivity
 		startActivity(intent);
 	}
 
-	protected int markReadOne(Cursor _c) {
+	protected int markReadOne(final Cursor _c) {
 		final int seq = _c.getInt(_c.getColumnIndex(ArticleColumn.SEQ));
 		final String user = _c.getString(_c.getColumnIndex(ArticleColumn.USER));
 		final String thread = _c.getString(_c.getColumnIndex(ArticleColumn.THREAD));

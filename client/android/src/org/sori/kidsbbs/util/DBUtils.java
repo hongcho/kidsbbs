@@ -54,7 +54,8 @@ public class DBUtils {
 		String[] ALLREAD = { ArticleField.ALLREAD };
 	}
 
-	public static final void updateBoardTable(Context _context, String _tabname) {
+	public static final void updateBoardTable(final Context _context,
+			final String _tabname) {
 		Intent intent = new Intent(_context, UpdateService.class);
 		if (_tabname != null && _tabname.length() > 0) {
 			intent.putExtra(PackageBase.PARAM + ParamName.TABNAME, _tabname);
@@ -62,7 +63,8 @@ public class DBUtils {
 		_context.startService(intent);
 	}
 
-	public static final int getBoardLastSeq(ContentResolver _cr, String _tabname) {
+	public static final int getBoardLastSeq(final ContentResolver _cr,
+			final String _tabname) {
 		int seq = 0;
 		final Uri uri = Uri.parse(ContentUriString.LIST + _tabname);
 		final Cursor c = _cr.query(uri, Projection.SEQ, null, null,
@@ -77,8 +79,8 @@ public class DBUtils {
 		return seq;
 	}
 
-	public static final String getBoardTitle(ContentResolver _cr,
-			String _tabname) {
+	public static final String getBoardTitle(final ContentResolver _cr,
+			final String _tabname) {
 		String title = null;
 		final Cursor c = _cr.query(ContentUri.BOARDS, Projection.ARTICLE_TITLE,
 				Selection.TABNAME, new String[] { _tabname }, null);
@@ -92,8 +94,8 @@ public class DBUtils {
 		return title;
 	}
 
-	public static final int getBoardTableSize(ContentResolver _cr,
-			String _tabname) {
+	public static final int getBoardTableSize(final ContentResolver _cr,
+			final String _tabname) {
 		int cnt = 0;
 		final Uri uri = Uri.parse(ContentUriString.LIST + _tabname);
 		final Cursor c = _cr.query(uri, Projection.ARTICLE_CNT, null, null,
@@ -108,14 +110,14 @@ public class DBUtils {
 		return cnt;
 	}
 
-	public static final int getBoardUnreadCount(ContentResolver _cr,
-			String _tabname) {
+	public static final int getBoardUnreadCount(final ContentResolver _cr,
+			final String _tabname) {
 		return getTableCount(_cr, ContentUriString.LIST, _tabname,
 				Selection.UNREAD);
 	}
 
-	public static final int getTableCount(ContentResolver _cr, String _uriBase,
-			String _tabname, String _where) {
+	public static final int getTableCount(final ContentResolver _cr,
+			final String _uriBase, final String _tabname, final String _where) {
 		int count = 0;
 		final Uri uri = Uri.parse(_uriBase + _tabname);
 		final Cursor c = _cr.query(uri, Projection.ARTICLE_CNT, _where, null,
@@ -130,7 +132,7 @@ public class DBUtils {
 		return count;
 	}
 
-	public static final int getTotalUnreadCount(ContentResolver _cr) {
+	public static final int getTotalUnreadCount(final ContentResolver _cr) {
 		int count = 0;
 		final Cursor c = _cr.query(ContentUri.BOARDS,
 				Projection.BOARD_TOTAL_COUNT, Selection.STATE_ACTIVE, null,
@@ -145,16 +147,16 @@ public class DBUtils {
 		return count;
 	}
 
-	public static final void updateBoardCount(ContentResolver _cr,
-			String _tabname) {
+	public static final void updateBoardCount(final ContentResolver _cr,
+			final String _tabname) {
 		final ContentValues values = new ContentValues();
 		values.put(BoardColumn.COUNT, getBoardUnreadCount(_cr, _tabname));
 		_cr.update(ContentUri.BOARDS, values, Selection.TABNAME,
 				new String[] { _tabname });
 	}
 
-	public static final boolean updateArticleRead(ContentResolver _cr,
-			String _tabname, int _seq, boolean _read) {
+	public static final boolean updateArticleRead(final ContentResolver _cr,
+			final String _tabname, final int _seq, final boolean _read) {
 		final Uri uri = Uri.parse(ContentUriString.LIST + _tabname);
 		final String[] args = new String[] { Integer.toString(_seq) };
 
@@ -178,8 +180,8 @@ public class DBUtils {
 		return (count > 0);
 	}
 
-	public static final boolean getArticleRead(ContentResolver _cr, Uri _uri,
-			String _where, String[] _whereArgs) {
+	public static final boolean getArticleRead(final ContentResolver _cr,
+			final Uri _uri, final String _where, final String[] _whereArgs) {
 		boolean read = false;
 		final Cursor c = _cr.query(_uri, Projection.ALLREAD, _where,
 				_whereArgs, null);
