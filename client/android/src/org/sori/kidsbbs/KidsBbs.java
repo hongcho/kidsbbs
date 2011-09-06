@@ -78,7 +78,7 @@ public class KidsBbs {
 		int CONN_TIMEOUT = 30 * 1000; // 30 seconds
 		int MAX_DAYS = 7;
 		int MIN_ARTICLES = 10;
-		int MAX_ARTICLES = 200;
+		int MAX_ARTICLES = 300;
 		int MAX_FIRST_ARTICLES = 100;
 		String KST_DIFF = "'-9 hours'";
 		String MAX_TIME = "'-" + MAX_DAYS + " days'";

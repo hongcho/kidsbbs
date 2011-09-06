@@ -51,8 +51,8 @@ import org.w3c.dom.NodeList;
 
 public class HttpXml {
 
-	public static final ArrayList<ArticleInfo> getArticles(String _board,
-			int _type, int _start) throws Exception {
+	public static final ArrayList<ArticleInfo> getArticles(final String _board,
+			final int _type, final int _start) throws Exception {
 		final ArrayList<ArticleInfo> articles = new ArrayList<ArticleInfo>();
 		final String tabname = BoardInfo.buildTabname(_board, _type);
 		final String urlString = UrlString.PLIST
@@ -98,7 +98,8 @@ public class HttpXml {
 		return articles;
 	}
 
-	public static final int getArticlesLastSeq(String _board, int _type) {
+	public static final int getArticlesLastSeq(final String _board,
+			final int _type) {
 		final String tabname = BoardInfo.buildTabname(_board, _type);
 		final String urlString = UrlString.LIST
 			+ ParamName.BOARD + "=" + _board

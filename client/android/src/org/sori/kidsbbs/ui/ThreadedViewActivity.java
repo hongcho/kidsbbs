@@ -197,7 +197,7 @@ public class ThreadedViewActivity extends ListActivity
 		toggleExpansion(_v);
 	}
 
-	private View findViewBySeq(int _seq) {
+	private View findViewBySeq(final int _seq) {
 		if (_seq >= 0) {
 			final int n = mListView.getChildCount();
 			for (int i = 0; i < n; ++i) {
@@ -210,7 +210,7 @@ public class ThreadedViewActivity extends ListActivity
 		return null;
 	}
 
-	private void toggleExpansion(View _v) {
+	private void toggleExpansion(final View _v) {
 		mAdapter.toggleExpansion(_v);
 		refreshView();
 	}
@@ -311,7 +311,7 @@ public class ThreadedViewActivity extends ListActivity
 		}
 	}
 	
-	private void updateHeader(AbsListView _v) {
+	private void updateHeader(final AbsListView _v) {
 		ThreadItemView vItem = (ThreadItemView) getFirstVisibleView(_v);
 		if (null == vItem) {
 			return;
@@ -326,7 +326,7 @@ public class ThreadedViewActivity extends ListActivity
 		mDateView.getParent().getParent().requestLayout();
 	}
 	
-	private View getFirstVisibleView(AbsListView _v) {
+	private View getFirstVisibleView(final AbsListView _v) {
 		final int n = _v.getChildCount();
 		for (int i = 0; i < n; ++i) {
 			final View vChild = _v.getChildAt(i);
@@ -351,7 +351,7 @@ public class ThreadedViewActivity extends ListActivity
 	private final int getCount() {
 		return mListView.getCount();
 	}
-	private final Cursor getItem(int _index) {
+	private final Cursor getItem(final int _index) {
 		return (Cursor) mListView.getItemAtPosition(_index);
 	}
 
@@ -398,7 +398,7 @@ public class ThreadedViewActivity extends ListActivity
 		updateHeader(mListView);
 	}
 
-	private void expandAll(boolean _state) {
+	private void expandAll(final boolean _state) {
 		mAdapter.setExpansionAll(_state);
 		final int n = mListView.getChildCount();
 		for (int i = n - 1; i >= 0; --i) {
@@ -519,7 +519,7 @@ public class ThreadedViewActivity extends ListActivity
 		}
 
 		@SuppressWarnings("unchecked")
-		public void setExpansionStates(Object _states) {
+		public void setExpansionStates(final Object _states) {
 			synchronized(mExpansionStates) {
 				mExpansionStates = (HashMap<Integer, Boolean>) _states;
 			}
@@ -634,7 +634,7 @@ public class ThreadedViewActivity extends ListActivity
 					null, null);
 		}
 
-		public int initExpansionStates(Cursor _c) {
+		public int initExpansionStates(final Cursor _c) {
 			if (_c == null || _c.getCount() <= 0) {
 				return 0;
 			}
@@ -655,12 +655,12 @@ public class ThreadedViewActivity extends ListActivity
 			return pos;
 		}
 
-		public boolean isExpanded(View _v) {
+		public boolean isExpanded(final View _v) {
 			final ViewHolder holder = (ViewHolder) _v.getTag();
 			return (holder.summary.getVisibility() == View.GONE);
 		}
 
-		public void setExpansion(View _v, boolean _state) {
+		public void setExpansion(final View _v, final boolean _state) {
 			final ThreadItemView itemView = (ThreadItemView) _v;
 			final ViewHolder holder = (ViewHolder) _v.getTag();
 			ViewGroup.LayoutParams params = holder.item.getLayoutParams();
@@ -685,11 +685,11 @@ public class ThreadedViewActivity extends ListActivity
 			}
 		}
 
-		public void toggleExpansion(View _v) {
+		public void toggleExpansion(final View _v) {
 			setExpansion(_v, !isExpanded(_v));
 		}
 
-		public void setExpansionAll(boolean _state) {
+		public void setExpansionAll(final boolean _state) {
 			Cursor c = getCursor();
 			if (c == null || c.getCount() <= 0) {
 				return;

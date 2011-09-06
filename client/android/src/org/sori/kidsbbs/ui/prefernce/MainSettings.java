@@ -67,7 +67,7 @@ public class MainSettings extends PreferenceActivity {
 
 	private static String DEFAULT_UPDATE_FREQ = null;
 
-	public static final String getDefaultUpdateFreq(Context _context) {
+	public static final String getDefaultUpdateFreq(final Context _context) {
 		if (DEFAULT_UPDATE_FREQ == null) {
 			DEFAULT_UPDATE_FREQ = _context.getResources().getString(
 					R.string.default_update_freq);
@@ -75,7 +75,7 @@ public class MainSettings extends PreferenceActivity {
 		return DEFAULT_UPDATE_FREQ;
 	}
 
-	private void notificationEnable(boolean _on) {
+	private void notificationEnable(final boolean _on) {
 		mPrefNotificationLights.setEnabled(_on);
 		mPrefNotificationSound.setEnabled(_on);
 		mPrefNotificationVibrate.setEnabled(_on);
@@ -84,7 +84,7 @@ public class MainSettings extends PreferenceActivity {
 	@Override
 	public void onCreate(Bundle _state) {
 		super.onCreate(_state);
-		addPreferencesFromResource(R.xml.mainsettings);
+		addPreferencesFromResource(R.xml.main_settings);
 
 		mInflater = LayoutInflater.from(this);
 
@@ -123,7 +123,7 @@ public class MainSettings extends PreferenceActivity {
 		notificationEnable(mPrefs.getBoolean(PrefKey.NOTIFICATION, true));
 	}
 
-	private Dialog createAboutDialog(int _id_title, int _id_text) {
+	private Dialog createAboutDialog(final int _id_title, final int _id_text) {
 		final View v = mInflater.inflate(R.layout.about_dialog, null);
 		((TextView) v.findViewById(R.id.about_text)).setText(_id_text);
 		return new AlertDialog.Builder(this)

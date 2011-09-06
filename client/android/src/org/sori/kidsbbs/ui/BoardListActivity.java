@@ -262,7 +262,7 @@ public class BoardListActivity extends ListActivity {
 		}
 	}
 
-	private void showItem(int _index) {
+	private void showItem(final int _index) {
 		final Cursor c = (Cursor) mAdapter.getItem(_index);
 		final Intent intent = new Intent(this, ThreadListActivity.class);
 		intent.setData(IntentUri.TLIST);

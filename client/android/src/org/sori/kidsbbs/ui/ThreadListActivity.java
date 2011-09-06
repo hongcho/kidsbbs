@@ -70,11 +70,12 @@ public class ThreadListActivity extends ArticleListActivity {
 				getCount(ContentUriString.LIST, null));
 	}
 
-	protected boolean matchingBroadcast(int _seq, String _user, String _thread) {
+	protected boolean matchingBroadcast(final int _seq, final String _user,
+			final String _thread) {
 		return true;
 	}
 
-	protected void showItem(int _index) {
+	protected void showItem(final int _index) {
 		final Cursor c = getItem(_index);
 		final int count = c.getInt(c.getColumnIndex(ArticleColumn.CNT));
 		final String title = c.getString(c.getColumnIndex(ArticleColumn.TITLE));
@@ -88,7 +89,7 @@ public class ThreadListActivity extends ArticleListActivity {
 		showItemCommon(this, ThreadedViewActivity.class, IntentUri.TVIEW, extras);
 	}
 
-	protected void markRead(int _index) {
+	protected void markRead(final int _index) {
 		final Cursor c = getItem(_index);
 		final int count = c.getInt(c.getColumnIndex(ArticleColumn.CNT));
 		int nChanged;

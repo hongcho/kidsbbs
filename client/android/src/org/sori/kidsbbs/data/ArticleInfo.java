@@ -49,9 +49,10 @@ public class ArticleInfo {
 	public final boolean getRead() { return mRead; }
 	public final void setRead(boolean _read) { mRead = _read; }
 
-	public ArticleInfo(String _tabname, int _seq, String _user, String _author,
-			String _dateString, String _title, String _thread, String _body,
-			int _count, boolean _read) {
+	public ArticleInfo(final String _tabname, final int _seq, final String _user,
+			final String _author, final String _dateString, final String _title,
+			final String _thread, final String _body, final int _count,
+			final boolean _read) {
 		mTabname = _tabname;
 		mSeq = _seq;
 		mUser = _user;

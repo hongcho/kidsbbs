@@ -202,7 +202,7 @@ public class ArticleProvider extends ContentProvider {
 		return count;
 	}
 
-	private String getTableName(Uri _uri) {
+	private String getTableName(final Uri _uri) {
 		final int type = sUriMatcher.match(_uri);
 		final List<String> segments = _uri.getPathSegments();
 		switch (type) {

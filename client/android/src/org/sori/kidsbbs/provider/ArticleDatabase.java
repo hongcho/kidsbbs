@@ -211,8 +211,8 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 		return _tabname + "_I" + _index;
 	}
 
-	private void upgradeArticleDB(SQLiteDatabase _db, String _tabname,
-			int _old) {
+	private void upgradeArticleDB(final SQLiteDatabase _db, final String _tabname,
+			final int _old) {
 		int version = _old;
 
 		// Cascading upgrade...
@@ -244,7 +244,7 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 		}
 	}
 
-	private void upgradeBoardDB(SQLiteDatabase _db, int _old) {
+	private void upgradeBoardDB(final SQLiteDatabase _db, final int _old) {
 		int version = _old;
 
 		// Cascading upgrade...
@@ -297,7 +297,8 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 		}
 	}
 
-	private void addBoard(SQLiteDatabase _db, BoardInfo _info, int _state) {
+	private void addBoard(final SQLiteDatabase _db, final BoardInfo _info,
+			final int _state) {
 		final ContentValues values = new ContentValues();
 		values.put(BoardColumn.TABNAME, _info.getTabname());
 		values.put(BoardColumn.TITLE, _info.getTitle());
@@ -310,7 +311,8 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 		createArticleTable(_db, _info.getTabname());
 	}
 
-	private static final int getUnreadCount(SQLiteDatabase _db, String _tabname) {
+	private static final int getUnreadCount(final SQLiteDatabase _db,
+			final String _tabname) {
 		final String[] PROJECTION = {
 				ArticleField.CNT,
 		};
@@ -329,15 +331,15 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 		return count;
 	}
 
-	private static final int setMainUnreadCount(SQLiteDatabase _db,
-			String _tabname, int count) {
+	private static final int setMainUnreadCount(final SQLiteDatabase _db,
+			final String _tabname, final int count) {
 		final ContentValues values = new ContentValues();
 		values.put(BoardColumn.COUNT, count);
 		return _db.update(Table.BOARDS, values,
 				ArticleProvider.Selection.TABNAME, new String[] { _tabname });
 	}
 
-	private void createMainTable(SQLiteDatabase _db) {
+	private void createMainTable(final SQLiteDatabase _db) {
 		_db.execSQL("CREATE TABLE IF NOT EXISTS " + Table.BOARDS + " ("
 				+ BaseColumnDef._ID + ","
 				+ BoardColumnDef.TABNAME + ","
@@ -346,11 +348,12 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 				+ BoardColumnDef.COUNT + ");");
 	}
 
-	private void dropMainTable(SQLiteDatabase _db) {
+	private void dropMainTable(final SQLiteDatabase _db) {
 		_db.execSQL("DROP TABLE IF EXISTS " + Table.BOARDS);
 	}
 
-	private void createArticleViews(SQLiteDatabase _db, String _tabname) {
+	private void createArticleViews(final SQLiteDatabase _db,
+			final String _tabname) {
 		_db.execSQL("CREATE VIEW IF NOT EXISTS "
 				+ getViewName(_tabname) + " AS SELECT "
 				+ BaseColumns._ID + ","
@@ -368,7 +371,8 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 				+ ") AS t GROUP BY " + ArticleColumn.THREAD + ";");
 	}
 
-	private void createArticleTable(SQLiteDatabase _db, String _tabname) {
+	private void createArticleTable(final SQLiteDatabase _db,
+			final String _tabname) {
 		_db.execSQL("CREATE TABLE IF NOT EXISTS "
 				+ _tabname + " ("
 				+ BaseColumnDef._ID + ","
@@ -387,11 +391,13 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 		createArticleViews(_db, _tabname);
 	}
 
-	private void dropArticleViews(SQLiteDatabase _db, String _tabname) {
+	private void dropArticleViews(final SQLiteDatabase _db,
+			final String _tabname) {
 		_db.execSQL("DROP VIEW IF EXISTS " + getViewName(_tabname));
 	}
 
-	private void dropArticleTable(SQLiteDatabase _db, String _tabname) {
+	private void dropArticleTable(final SQLiteDatabase _db,
+			final String _tabname) {
 		_db.execSQL("DROP TABLE IF EXISTS " + _tabname);
 		_db.execSQL("DROP INDEX IF EXISTS " + getIndexName(_tabname,
 				ArticleColumn.SEQ));

@@ -140,7 +140,7 @@ public class UpdateService extends Service
 		}
 	}
 
-	private void setupAlarm(long _period, String _tabname) {
+	private void setupAlarm(final long _period, final String _tabname) {
 		if (_period > 0) {
 			final long msPeriod = _period * 60 * 1000;
 			mAlarms.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
@@ -221,7 +221,7 @@ public class UpdateService extends Service
 			stopSelf();
 		}
 
-		private int getTableState(String _tabname) {
+		private int getTableState(final String _tabname) {
 			final String[] PROJECTIONS = {
 					BoardColumn.STATE,
 			};
@@ -239,7 +239,7 @@ public class UpdateService extends Service
 			return result;
 		}
 
-		private boolean setTableState(String _tabname, int _state) {
+		private boolean setTableState(final String _tabname, final int _state) {
 			final ContentValues values = new ContentValues();
 			values.put(BoardColumn.STATE, _state);
 			final int count = mResolver.update(ContentUri.BOARDS, values,
@@ -247,7 +247,8 @@ public class UpdateService extends Service
 			return count > 0;
 		}
 
-		private synchronized int refreshTable(String _tabname) {
+		private synchronized int refreshTable(final String _tabname,
+				final boolean _postNotification) {
 			final String[] PROJECTION = {
 					ArticleColumn.SEQ,
 					ArticleColumn.USER,
@@ -386,7 +387,7 @@ public class UpdateService extends Service
 			}
 			final int trimmed = trimBoardTable(_tabname);
 			Log.d(TAG, _tabname + ": trimed " + trimmed + " articles");
-			if (count > 0) {
+			if (_postNotification && count > 0) {
 				notifyNewArticles(_tabname, count);
 			}
 			BroadcastUtils.announceBoardUpdated(UpdateService.this, _tabname);
@@ -399,7 +400,7 @@ public class UpdateService extends Service
 			return count;
 		}
 
-		private void notifyNewArticles(String _tabname, int _count) {
+		private void notifyNewArticles(final String _tabname, final int _count) {
 			if (!mNotificationOn) {
 				return;
 			}
@@ -429,13 +430,13 @@ public class UpdateService extends Service
 					mNewArticlesNotification);
 		}
 
-		private int refreshTables(String _tabname) {
+		private int refreshTables(final String _tabname) {
 			final String[] PROJECTION = {
 					BoardColumn.TABNAME
 			};
 			final String ORDERBY = OrderBy.STATE_ASC + "," + OrderBy._ID;
 
-			int total_count = 0;
+			boolean postNotification = true;
 			final ArrayList<String> tabnames = new ArrayList<String>();
 			if (TextUtils.isEmpty(_tabname)) {
 				// Get all the boards...
@@ -452,10 +453,12 @@ public class UpdateService extends Service
 					c.close();
 				}
 			} else {
+				postNotification = false;
 				tabnames.add(_tabname);
 			}
 
 			// Update each board in the list.
+			int total_count = 0;
 			int i = 0;
 			int nTries = 0;
 			while (i < tabnames.size()) {
@@ -469,7 +472,7 @@ public class UpdateService extends Service
 				}
 				final String tabname = tabnames.get(i);
 				try {
-					final int count = refreshTable(tabname);
+					final int count = refreshTable(tabname, postNotification);
 					Log.d(TAG, tabname + ": updated " + count + " articles");
 					total_count += count;
 					++i;
@@ -486,7 +489,7 @@ public class UpdateService extends Service
 		}
 	}
 
-	private void refreshArticles(String _tabname) {
+	private void refreshArticles(final String _tabname) {
 		if (mLastUpdate == null
 				|| mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED)) {
 			mLastUpdate = new UpdateTask();
@@ -494,7 +497,7 @@ public class UpdateService extends Service
 		}
 	}
 
-	private int deleteArticles(Uri _uri, Cursor _c, int _max) {
+	private int deleteArticles(final Uri _uri, final Cursor _c, int _max) {
 		final int col_index = _c.getColumnIndex(ArticleColumn.SEQ);
 		int count = 0;
 		_c.moveToFirst();
@@ -508,7 +511,7 @@ public class UpdateService extends Service
 		return count;
 	}
 
-	private int trimBoardTable(String _tabname) {
+	private int trimBoardTable(final String _tabname) {
 		final String[] PROJECTION = {
 				ArticleColumn.SEQ,
 		};
