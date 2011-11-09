@@ -44,61 +44,61 @@
 		<item>1440</item>
 	</string-array>
 
-    <string-array name="article_names">
-    	<item>Article</item>
-    	<item>Article_w</item>
-    	<item>Article_p</item>
-    </string-array>
-    
-    <string-array name="board_type_names">
-    	<item></item>
-    	<item>작가의 마을</item>
-    	<item>시인의 집</item>
-    </string-array>
-    
-    <string-array name="board_name_map_in">
-    	<item>SquareMemo</item>
-    	<item>OpenLetter</item>
-    	<item>zDongWuHoe</item>
-    	<item>zMeot</item>
-    	<item>zSan</item>
-    	<item>zSul</item>
-    	<item>zYugA</item>
-    </string-array>
-    <string-array name="board_name_map_out">
-    	<item>Square Memo</item>
-    	<item>Square Open Letter</item>
-    	<item>동우회</item>
-    	<item>멋</item>
-    	<item>산</item>
-    	<item>술</item>
-    	<item>육아</item>
-    </string-array>
-    
-    <string-array name="default_board_tables">
-        <item>b0_anonymous</item>
-        <item>b0_AnonymousSerious</item>
-        <item>b0_guest</item>
-        <item>b0_garbages</item>
-    </string-array>
-    
-    <string-array name="board_table_names">
-        <item>b0_notice</item>
-        <item>b0_ToSysop</item>
-        <item>b0_anonymous</item>
-        <item>b0_AnonymousSerious</item>
-        <item>b0_guest</item>
-        <item>b0_garbages</item>
-
-        <item>b0_CinemaPlay</item>
-        <item>b0_ComicsAnim</item>
-        <item>b0_ComputerGamenia</item>
-        <item>b0_Music</item>
-        <item>b0_OpenDiary</item>
-        <item>b0_QuizWit</item>
-        <item>b0_Season</item>
-        <item>b0_sExLife</item>
-        <item>b0_SportsLeisure</item>
+	<string-array name="article_names">
+		<item>Article</item>
+		<item>Article_w</item>
+		<item>Article_p</item>
+	</string-array>
+	
+	<string-array name="board_type_names">
+		<item></item>
+		<item>작가의 마을</item>
+		<item>시인의 집</item>
+	</string-array>
+	
+	<string-array name="board_name_map_in">
+		<item>SquareMemo</item>
+		<item>OpenLetter</item>
+		<item>zDongWuHoe</item>
+		<item>zMeot</item>
+		<item>zSan</item>
+		<item>zSul</item>
+		<item>zYugA</item>
+	</string-array>
+	<string-array name="board_name_map_out">
+		<item>Square Memo</item>
+		<item>Square Open Letter</item>
+		<item>동우회</item>
+		<item>멋</item>
+		<item>산</item>
+		<item>술</item>
+		<item>육아</item>
+	</string-array>
+	
+	<string-array name="default_board_tables">
+		<item>b0_anonymous</item>
+		<item>b0_AnonymousSerious</item>
+		<item>b0_guest</item>
+		<item>b0_garbages</item>
+	</string-array>
+	
+	<string-array name="board_table_names">
+		<item>b0_notice</item>
+		<item>b0_ToSysop</item>
+		<item>b0_anonymous</item>
+		<item>b0_AnonymousSerious</item>
+		<item>b0_guest</item>
+		<item>b0_garbages</item>
+		
+		<item>b0_CinemaPlay</item>
+		<item>b0_ComicsAnim</item>
+		<item>b0_ComputerGamenia</item>
+		<item>b0_Music</item>
+		<item>b0_OpenDiary</item>
+		<item>b0_QuizWit</item>
+		<item>b0_Season</item>
+		<item>b0_sExLife</item>
+		<item>b0_SportsLeisure</item>
 
 		<item>b0_2000</item>
 		<item>b0_386</item>
@@ -170,7 +170,7 @@
 		<item>b0_MUD</item>
 		<item>b0_MyongJi</item>
 		<item>b0_NWU</item>
-        <item>b0_OpenLetter</item>
+		<item>b0_OpenLetter</item>
 		<item>b0_pC</item>
 		<item>b0_pet</item>
 		<item>b0_PhilosophyThought</item>
@@ -222,6 +222,6 @@
 		<item>b1_hwirim</item>
 		<item>b1_Memo</item>
 		<item>b1_SF</item>
-        <item>b0_p</item>
-    </string-array>
+		<item>b0_p</item>
+	</string-array>
 </resources>
