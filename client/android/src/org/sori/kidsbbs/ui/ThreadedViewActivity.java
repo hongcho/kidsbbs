@@ -223,22 +223,22 @@ public class ThreadedViewActivity extends ListActivity
 				_menu.add(0, MenuId.REFRESH, Menu.NONE, R.string.menu_refresh)
 					.setIcon(getResources().getIdentifier(
 							"android:drawable/ic_menu_refresh", null, null))
-					.setShortcut('0', 'r'), 1);
+					.setShortcut('0', 'r'), 9);
 		MenuCompat.setShowAsAction(
 				_menu.add(0, MenuId.EXPAND_ALL, Menu.NONE, R.string.menu_expand_all)
 					.setIcon(android.R.drawable.ic_menu_zoom)
-					.setShortcut('1', 'e'), 5);
+					.setShortcut('1', 'e'), 9);
 		MenuCompat.setShowAsAction(
 				_menu.add(0, MenuId.COLLAPSE_ALL, Menu.NONE,
 						R.string.menu_collapse_all)
 					.setIcon(getResources().getIdentifier(
 							"android:drawable/ic_menu_block", null, null))
-					.setShortcut('2', 'c'), 5);
+					.setShortcut('2', 'c'), 9);
 		MenuCompat.setShowAsAction(
 				_menu.add(0, MenuId.PREFERENCES, Menu.NONE,
 						R.string.menu_preferences)
 					.setIcon(android.R.drawable.ic_menu_preferences)
-					.setShortcut('3', 'p'), 1);
+					.setShortcut('3', 'p'), 9);
 
 		return true;
 	}
@@ -258,6 +258,9 @@ public class ThreadedViewActivity extends ListActivity
 			return true;
 		case MenuId.PREFERENCES:
 			showPreference();
+			return true;
+		case R.integer.id_home: // HACK: android.R.id.home
+			finish();
 			return true;
 		}
 		return false;

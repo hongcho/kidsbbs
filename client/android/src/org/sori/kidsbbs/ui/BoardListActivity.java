@@ -168,12 +168,12 @@ public class BoardListActivity extends ListActivity {
 				_menu.add(0, MenuId.REFRESH, Menu.NONE, R.string.menu_refresh)
 					.setIcon(getResources().getIdentifier(
 							"android:drawable/ic_menu_refresh", null, null))
-					.setShortcut('1', 'r'), 1);
+					.setShortcut('1', 'r'), 9);
 		MenuCompat.setShowAsAction(
 				_menu.add(0, MenuId.PREFERENCES, Menu.NONE,
 						R.string.menu_preferences)
 					.setIcon(android.R.drawable.ic_menu_preferences)
-					.setShortcut('2', 'p'), 1);
+					.setShortcut('2', 'p'), 9);
 
 		return true;
 	}
