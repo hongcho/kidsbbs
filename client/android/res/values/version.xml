@@ -28,5 +28,8 @@
 -->
 <resources>
 	<!-- for versionCode: 16 -->
-    <string name="version_name">0.10.6</string>
+	<string name="version_name">0.10.6</string>
+
+	<!-- HACK: android.R.id.home -->
+	<integer name="id_home">16908332</integer>
 </resources>

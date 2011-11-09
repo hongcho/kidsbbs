@@ -236,12 +236,12 @@ public abstract class ArticleListActivity extends ListActivity
 							R.string.menu_mark_all_read)
 					.setIcon(getResources().getIdentifier(
 							"android:drawable/ic_menu_mark", null, null))
-					.setShortcut('1', 't'), 1);
+					.setShortcut('1', 't'), 9);
 		MenuCompat.setShowAsAction(
 				_menu.add(0, MenuId.PREFERENCES, Menu.NONE,
 							R.string.menu_preferences)
 					.setIcon(android.R.drawable.ic_menu_preferences)
-					.setShortcut('2', 'p'), 1);
+					.setShortcut('2', 'p'), 9);
 
 		return true;
 	}
@@ -259,6 +259,9 @@ public abstract class ArticleListActivity extends ListActivity
 			return true;
 		case MenuId.PREFERENCES:
 			showPreference();
+			return true;
+		case R.integer.id_home: // HACK: android.R.id.home
+			finish();
 			return true;
 		}
 		return false;
