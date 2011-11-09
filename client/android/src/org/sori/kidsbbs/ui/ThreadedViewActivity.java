@@ -513,16 +513,12 @@ public class ThreadedViewActivity extends ListActivity
 			new HashMap<Integer, Boolean>();
 
 		public Object getExpansionStates() {
-			synchronized(mExpansionStates) {
-				return mExpansionStates;
-			}
+			return mExpansionStates;
 		}
 
 		@SuppressWarnings("unchecked")
 		public void setExpansionStates(final Object _states) {
-			synchronized(mExpansionStates) {
-				mExpansionStates = (HashMap<Integer, Boolean>) _states;
-			}
+			mExpansionStates = (HashMap<Integer, Boolean>) _states;
 		}
 
 		public ArticlesAdapter(Context _context) {
@@ -605,11 +601,12 @@ public class ThreadedViewActivity extends ListActivity
 				itemView.setPadding(0, mTopPaddingX, 0, 0);
 			}
 
-			Boolean state;
-			synchronized(mExpansionStates) {
-				state = mExpansionStates.get(itemView.mSeq);
+			// It seems "itemView" can disappear...
+			try {
+				setExpansion(itemView, mExpansionStates.get(itemView.mSeq));
+			} catch (NullPointerException e) {
+				// Ignore...
 			}
-			setExpansion(itemView, state);
 		}
 
 		@Override
@@ -645,9 +642,7 @@ public class ThreadedViewActivity extends ListActivity
 				if (pos == -1 && !read) {
 					pos = _c.getPosition();
 				}
-				synchronized(mExpansionStates) {
-					mExpansionStates.put(_c.getInt(ColumnIndex.SEQ), !read);
-				}
+				mExpansionStates.put(_c.getInt(ColumnIndex.SEQ), !read);
 			} while (_c.moveToNext());
 			if (pos == -1) {
 				pos = _c.getPosition();
@@ -680,9 +675,7 @@ public class ThreadedViewActivity extends ListActivity
 						mCollapsedHeight0 : mCollapsedHeightX;
 				holder.item.setLayoutParams(params);
 			}
-			synchronized(mExpansionStates) {
-				mExpansionStates.put(itemView.mSeq, _state);
-			}
+			mExpansionStates.put(itemView.mSeq, _state);
 		}
 
 		public void toggleExpansion(final View _v) {
@@ -697,9 +690,7 @@ public class ThreadedViewActivity extends ListActivity
 			final int saved = c.getPosition();
 			c.moveToFirst();
 			do {
-				synchronized(mExpansionStates) {
-					mExpansionStates.put(c.getInt(ColumnIndex.SEQ), _state);
-				}
+				mExpansionStates.put(c.getInt(ColumnIndex.SEQ), _state);
 			} while (c.moveToNext());
 			c.moveToPosition(saved);
 		}
