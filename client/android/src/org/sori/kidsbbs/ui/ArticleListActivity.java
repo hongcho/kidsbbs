@@ -25,9 +25,9 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs.ui;
 
-import org.sori.kidsbbs.R;
 import org.sori.kidsbbs.KidsBbs.PackageBase;
 import org.sori.kidsbbs.KidsBbs.ParamName;
+import org.sori.kidsbbs.R;
 import org.sori.kidsbbs.provider.ArticleDatabase.ArticleColumn;
 import org.sori.kidsbbs.provider.ArticleDatabase.BoardColumn;
 import org.sori.kidsbbs.provider.ArticleProvider.ContentUriString;
@@ -36,9 +36,9 @@ import org.sori.kidsbbs.ui.prefernce.MainSettings;
 import org.sori.kidsbbs.ui.prefernce.MainSettings.PrefKey;
 import org.sori.kidsbbs.util.ArticleUtils;
 import org.sori.kidsbbs.util.BroadcastUtils;
+import org.sori.kidsbbs.util.BroadcastUtils.BroadcastType;
 import org.sori.kidsbbs.util.DBUtils;
 import org.sori.kidsbbs.util.DateUtils;
-import org.sori.kidsbbs.util.BroadcastUtils.BroadcastType;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -53,8 +53,8 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
-import android.content.res.TypedArray;
 import android.content.res.Resources.Theme;
+import android.content.res.TypedArray;
 import android.database.Cursor;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
@@ -63,7 +63,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.BaseColumns;
-import android.support.v4.view.MenuCompat;
+import android.support.v4.view.MenuItemCompat;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -225,23 +225,32 @@ public abstract class ArticleListActivity extends ListActivity
 	@Override
 	public boolean onCreateOptionsMenu(Menu _menu) {
 		super.onCreateOptionsMenu(_menu);
-
-		MenuCompat.setShowAsAction(
-				_menu.add(0, MenuId.REFRESH, Menu.NONE, R.string.menu_refresh)
-					.setIcon(getResources().getIdentifier(
-							"android:drawable/ic_menu_refresh", null, null))
-					.setShortcut('0', 'r'), 1);
-		MenuCompat.setShowAsAction(
-				_menu.add(0, MenuId.MARK_ALL_READ, Menu.NONE,
-							R.string.menu_mark_all_read)
-					.setIcon(getResources().getIdentifier(
-							"android:drawable/ic_menu_mark", null, null))
-					.setShortcut('1', 't'), 9);
-		MenuCompat.setShowAsAction(
-				_menu.add(0, MenuId.PREFERENCES, Menu.NONE,
-							R.string.menu_preferences)
-					.setIcon(android.R.drawable.ic_menu_preferences)
-					.setShortcut('2', 'p'), 9);
+		
+		MenuItem item;
+		item =
+			_menu.add(0, MenuId.REFRESH, Menu.NONE, R.string.menu_refresh)
+			.setIcon(getResources().getIdentifier(
+					"android:drawable/ic_menu_refresh", null, null))
+			.setShortcut('0', 'r');
+		MenuItemCompat.setShowAsAction(item,
+				MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
+		
+		item =
+			_menu.add(0, MenuId.MARK_ALL_READ, Menu.NONE,
+					R.string.menu_mark_all_read)
+			.setIcon(getResources().getIdentifier(
+					"android:drawable/ic_menu_mark", null, null))
+			.setShortcut('1', 'm');
+		MenuItemCompat.setShowAsAction(item,
+				MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
+		
+		item =
+			_menu.add(0, MenuId.PREFERENCES, Menu.NONE,
+					R.string.menu_preferences)
+			.setIcon(android.R.drawable.ic_menu_preferences)
+			.setShortcut('2', 'p');
+		MenuItemCompat.setShowAsAction(item,
+				MenuItemCompat.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
 
 		return true;
 	}
