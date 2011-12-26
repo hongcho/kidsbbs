@@ -27,10 +27,10 @@ package org.sori.kidsbbs.ui;
 
 import java.util.HashMap;
 
-import org.sori.kidsbbs.R;
 import org.sori.kidsbbs.KidsBbs.IntentUri;
 import org.sori.kidsbbs.KidsBbs.PackageBase;
 import org.sori.kidsbbs.KidsBbs.ParamName;
+import org.sori.kidsbbs.R;
 import org.sori.kidsbbs.provider.ArticleDatabase.ArticleColumn;
 import org.sori.kidsbbs.provider.ArticleProvider.ContentUriString;
 import org.sori.kidsbbs.provider.ArticleProvider.OrderBy;
@@ -52,7 +52,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.BaseColumns;
-import android.support.v4.view.MenuCompat;
+import android.support.v4.view.MenuItemCompat;
 import android.util.TypedValue;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
@@ -218,27 +218,40 @@ public class ThreadedViewActivity extends ListActivity
 	@Override
 	public boolean onCreateOptionsMenu(Menu _menu) {
 		super.onCreateOptionsMenu(_menu);
-
-		MenuCompat.setShowAsAction(
-				_menu.add(0, MenuId.REFRESH, Menu.NONE, R.string.menu_refresh)
-					.setIcon(getResources().getIdentifier(
-							"android:drawable/ic_menu_refresh", null, null))
-					.setShortcut('0', 'r'), 9);
-		MenuCompat.setShowAsAction(
-				_menu.add(0, MenuId.EXPAND_ALL, Menu.NONE, R.string.menu_expand_all)
-					.setIcon(android.R.drawable.ic_menu_zoom)
-					.setShortcut('1', 'e'), 9);
-		MenuCompat.setShowAsAction(
-				_menu.add(0, MenuId.COLLAPSE_ALL, Menu.NONE,
-						R.string.menu_collapse_all)
-					.setIcon(getResources().getIdentifier(
-							"android:drawable/ic_menu_block", null, null))
-					.setShortcut('2', 'c'), 9);
-		MenuCompat.setShowAsAction(
-				_menu.add(0, MenuId.PREFERENCES, Menu.NONE,
-						R.string.menu_preferences)
-					.setIcon(android.R.drawable.ic_menu_preferences)
-					.setShortcut('3', 'p'), 9);
+		
+		MenuItem item;
+		item =
+			_menu.add(0, MenuId.REFRESH, Menu.NONE, R.string.menu_refresh)
+			.setIcon(getResources().getIdentifier(
+					"android:drawable/ic_menu_refresh", null, null))
+			.setShortcut('0', 'r');
+		MenuItemCompat.setShowAsAction(item,
+				MenuItemCompat.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
+		
+		item =
+			_menu.add(0, MenuId.EXPAND_ALL, Menu.NONE,
+					R.string.menu_expand_all)
+			.setIcon(android.R.drawable.ic_menu_zoom)
+			.setShortcut('1', 'e');
+		MenuItemCompat.setShowAsAction(item,
+				MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
+		
+		item =
+			_menu.add(0, MenuId.COLLAPSE_ALL, Menu.NONE,
+					R.string.menu_collapse_all)
+			.setIcon(getResources().getIdentifier(
+					"android:drawable/ic_menu_block", null, null))
+			.setShortcut('2', 'c');
+		MenuItemCompat.setShowAsAction(item,
+				MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
+		
+		item =
+			_menu.add(0, MenuId.PREFERENCES, Menu.NONE,
+					R.string.menu_preferences)
+			.setIcon(android.R.drawable.ic_menu_preferences)
+			.setShortcut('3', 'p');
+		MenuItemCompat.setShowAsAction(item,
+				MenuItemCompat.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
 
 		return true;
 	}
