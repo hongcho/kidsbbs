@@ -110,8 +110,6 @@ public abstract class ArticleListActivity extends ListActivity
 
 	private boolean mHideRead;
 
-	private String mTitle;
-
 	// First call setQueryBase(), and all refreshListCommon().
 	abstract protected void refreshList();
 
@@ -142,13 +140,8 @@ public abstract class ArticleListActivity extends ListActivity
 		return DBUtils.getTableCount(mResolver, _uriBase, mTabname, _where);
 	}
 
-	protected final void setTitleCommon(final String _title) {
-		mTitle = _title;
-	}
-
 	protected final void updateTitleCommon(final int _unread, final int _total) {
-		setTitle("[" + mBoardTitle + "] " + mTitle + " (" + _unread + "/"
-				+ _total + ")");
+		setTitle(mBoardTitle + " (" + _unread + "/" + _total + ")");
 	}
 
 	protected final Cursor getItem(final int _index) {
