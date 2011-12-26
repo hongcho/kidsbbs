@@ -51,7 +51,6 @@ public class ThreadListActivity extends ArticleListActivity {
 		final Resources resources = getResources();
 		mTitleTView = resources.getString(R.string.title_tview);
 
-		setTitleCommon(resources.getString(R.string.title_tlist));
 		setQueryBase(ContentUriString.TLIST, COLUMNS_TLIST, null);
 
 		updateTitle();

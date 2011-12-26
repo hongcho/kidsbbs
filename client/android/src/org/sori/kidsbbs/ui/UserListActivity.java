@@ -52,7 +52,6 @@ public class UserListActivity extends ArticleListActivity {
 		final Resources resources = getResources();
 		mTitleView = resources.getString(R.string.title_view);
 
-		setTitleCommon(resources.getString(R.string.title_user));
 		setQueryBase(ContentUriString.LIST, COLUMNS_LIST,
 				ArticleColumn.USER + "='" + mBoardUser + "'");
 

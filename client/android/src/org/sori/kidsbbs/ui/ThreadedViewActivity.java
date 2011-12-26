@@ -361,7 +361,7 @@ public class ThreadedViewActivity extends ListActivity
 		} else {
 			countString = "";
 		}
-		setTitle("[" + mBoardTitle + "] " + mTitle + countString);
+		setTitle(mBoardTitle + " " + countString);
 	}
 
 	private final int getCount() {
