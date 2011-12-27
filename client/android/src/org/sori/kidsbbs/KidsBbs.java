@@ -83,4 +83,8 @@ public class KidsBbs {
 		String KST_DIFF = "'-9 hours'";
 		String MAX_TIME = "'-" + MAX_DAYS + " days'";
 	}
+	
+	public interface Hacks {
+		int android_R_id_home = 16908332; // HACK: android.R.id.home
+	}
 }
