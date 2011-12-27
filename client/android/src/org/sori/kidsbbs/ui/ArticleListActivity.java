@@ -27,6 +27,7 @@ package org.sori.kidsbbs.ui;
 
 import org.sori.kidsbbs.KidsBbs.PackageBase;
 import org.sori.kidsbbs.KidsBbs.ParamName;
+import org.sori.kidsbbs.KidsBbs;
 import org.sori.kidsbbs.R;
 import org.sori.kidsbbs.provider.ArticleDatabase.ArticleColumn;
 import org.sori.kidsbbs.provider.ArticleDatabase.BoardColumn;
@@ -260,7 +261,7 @@ public abstract class ArticleListActivity extends ListActivity
 		case MenuId.PREFERENCES:
 			showPreference();
 			break;
-		case 16908332: // HACK: android.R.id.home
+		case KidsBbs.Hacks.android_R_id_home: // HACK: android.R.id.home
 			finish();
 			break;
 		}
