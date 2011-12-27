@@ -158,8 +158,6 @@ public class BoardListActivity extends ListActivity {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu _menu) {
-		super.onCreateOptionsMenu(_menu);
-		
 		MenuItem item;
 		item =
 			_menu.add(0, MenuId.SELECT, Menu.NONE, R.string.menu_select)
@@ -174,7 +172,7 @@ public class BoardListActivity extends ListActivity {
 					"android:drawable/ic_menu_refresh", null, null))
 			.setShortcut('1', 'r');
 		MenuItemCompat.setShowAsAction(item,
-				MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
+				MenuItemCompat.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
 		
 		item =
 			_menu.add(0, MenuId.PREFERENCES, Menu.NONE,
@@ -184,7 +182,7 @@ public class BoardListActivity extends ListActivity {
 		MenuItemCompat.setShowAsAction(item,
 				MenuItemCompat.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
 
-		return true;
+		return super.onCreateOptionsMenu(_menu);
 	}
 
 	@Override
@@ -201,20 +199,19 @@ public class BoardListActivity extends ListActivity {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		super.onOptionsItemSelected(item);
 		switch (item.getItemId()) {
 		case MenuId.SELECT:
 			selectBoards();
-			return true;
+			break;
 		case MenuId.REFRESH:
 			DBUtils.updateBoardTable(this, null);
 			refreshList();
-			return true;
+			break;
 		case MenuId.PREFERENCES:
 			startActivity(new Intent(this, MainSettings.class));
-			return true;
+			break;
 		}
-		return false;
+		return super.onOptionsItemSelected(item);
 	}
 
 	@Override

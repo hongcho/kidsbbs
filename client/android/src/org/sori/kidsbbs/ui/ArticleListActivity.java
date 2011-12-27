@@ -217,8 +217,6 @@ public abstract class ArticleListActivity extends ListActivity
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu _menu) {
-		super.onCreateOptionsMenu(_menu);
-		
 		MenuItem item;
 		item =
 			_menu.add(0, MenuId.REFRESH, Menu.NONE, R.string.menu_refresh)
@@ -235,7 +233,7 @@ public abstract class ArticleListActivity extends ListActivity
 					"android:drawable/ic_menu_mark", null, null))
 			.setShortcut('1', 'm');
 		MenuItemCompat.setShowAsAction(item,
-				MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
+				MenuItemCompat.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
 		
 		item =
 			_menu.add(0, MenuId.PREFERENCES, Menu.NONE,
@@ -245,28 +243,28 @@ public abstract class ArticleListActivity extends ListActivity
 		MenuItemCompat.setShowAsAction(item,
 				MenuItemCompat.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
 
-		return true;
+		return super.onCreateOptionsMenu(_menu);
+		
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		super.onOptionsItemSelected(item);
 		switch (item.getItemId()) {
 		case MenuId.REFRESH:
 			DBUtils.updateBoardTable(this, mTabname);
 			refreshList();
-			return true;
+			break;
 		case MenuId.MARK_ALL_READ:
 			markAllRead();
-			return true;
+			break;
 		case MenuId.PREFERENCES:
 			showPreference();
-			return true;
-		case R.integer.id_home: // HACK: android.R.id.home
+			break;
+		case 16908332: // HACK: android.R.id.home
 			finish();
-			return true;
+			break;
 		}
-		return false;
+		return super.onOptionsItemSelected(item);
 	}
 
 	@Override

@@ -217,8 +217,6 @@ public class ThreadedViewActivity extends ListActivity
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu _menu) {
-		super.onCreateOptionsMenu(_menu);
-		
 		MenuItem item;
 		item =
 			_menu.add(0, MenuId.REFRESH, Menu.NONE, R.string.menu_refresh)
@@ -226,7 +224,7 @@ public class ThreadedViewActivity extends ListActivity
 					"android:drawable/ic_menu_refresh", null, null))
 			.setShortcut('0', 'r');
 		MenuItemCompat.setShowAsAction(item,
-				MenuItemCompat.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
+				MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
 		
 		item =
 			_menu.add(0, MenuId.EXPAND_ALL, Menu.NONE,
@@ -234,7 +232,7 @@ public class ThreadedViewActivity extends ListActivity
 			.setIcon(android.R.drawable.ic_menu_zoom)
 			.setShortcut('1', 'e');
 		MenuItemCompat.setShowAsAction(item,
-				MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
+				MenuItemCompat.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
 		
 		item =
 			_menu.add(0, MenuId.COLLAPSE_ALL, Menu.NONE,
@@ -243,7 +241,7 @@ public class ThreadedViewActivity extends ListActivity
 					"android:drawable/ic_menu_block", null, null))
 			.setShortcut('2', 'c');
 		MenuItemCompat.setShowAsAction(item,
-				MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
+				MenuItemCompat.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
 		
 		item =
 			_menu.add(0, MenuId.PREFERENCES, Menu.NONE,
@@ -253,30 +251,29 @@ public class ThreadedViewActivity extends ListActivity
 		MenuItemCompat.setShowAsAction(item,
 				MenuItemCompat.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
 
-		return true;
+		return super.onCreateOptionsMenu(_menu);
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		super.onOptionsItemSelected(item);
 		switch (item.getItemId()) {
 		case MenuId.REFRESH:
 			refreshList();
-			return true;
+			break;
 		case MenuId.EXPAND_ALL:
 			expandAll(true);
-			return true;
+			break;
 		case MenuId.COLLAPSE_ALL:
 			expandAll(false);
-			return true;
+			break;
 		case MenuId.PREFERENCES:
 			showPreference();
-			return true;
-		case R.integer.id_home: // HACK: android.R.id.home
+			break;
+		case 16908332: // HACK: android.R.id.home
 			finish();
-			return true;
+			break;
 		}
-		return false;
+		return super.onOptionsItemSelected(item);
 	}
 
 	@Override
