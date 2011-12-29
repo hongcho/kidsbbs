@@ -49,7 +49,7 @@ public class KidsConnection {
 	private InputStream mStderr;
 	private OutputStreamWriter mStdin;
 
-	private VT220Screen mScreen;
+	private VT220Screen mScreen = new VT220Screen(WIDTH, HEIGHT);
 	private byte[] mBuf = new byte[BUF_SIZE];
 
 	protected void finalize() throws Throwable {
@@ -87,8 +87,6 @@ public class KidsConnection {
 		mSess = mConn.openSession();
 		mSess.requestPTY(STR_VT100, WIDTH, HEIGHT, 640, 480, null);
 		mSess.startShell();
-
-		mScreen = new VT220Screen(WIDTH, HEIGHT);
 
 		mStdout = mSess.getStdout();
 		mStderr = mSess.getStderr();
