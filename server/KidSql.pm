@@ -66,10 +66,17 @@ my $MAX_TRY = 3;
 ######################################################################
 # String Constants.
 
+sub utf82euckr
+{
+    my ($s) = @_;
+    Encode::from_to($s, 'UTF8', 'EUC-KR');
+    return $s;
+}
+
 sub euckr2utf8
 {
     my ($s) = @_;
-    Encode::from_to($s, "EUC-KR", "UTF8");
+    Encode::from_to($s, 'EUC-KR', 'UTF8');
     return $s;
 }
 
@@ -78,7 +85,7 @@ sub k2u_hash
     my ($e, $u) = @_;
     foreach my $k (keys(%$e)) {
 	my $v = $$e{$k};
-	Encode::from_to($k, "EUC-KR", "UTF8");
+	Encode::from_to($k, 'EUC-KR', 'UTF8');
 	$$u{$k} = $v;
     }
 }
@@ -91,49 +98,42 @@ my %N_MON = ('Jan' => 1, 'Feb' => 2, 'Mar' => 3, 'Apr' => 4, 'May' => 5,
 	     'Jun' => 6, 'Jul' => 7, 'Aug' => 8, 'Sep' => 9, 'Oct' => 10,
 	     'Nov' => 11, 'Dec' => 12);
 
-my %K_DAY_EUCKR = ('일요일' => 'Sun',
-		   '월요일' => 'Mon',
-		   '화요일' => 'Tue',
-		   '수요일' => 'Wed',
-		   '목요일' => 'Thu',
-		   '금요일' => 'Fri',
-		   '토요일' => 'Sat',
-		   '일' => 'Sun',
-		   '월' => 'Mon',
-		   '화' => 'Tue',
-		   '수' => 'Wed',
-		   '목' => 'Thu',
-		   '금' => 'Fri',
-		   '토' => 'Sat',
-		   '(일)' => 'Sun',
-		   '(월)' => 'Mon',
-		   '(화)' => 'Tue',
-		   '(수)' => 'Wed',
-		   '(목)' => 'Thu',
-		   '(금)' => 'Fri',
-		   '(토)' => 'Sat');
-my %K_DAY;
-k2u_hash(\%K_DAY_EUCKR, \%K_DAY);
+my %K_DAY = ('일요일' => 'Sun',
+	     '월요일' => 'Mon',
+	     '화요일' => 'Tue',
+	     '수요일' => 'Wed',
+	     '목요일' => 'Thu',
+	     '금요일' => 'Fri',
+	     '토요일' => 'Sat',
+	     '일' => 'Sun',
+	     '월' => 'Mon',
+	     '화' => 'Tue',
+	     '수' => 'Wed',
+	     '목' => 'Thu',
+	     '금' => 'Fri',
+	     '토' => 'Sat',
+	     '(일)' => 'Sun',
+	     '(월)' => 'Mon',
+	     '(화)' => 'Tue',
+	     '(수)' => 'Wed',
+	     '(목)' => 'Thu',
+	     '(금)' => 'Fri',
+	     '(토)' => 'Sat');
 
-my %K_AMPM_EUCKR = ('오전' => 0, '오후' => 12);
-my %K_AMPM;
-k2u_hash(\%K_AMPM_EUCKR, \%K_AMPM);
+my %K_AMPM = ('오전' => 0, '오후' => 12);
 
 # (year, month, mday, wday, ampm, hour, min, sec)
-my $K_DATETMPL_EUCKR = '^\s*(\d+)년\s+(\d+)월\s+(\d+)일\s+(\S+)\s+(\S+)\s+(\d+)시\s+(\d+)분\s+(\d+)초\s*$';
-my $K_DATETMPL = euckr2utf8($K_DATETMPL_EUCKR);
+my $K_DATETMPL = '^\s*(\d+)년\s+(\d+)월\s+(\d+)일\s+(\S+)\s+(\S+)\s+(\d+)시\s+(\d+)분\s+(\d+)초\s*$';
 
 my %BTYPES = (Boardname => 0, writer => 1, writer_p => 2);
 my @BNAME1 = ('Boardname=', 'writer=', 'writer_p=');
 my @BNAME2 = ('Article=', 'Article_w=', 'Article_p=');
 
-my %B_KMAP_EUCKR = ('동우회' => 'zDongWuHoe',
-		    '멋' => 'zMeot',
-		    '산' => 'zSan',
-		    '술' => 'zSul',
-		    '육아' => 'zYugA');
-my %B_KMAP;
-k2u_hash(\%B_KMAP_EUCKR, \%B_KMAP);
+my %B_KMAP = ('동우회' => 'zDongWuHoe',
+	      '멋' => 'zMeot',
+	      '산' => 'zSan',
+	      '술' => 'zSul',
+	      '육아' => 'zYugA');
 
 ######################################################################
 # MySql Constants
@@ -436,6 +436,7 @@ sub GetBoardPage
 	my $rs = $AGENT->request($rq);
 	next if (!$rs->is_success);
 	foreach my $l (split(/\n/, $rs->content)) {
+	    $l = utf82euckr($l);# Keep things in EUC-KR
 	    if ($l =~ /^\s*<tr><td align=center><a href=.+?>([^<]+)<\/a><td bgcolor=pink>(.+?)<td>&nbsp;(.+?)<td>\s*(\d+\s*\/\s*\d+)\s*<td align=right>\s*(\S+)\s*<td><a href=(.+?)>&nbsp;(.+?)<\/a><\/tr>/oi) {
 		my $e;
 		$e->{seq} = $1;
@@ -493,6 +494,7 @@ sub GetArticlePage
 	my $st = 0;
 	my $skip = 1;
 	foreach my $l (split(/\n/, $rs->content)) {
+	    $l = utf82euckr($l);# Keep things in EUC-KR
 	    if ($st == 0) {
 		($l =~ /<td>/oi) and $st = 1;
 	    } elsif ($st == 1) {
@@ -823,6 +825,7 @@ sub GetBoardList
 	my $rs = $AGENT->request($rq);
 	next if (!$rs->is_success);
 	foreach my $l (split(/\n/, $rs->content)) {
+	    $l = utf82euckr($l);# Keep things in EUC-KR
 	    if ($l =~ /\[\s*<a href=(.+?)>\s*(.+?)\s*<\/a>\s*\]/oi) {
 		my $link = $1;
 		if ($link =~ /Boardlist\?(.+?)=(.+?)&/) {
@@ -913,7 +916,7 @@ sub InitBoardTable
     my $p = 'Last';
     while (1) {
 	my $bp = GetBoardPage($b, $t, $p);
-	defined($bp)
+	(defined($bp) and scalar(@{$bp->{list}}) > 0)
 	    or print("fetch failed <$b, $t, $p>\n"),
 	    ++$error,$done=1,last;
 	my $dx;
