@@ -65,19 +65,19 @@ if ($_n == NULL || $_n < 0) {
   $_n = 20;
  }
 
-$tmap = array(0 => '보드목록',
-	      1 => '작가의 마을',
-	      2 => '시인의 집');
+$tmap = array(0 => mb_convert_encoding('보드목록', 'UTF-8', 'EUC-KR'),
+	      1 => mb_convert_encoding('작가의 마을', 'UTF-8', 'EUC-KR'),
+	      2 => mb_convert_encoding('시인의 집', 'UTF-8', 'EUC-KR'));
 $amap = array(0 => 'Article',
 	      1 => 'Article_w',
 	      2 => 'Article_p');
 $bmap = array('SquareMemo' => 'Square Memo',
 	      'OpenLetter' => 'Square Open Letter',
-	      'zDongWuHoe' => '동우회',
-	      'zMeot' => '멋',
-	      'zSan' => '산',
-	      'zSul' => '술',
-	      'zYugA' => '육아');
+	      'zDongWuHoe' => mb_convert_encoding('동우회', 'UTF-8', 'EUC-KR'),
+	      'zMeot' => mb_convert_encoding('멋', 'UTF-8', 'EUC-KR'),
+	      'zSan' => mb_convert_encoding('산', 'UTF-8', 'EUC-KR'),
+	      'zSul' => mb_convert_encoding('술', 'UTF-8', 'EUC-KR'),
+	      'zYugA' => mb_convert_encoding('육아', 'UTF-8', 'EUC-KR'));
 
 // get type name
 function get_typename($t)
@@ -260,7 +260,7 @@ function display_header($b, $t, $title, $nt, $s, $n, $type)
     echo "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd\">\n";
     echo "<HTML>\n<HEAD>\n";
     echo "<LINK rel=\"SHORTCUT ICON\" href=\"/kids/favicon.ico\">\n";
-    echo "<META http-equiv=\"Content-Type\" content=\"text/html; charset=euc-kr\">\n";
+    echo "<META http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n";
     echo "<TITLE>$title</TITLE>\n";
     echo "<BASE target=\"_top\">\n";
     echo "<LINK rel=\"stylesheet\" href=\"kids.css\" type=\"text/css\">\n";
@@ -272,7 +272,7 @@ function display_header($b, $t, $title, $nt, $s, $n, $type)
     break;
   case 1:
     header('Content-Type: text/xml');
-    echo "<?xml version=\"1.0\" encoding=\"euc-kr\"?>\n";
+    echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
     echo "<KIDSBBS>\n";
     switch ($type) {
     case 'plist':
@@ -620,8 +620,10 @@ function gen_main(&$qr)
 {
   global $_o;
   $nr = mysql_num_rows($qr);
-  display_header(NULL, NULL, "키즈 쓰레드 보드 목록 ($nr)", $nr,
-		 0, $nr, 'main');
+  display_header(NULL, NULL,
+		 mb_convert_encoding("키즈 쓰레드 보드 목록 ($nr)",
+				     'UTF-8', 'EUC-KR'),
+		 $nr, 0, $nr, 'main');
   $nc = 4;
   $cnt = 0;
   $last_t = -1;
@@ -651,7 +653,9 @@ function gen_main(&$qr)
 	  echo "</TABLE>\n";
 	}
 	$last_t = $t;
-	echo "<H1>".get_typename($last_t)." <FONT size=\"-1pt\">(쓰레드 갯수|글 갯수)</FONT></H1>\n";
+	echo "<H1>".get_typename($last_t)." <FONT size=\"-1pt\">";
+	echo mb_convert_encoding("(쓰레드 갯수|글 갯수)", 'UTF-8', 'EUC-KR');
+	echo "</FONT></H1>\n";
 	echo "<TABLE cellpadding=\"5\" cellspacing=\"0\" border=\"1\">\n";
 	$cnt = 0;
       }
@@ -728,7 +732,10 @@ function gen_rss_main()
   $q = get_dbquery('main');
   $qr = mysql_query($q);
   $nr = mysql_num_rows($qr);
-  display_header(NULL, NULL, "키즈 RSS 목록 ($nr)", $nr, 0, $nr, 'main');
+  display_header(NULL, NULL,
+		 mb_convert_encoding("키즈 RSS 목록 ($nr)",
+				     'UTF-8', 'EUC-KR'),
+		 $nr, 0, $nr, 'main');
   $nc = 4;
   $cnt = 0;
   $last_t = -1;
@@ -790,7 +797,7 @@ function gen_rss_feed($b, $t)
   $buildDate = to_date822(mysql_result($qr, 0, 'a4_date'));
 
   header('Content-Type: text/xml');
-  echo "<?xml version=\"1.0\" encoding=\"EUC-KR\"?>\n";
+  echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
   echo "<rss version=\"2.0\">";
   echo "<channel>\n";
   echo "<title><![CDATA[KIDS: $title]]></title>\n";
