@@ -32,6 +32,7 @@
 
 package KidSql;
 use strict;
+use Encode;
 use LWP::UserAgent;
 use DBI;
 # The default MD5 didn't quite work.
@@ -62,46 +63,77 @@ my $AGENT_STRBASE = 'KidSqlGet 0/1 (http://sori.org/kids/) ';
 
 my $MAX_TRY = 3;
 
+######################################################################
+# String Constants.
+
+sub euckr2utf8
+{
+    my ($s) = @_;
+    Encode::from_to($s, "EUC-KR", "UTF8");
+    return $s;
+}
+
+sub k2u_hash
+{
+    my ($e, $u) = @_;
+    foreach my $k (keys(%$e)) {
+	my $v = $$e{$k};
+	Encode::from_to($k, "EUC-KR", "UTF8");
+	$$u{$k} = $v;
+    }
+}
+
+
 my @S_DAY = ('Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat');
 my @S_MON = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
 	     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec');
 my %N_MON = ('Jan' => 1, 'Feb' => 2, 'Mar' => 3, 'Apr' => 4, 'May' => 5,
 	     'Jun' => 6, 'Jul' => 7, 'Aug' => 8, 'Sep' => 9, 'Oct' => 10,
 	     'Nov' => 11, 'Dec' => 12);
-my %K_DAY = ('일요일' => 'Sun',
-	     '월요일' => 'Mon',
-	     '화요일' => 'Tue',
-	     '수요일' => 'Wed',
-	     '목요일' => 'Thu',
-	     '금요일' => 'Fri',
-	     '토요일' => 'Sat',
-	     '일' => 'Sun',
-	     '월' => 'Mon',
-	     '화' => 'Tue',
-	     '수' => 'Wed',
-	     '목' => 'Thu',
-	     '금' => 'Fri',
-	     '토' => 'Sat',
-	     '(일)' => 'Sun',
-	     '(월)' => 'Mon',
-	     '(화)' => 'Tue',
-	     '(수)' => 'Wed',
-	     '(목)' => 'Thu',
-	     '(금)' => 'Fri',
-	     '(토)' => 'Sat');
-my %K_AMPM = ('오전' => 0, '오후' => 12);
+
+my %K_DAY_EUCKR = ('일요일' => 'Sun',
+		   '월요일' => 'Mon',
+		   '화요일' => 'Tue',
+		   '수요일' => 'Wed',
+		   '목요일' => 'Thu',
+		   '금요일' => 'Fri',
+		   '토요일' => 'Sat',
+		   '일' => 'Sun',
+		   '월' => 'Mon',
+		   '화' => 'Tue',
+		   '수' => 'Wed',
+		   '목' => 'Thu',
+		   '금' => 'Fri',
+		   '토' => 'Sat',
+		   '(일)' => 'Sun',
+		   '(월)' => 'Mon',
+		   '(화)' => 'Tue',
+		   '(수)' => 'Wed',
+		   '(목)' => 'Thu',
+		   '(금)' => 'Fri',
+		   '(토)' => 'Sat');
+my %K_DAY;
+k2u_hash(\%K_DAY_EUCKR, \%K_DAY);
+
+my %K_AMPM_EUCKR = ('오전' => 0, '오후' => 12);
+my %K_AMPM;
+k2u_hash(\%K_AMPM_EUCKR, \%K_AMPM);
+
 # (year, month, mday, wday, ampm, hour, min, sec)
-my $K_DATETMPL = '^\s*(\d+)년\s+(\d+)월\s+(\d+)일\s+(\S+)\s+(\S+)\s+(\d+)시\s+(\d+)분\s+(\d+)초\s*$';
+my $K_DATETMPL_EUCKR = '^\s*(\d+)년\s+(\d+)월\s+(\d+)일\s+(\S+)\s+(\S+)\s+(\d+)시\s+(\d+)분\s+(\d+)초\s*$';
+my $K_DATETMPL = euckr2utf8($K_DATETMPL_EUCKR);
 
 my %BTYPES = (Boardname => 0, writer => 1, writer_p => 2);
 my @BNAME1 = ('Boardname=', 'writer=', 'writer_p=');
 my @BNAME2 = ('Article=', 'Article_w=', 'Article_p=');
 
-my %B_KMAP = ('동우회' => 'zDongWuHoe',
-	      '멋' => 'zMeot',
-	      '산' => 'zSan',
-	      '술' => 'zSul',
-	      '육아' => 'zYugA');
+my %B_KMAP_EUCKR = ('동우회' => 'zDongWuHoe',
+		    '멋' => 'zMeot',
+		    '산' => 'zSan',
+		    '술' => 'zSul',
+		    '육아' => 'zYugA');
+my %B_KMAP;
+k2u_hash(\%B_KMAP_EUCKR, \%B_KMAP);
 
 ######################################################################
 # MySql Constants
@@ -240,7 +272,7 @@ sub EncodeUrl
 sub DecodeKidsHeaderFormat
 {
     my ($l) = @_;
-    $$l =~ s/ <br \/>//g;
+    $$l =~ s/\s*<br \/>//g;
     $$l =~ s/&lt;/</g;
     $$l =~ s/&nbsp;/ /g;
 }
@@ -251,7 +283,7 @@ sub DecodeKidsHeaderFormat
 sub DecodeKidsBodyFormat
 {
     my ($l) = @_;
-    $$l =~ s/ <br \/>/<br\/>/g;
+    $$l =~ s/\s*<br \/>/<br\/>/g;
 }
 
 ######################################################################
