@@ -42,6 +42,9 @@ select((select(STDERR), $|=1)[0]);
 # kill all previous childs first.
 print(STDERR $TAG, " killall -9 $CMD:", `killall -9 $CMD`, "\n");
 
+# Uncomment to suspend update by cron.
+#exit(0);
+
 my $pid = fork();
 defined($pid) or die("$TAG cannot fork: $!\n");
 if ($pid) {
