@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+	Copyright (c) 2010, Younghong "Hong" Cho <hongcho@sori.org>.
+	All rights reserved.
+
+	Redistribution and use in source and binary forms, with or without
+	modification, are permitted provided that the following conditions are met:
+
+	  1. Redistributions of source code must retain the above copyright notice,
+	this list of conditions and the following disclaimer.
+	  2. Redistributions in binary form must reproduce the above copyright
+	notice, this list of conditions and the following disclaimer in the
+	documentation and/or other materials provided with the distribution.
+	  3. Neither the name of the organization nor the names of its contributors
+	may be used to endorse or promote products derived from this software
+	without specific prior written permission.
+
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+	AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+	IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+	ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY
+	DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+	(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+	ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+	(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+	THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources>
+	<string-array name="update_freq_options">
+		<item>수동</item>
+		<item>20분</item>
+		<item>1시간</item>
+		<item>6시간</item>
+		<item>12시간</item>
+		<item>하루</item>
+	</string-array>
+	<string-array name="update_freq_values">
+		<item>0</item>
+		<item>20</item>
+		<item>60</item>
+		<item>360</item>
+		<item>720</item>
+		<item>1440</item>
+	</string-array>
+
+	<string-array name="article_names">
+		<item>Article</item>
+		<item>Article_w</item>
+		<item>Article_p</item>
+	</string-array>
+	
+	<string-array name="board_type_names">
+		<item></item>
+		<item>작가의 마을</item>
+		<item>시인의 집</item>
+	</string-array>
+	
+	<string-array name="board_name_map_in">
+		<item>SquareMemo</item>
+		<item>OpenLetter</item>
+		<item>zDongWuHoe</item>
+		<item>zMeot</item>
+		<item>zSan</item>
+		<item>zSul</item>
+		<item>zYugA</item>
+	</string-array>
+	<string-array name="board_name_map_out">
+		<item>Square Memo</item>
+		<item>Square Open Letter</item>
+		<item>동우회</item>
+		<item>멋</item>
+		<item>산</item>
+		<item>술</item>
+		<item>육아</item>
+	</string-array>
+	
+	<string-array name="default_board_tables">
+		<item>b0_anonymous</item>
+		<item>b0_AnonymousSerious</item>
+		<item>b0_guest</item>
+		<item>b0_garbages</item>
+	</string-array>
+	
+	<string-array name="board_table_names">
+		<item>b0_notice</item>
+		<item>b0_ToSysop</item>
+		<item>b0_anonymous</item>
+		<item>b0_AnonymousSerious</item>
+		<item>b0_guest</item>
+		<item>b0_garbages</item>
+		
+		<item>b0_CinemaPlay</item>
+		<item>b0_ComicsAnim</item>
+		<item>b0_ComputerGamenia</item>
+		<item>b0_Music</item>
+		<item>b0_OpenDiary</item>
+		<item>b0_QuizWit</item>
+		<item>b0_Season</item>
+		<item>b0_sExLife</item>
+		<item>b0_SportsLeisure</item>
+
+		<item>b0_2000</item>
+		<item>b0_386</item>
+		<item>b0_AfterWeddingMarch</item>
+		<item>b0_AJou</item>
+		<item>b0_Arizona</item>
+		<item>b0_AUstralia</item>
+		<item>b0_Buddhism</item>
+		<item>b0_CampusLife</item>
+		<item>b0_canaDA</item>
+		<item>b0_car</item>
+		<item>b0_CareerCenter</item>
+		<item>b0_catholic</item>
+		<item>b0_CAU</item>
+		<item>b0_CBNU</item>
+		<item>b0_Christian</item>
+		<item>b0_ChungNam</item>
+		<item>b0_CMU</item>
+		<item>b0_CNU</item>
+		<item>b0_CnUnix</item>
+		<item>b0_consumer</item>
+		<item>b0_cooKing</item>
+		<item>b0_CultureOfKids</item>
+		<item>b0_cyberPunk</item>
+		<item>b0_dataBase</item>
+		<item>b0_DongDuk</item>
+		<item>b0_donggukUniv</item>
+		<item>b0_Duksung</item>
+		<item>b0_economics</item>
+		<item>b0_educationLearning</item>
+		<item>b0_EnglishOnly</item>
+		<item>b0_envirOnment</item>
+		<item>b0_euroPe</item>
+		<item>b0_Ewha</item>
+		<item>b0_face2face</item>
+		<item>b0_Family</item>
+		<item>b0_fineArt</item>
+		<item>b0_FlagOfKids</item>
+		<item>b0_fleaMarket</item>
+		<item>b0_freeeXpression</item>
+		<item>b0_Fun</item>
+		<item>b0_GoodPlaces</item>
+		<item>b0_Guru</item>
+		<item>b0_HallymUnv</item>
+		<item>b0_HangulKorean</item>
+		<item>b0_healthNdiet</item>
+		<item>b0_history</item>
+		<item>b0_HUFSan</item>
+		<item>b0_HYU</item>
+		<item>b0_Iam</item>
+		<item>b0_IDofTheWeek</item>
+		<item>b0_internet</item>
+		<item>b0_KAIST</item>
+		<item>b0_kidsine</item>
+		<item>b0_kidsOB</item>
+		<item>b0_KJIST</item>
+		<item>b0_KNU</item>
+		<item>b0_KoreaUniv</item>
+		<item>b0_KyungHee</item>
+		<item>b0_Japan</item>
+		<item>b0_java</item>
+		<item>b0_law</item>
+		<item>b0_LinuxFreeBSD</item>
+		<item>b0_loveNfriendship</item>
+		<item>b0_manualKids</item>
+		<item>b0_medicineClinic</item>
+		<item>b0_military</item>
+		<item>b0_MIT</item>
+		<item>b0_MUD</item>
+		<item>b0_MyongJi</item>
+		<item>b0_NWU</item>
+		<item>b0_OpenLetter</item>
+		<item>b0_pC</item>
+		<item>b0_pet</item>
+		<item>b0_PhilosophyThought</item>
+		<item>b0_photo</item>
+		<item>b0_plantsNherb</item>
+		<item>b0_PNU</item>
+		<item>b0_Politics</item>
+		<item>b0_POSTECH</item>
+		<item>b0_purdue</item>
+		<item>b0_salaryMan</item>
+		<item>b0_sciEncE</item>
+		<item>b0_SKK</item>
+		<item>b0_SNU</item>
+		<item>b0_SoGang</item>
+		<item>b0_SookMyung</item>
+		<item>b0_SoongSil</item>
+		<item>b0_SquareMemo</item>
+		<item>b0_Stanford</item>
+		<item>b0_studyingabroad</item>
+		<item>b0_SungShin</item>
+		<item>b0_TAMU</item>
+		<item>b0_Teach</item>
+		<item>b0_Travel</item>
+		<item>b0_tV</item>
+		<item>b0_UCLA</item>
+		<item>b0_UIUC</item>
+		<item>b0_UMN</item>
+		<item>b0_USA</item>
+		<item>b0_venTure</item>
+		<item>b0_Wanted</item>
+		<item>b0_windows</item>
+		<item>b0_WWW</item>
+		<item>b0_YonSei</item>
+		<item>b0_zDongWuHoe</item>
+		<item>b0_zMeot</item>
+		<item>b0_zYugA</item>
+		<item>b0_zSan</item>
+		<item>b0_zSul</item>
+		<item>b2_Anthology</item>
+		<item>b2_Favorite</item>
+		<item>b2_Memo</item>
+		<item>b2_Note</item>
+		<item>b2_Poet</item>
+		<item>b1_adage</item>
+		<item>b1_books</item>
+		<item>b1_contemplation</item>
+		<item>b1_essay</item>
+		<item>b1_fiction</item>
+		<item>b1_hwirim</item>
+		<item>b1_Memo</item>
+		<item>b1_SF</item>
+		<item>b0_p</item>
+	</string-array>
+</resources>

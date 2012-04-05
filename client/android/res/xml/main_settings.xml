@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+	Copyright (c) 2010, Younghong "Hong" Cho <hongcho@sori.org>.
+	All rights reserved.
+
+	Redistribution and use in source and binary forms, with or without
+	modification, are permitted provided that the following conditions are met:
+
+	  1. Redistributions of source code must retain the above copyright notice,
+	this list of conditions and the following disclaimer.
+	  2. Redistributions in binary form must reproduce the above copyright
+	notice, this list of conditions and the following disclaimer in the
+	documentation and/or other materials provided with the distribution.
+	  3. Neither the name of the organization nor the names of its contributors
+	may be used to endorse or promote products derived from this software
+	without specific prior written permission.
+
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+	AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+	IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+	ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY
+	DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+	(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+	ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+	(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+	THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+	<PreferenceCategory
+		android:title="@string/settings_update"
+		>
+		<ListPreference
+			android:key="PREF_UPDATE_FREQ"
+			android:title="@string/update_freq_title"
+			android:summary="@string/update_freq_summary"
+			android:entries="@array/update_freq_options"
+			android:entryValues="@array/update_freq_values"
+			android:dialogTitle="@string/update_freq_title"
+			android:defaultValue="@string/default_update_freq"
+			/>
+	</PreferenceCategory>
+	<PreferenceCategory
+		android:title="@string/settings_viewing"
+		>
+		<CheckBoxPreference
+			android:key="PREF_HIDE_READ"
+			android:title="@string/hide_read_title"
+			android:summary="@string/hide_read_summary"
+			android:defaultValue="false"
+			/>
+	</PreferenceCategory>
+	<PreferenceCategory
+		android:title="@string/settings_notification"
+		>
+		<CheckBoxPreference
+			android:key="PREF_NOTIFICATION"
+			android:title="@string/notification_title"
+			android:summary="@string/notification_summary"
+			android:defaultValue="true"
+			/>
+	</PreferenceCategory>
+	<PreferenceCategory
+		android:title="@string/settings_notification_options"
+		>
+		<CheckBoxPreference
+			android:key="PREF_NOTIFICATION_LIGHTS"
+			android:title="@string/notification_lights"
+			android:defaultValue="true"
+			/>
+		<CheckBoxPreference
+			android:key="PREF_NOTIFICATION_SOUND"
+			android:title="@string/notification_sound"
+			android:defaultValue="true"
+			/>
+		<CheckBoxPreference
+			android:key="PREF_NOTIFICATION_VIBRATE"
+			android:title="@string/notification_vibrate"
+			android:defaultValue="true"
+			/>
+	</PreferenceCategory>
+	<PreferenceCategory
+		android:title="@string/settings_general"
+		>
+		<PreferenceScreen
+			android:key="PREF_ABOUT_KIDSBBS"
+			android:title="@string/about_kidsbbs_title"
+			/>
+		<PreferenceScreen
+			android:key="PREF_ABOUT_APP"
+			android:title="@string/about_app_title"
+			android:summary="@string/version_name"
+			/>
+	</PreferenceCategory>
+</PreferenceScreen>
