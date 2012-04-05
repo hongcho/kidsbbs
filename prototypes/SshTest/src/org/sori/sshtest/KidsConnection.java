@@ -81,7 +81,7 @@ public class KidsConnection {
 	public void open() throws IOException {
 		mConn = new Connection(STR_HOST);
 		mConn.connect();
-		if (!mConn.authenticateWithNone(STR_KIDS)) {
+		if (!mConn.authenticateWithPassword(STR_KIDS, STR_KIDS)) {
 			throw new AuthenticationException();
 		}
 		mSess = mConn.openSession();
