@@ -1,4 +1,4 @@
-// Copyright (c) 2010-2011, Younghong "Hong" Cho <hongcho@sori.org>.
+// Copyright (c) 2010-2012, Younghong "Hong" Cho <hongcho@sori.org>.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,12 +49,14 @@ public class MainSettings extends PreferenceActivity {
 		String NOTIFICATION_SOUND = "PREF_NOTIFICATION_SOUND";
 		String NOTIFICATION_VIBRATE = "PREF_NOTIFICATION_VIBRATE";
 		String ABOUT_KIDSBBS = "PREF_ABOUT_KIDSBBS";
+		String ABOUT_COPYRIGHTS = "PREF_ABOUT_COPYRIGHTS";
 		String ABOUT_APP = "PREF_ABOUT_APP";
 	}
 
 	private interface DialogId {
 		int ABOUT_APP = 0;
 		int ABOUT_KIDSBBS = 1;
+		int ABOUT_COPYRIGHTS = 2;
 	}
 
 	private LayoutInflater mInflater;
@@ -104,10 +106,20 @@ public class MainSettings extends PreferenceActivity {
 					}
 				});
 
+		notificationEnable(mPrefs.getBoolean(PrefKey.NOTIFICATION, true));
+
 		findPreference(PrefKey.ABOUT_KIDSBBS).setOnPreferenceClickListener(
 				new Preference.OnPreferenceClickListener() {
 					public boolean onPreferenceClick(Preference _preference) {
 						showDialog(DialogId.ABOUT_KIDSBBS);
+						return true;
+					}
+				});
+
+		findPreference(PrefKey.ABOUT_COPYRIGHTS).setOnPreferenceClickListener(
+				new Preference.OnPreferenceClickListener() {
+					public boolean onPreferenceClick(Preference _preference) {
+						showDialog(DialogId.ABOUT_COPYRIGHTS);
 						return true;
 					}
 				});
@@ -119,8 +131,6 @@ public class MainSettings extends PreferenceActivity {
 						return true;
 					}
 				});
-
-		notificationEnable(mPrefs.getBoolean(PrefKey.NOTIFICATION, true));
 	}
 
 	private Dialog createAboutDialog(final int _id_title, final int _id_text) {
@@ -140,6 +150,9 @@ public class MainSettings extends PreferenceActivity {
 		case DialogId.ABOUT_KIDSBBS:
 			return createAboutDialog(R.string.about_kidsbbs_title,
 					R.string.about_kidsbbs_text);
+		case DialogId.ABOUT_COPYRIGHTS:
+			return createAboutDialog(R.string.about_copyrights_title,
+					R.string.about_copyrights_text);
 		case DialogId.ABOUT_APP:
 			return createAboutDialog(R.string.about_app_title,
 					R.string.about_app_text);
