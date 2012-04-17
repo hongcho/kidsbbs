@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.sori.kidsbbs"
+    android:versionCode="00016"
+    android:versionName="@string/version_name"
+    >
+    <application
+        android:icon="@drawable/icon"
+        android:label="@string/title_app"
+        >
+        <activity android:name=".ui.MainActivity"
+            android:label="@string/title_app"
+            >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".ui.BoardListActivity"
+            android:label="@string/title_blist"
+            android:launchMode="singleTask"
+            >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".ui.ThreadListActivity"
+            android:label="@string/title_tlist"
+            android:launchMode="singleTop"
+            >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".ui.UserListActivity"
+            android:label="@string/title_user"
+            android:launchMode="singleTop"
+            >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".ui.ThreadedViewActivity"
+            android:label="@string/title_tview"
+            android:launchMode="singleTop"
+            >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".ui.prefernce.MainSettings"
+            android:label="@string/title_pref"
+            android:launchMode="singleTop"
+            >
+        </activity>
+        <provider android:name=".provider.ArticleProvider"
+            android:authorities="org.sori.kidsbbs.provider"
+            />
+        <service android:name=".service.UpdateService"
+            android:enabled="true"
+            />
+        <receiver android:name=".service.AlarmReceiver">
+        	<intent-filter>
+        		<action android:name="org.sori.kidsbbs.alarm.UpdateBoards" />
+        	</intent-filter>
+        </receiver>
+    </application>
+    <uses-sdk android:minSdkVersion="4" android:targetSdkVersion="14" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+</manifest> 

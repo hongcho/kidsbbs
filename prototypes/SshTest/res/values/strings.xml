@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hello">Hello World, SshTest!</string>
+    <string name="app_name">SshTest</string>
+    
+    <string name="username">guest</string>
+    <string name="password">guest</string>
+    <string name="post_title"><![CDATA[테 스  트   1]]></string>
+    <string name="post_body"><![CDATA[1\n 2 \n\n  3  \n\n\n   4   ]]></string>
+</resources>
