@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-	Copyright (c) 2010-2011, Younghong "Hong" Cho <hongcho@sori.org>.
+        Copyright (c) 2010-2012, Younghong "Hong" Cho <hongcho@sori.org>.
 	All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
@@ -27,69 +27,78 @@
 	THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 <resources>
-	<string name="title_app">키즈 비비에스</string>
-	<string name="title_blist">보드 목록</string>
-	<string name="title_tlist">주제 목록</string>
-	<string name="title_tview">주제별 글 보기</string>
-	<string name="title_user">사용자별 글 보기</string>
-	<string name="title_view">글 보기</string>
-	<string name="title_pref">키즈 비비에스 설정</string>
-	
-	<string name="read_text">보기</string>
-	<string name="mark_read_text">읽음 표시</string>
-	<string name="blist_cm_header">보드 목록 메뉴</string>
-	<string name="alist_cm_header">글 목록 메뉴</string>
-	<string name="tview_cm_header">주제별 글 보기 메뉴</string>
-	<string name="tlist_cm_header">주제 목록 메뉴</string>
-	<string name="user_cm_header">사용자별 글 보기 메뉴</string>
-	
-	<string name="menu_select">보드 고르기</string>
-	<string name="menu_refresh">새로 불러오기</string>
-	<string name="menu_mark_all_read">모두 읽음 표시</string>
-	<string name="menu_expand_all">모두 펴기</string>
-	<string name="menu_collapse_all">모두 접기</string>
-	<string name="menu_preferences">설정</string>
-	<string name="menu_toggle_expansion">글 접기/펴기</string>
-	<string name="menu_show_user">사용자별 글 보기</string>
+    <string name="title_app">키즈 비비에스</string>
+    <string name="title_blist">보드 목록</string>
+    <string name="title_tlist">주제 목록</string>
+    <string name="title_tview">주제별 글 보기</string>
+    <string name="title_user">사용자별 글 보기</string>
+    <string name="title_view">글 보기</string>
+    <string name="title_pref">키즈 비비에스 설정</string>
 
-        <string name="settings_update">불러오기 기능 선택사항</string>
-	<string name="update_freq_title">불러오기 주기</string>
-	<string name="update_freq_summary">배경 서비스의 불러오기 주기를 정하세요.</string>
-   
-	<string name="settings_viewing">보기 기능 선택사항</string>
-	<string name="hide_read_title">읽은 글 숨기기</string>
-	<string name="hide_read_summary">읽은 글을 목록에서 제외시킵니다.</string>
-	
-	<string name="settings_notification">알림 기능 선택사항</string>
-	<string name="notification_title">알림 기능 선택사항</string>
-	<string name="notification_summary">새 글이 왔을 때 알려드릴까요?</string>
-	<string name="settings_notification_options">알림 방식 선택사항</string>
-	<string name="notification_lights">LED 알림</string>
-	<string name="notification_sound">소리 알림</string>
-	<string name="notification_vibrate">진동 알림</string>
-	
-	<string name="settings_general">일반 선택사항</string>
-	<string name="about_kidsbbs_title">키즈 비비에스란?</string>
-	<string name="about_app_title">이 앱에 대하여</string>
-	
-	<string name="default_update_freq">20</string>
-	<string name="update_error_text">배경 서비스가 글을 불러오는데 문제가 있었습니다</string>
-	
-	<string name="board_selection_title">보드를 골라주세요.</string>
-	<string name="confirm_text">정말로 계속하겠습니까?</string>
-	<string name="mark_all_read_message">글 목록 전체를 읽은 것으로 표시합니다.</string>
-	
-	<string name="notification_title_text">새 글이 올라왔습니다.</string>
-	<string name="notification_message">보드 목록으로 가서 읽으세요.</string>
-	
-	<string name="about_kidsbbs_text">KIDS (Korea Internet Dream Space
-		/ Korea Internet DataService System): telnet/SSH를 기반으로 하는
-		BBS\n\n주소: kids.kornet.net
-	</string>
-	<string name="about_app_text">이 앱은 키즈와는 직접적으로는 관련이 전혀
-		없습니다. 단지 사용자로서 취미삼아 만들어봤습니다.\n\n프로젝트:
-		http://kidsbbs.googlecode.com/
-	</string>
-   
-	<string name="update_text">불러오고 있습니다...</string>
+    <string name="read_text">보기</string>
+    <string name="mark_read_text">읽음 표시</string>
+    <string name="blist_cm_header">보드 목록 메뉴</string>
+    <string name="alist_cm_header">글 목록 메뉴</string>
+    <string name="tview_cm_header">주제별 글 보기 메뉴</string>
+    <string name="tlist_cm_header">주제 목록 메뉴</string>
+    <string name="user_cm_header">사용자별 글 보기 메뉴</string>
+
+    <string name="menu_select">보드 고르기</string>
+    <string name="menu_refresh">새로 불러오기</string>
+    <string name="menu_mark_all_read">모두 읽음 표시</string>
+    <string name="menu_expand_all">모두 펴기</string>
+    <string name="menu_collapse_all">모두 접기</string>
+    <string name="menu_preferences">설정</string>
+    <string name="menu_toggle_expansion">글 접기/펴기</string>
+    <string name="menu_show_user">사용자별 글 보기</string>
+
+    <string name="settings_update">불러오기 기능 선택사항</string>
+    <string name="update_freq_title">불러오기 주기</string>
+    <string name="update_freq_summary">배경 서비스의 불러오기 주기를 정하세요.</string>
+
+    <string name="settings_viewing">보기 기능 선택사항</string>
+    <string name="hide_read_title">읽은 글 숨기기</string>
+    <string name="hide_read_summary">읽은 글을 목록에서 제외시킵니다.</string>
+
+    <string name="settings_notification">알림 기능 선택사항</string>
+    <string name="notification_title">알림 기능 선택사항</string>
+    <string name="notification_summary">새 글이 왔을 때 알려드릴까요?</string>
+    <string name="settings_notification_options">알림 방식 선택사항</string>
+    <string name="notification_lights">LED 알림</string>
+    <string name="notification_sound">소리 알림</string>
+    <string name="notification_vibrate">진동 알림</string>
+
+    <string name="settings_general">일반 선택사항</string>
+    <string name="about_kidsbbs_title">키즈 비비에스란?</string>
+    <string name="about_copyrights_title">저작권에 대하여</string>
+    <string name="about_app_title">이 앱에 대하여</string>
+
+    <string name="default_update_freq">20</string>
+    <string name="update_error_text">배경 서비스가 글을 불러오는데 문제가 있었습니다</string>
+
+    <string name="board_selection_title">보드를 골라주세요.</string>
+    <string name="confirm_text">정말로 계속하겠습니까?</string>
+    <string name="mark_all_read_message">글 목록 전체를 읽은 것으로 표시합니다.</string>
+
+    <string name="notification_title_text">새 글이 올라왔습니다.</string>
+    <string name="notification_message">보드 목록으로 가서 읽으세요.</string>
+
+    <string name="about_kidsbbs_text">KIDS (Korea Internet Dream Space / Korea
+        Internet DataService System): telnet/SSH를 기반으로 하는 BBS\n\n주소:
+        kids.kornet.net
+    </string>
+    <string name="about_app_text">이 앱은 키즈와는 직접적으로는 관련이 전혀
+        없습니다. 단지 사용자로서 취미삼아 만들어봤습니다.\n\n프로젝트:
+        http://kidsbbs.googlecode.com/
+    </string>
+    <string name="about_copyrights_text">
+        Copyright (c) 2006 - 2010 Christian Plattner. All rights reserved.\n
+        \nCopyright (c) 2005 - 2006 Swiss Federal Institute of Technology (ETH Zurich),
+        Department of Computer Science (http://www.inf.ethz.ch),
+        Christian Plattner. All rights reserved.\n
+        \nCopyright (c) 2000 - 2004 The Legion Of The Bouncy Castle
+        (http://www.bouncycastle.org)\n
+    </string>
+
+    <string name="update_text">불러오고 있습니다...</string>
 </resources>
