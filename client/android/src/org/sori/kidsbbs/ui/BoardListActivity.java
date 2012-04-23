@@ -36,7 +36,7 @@ import org.sori.kidsbbs.provider.ArticleProvider.ContentUri;
 import org.sori.kidsbbs.provider.ArticleProvider.OrderBy;
 import org.sori.kidsbbs.provider.ArticleProvider.Selection;
 import org.sori.kidsbbs.service.UpdateService;
-import org.sori.kidsbbs.ui.prefernce.MainSettings;
+import org.sori.kidsbbs.ui.preference.MainSettings;
 import org.sori.kidsbbs.util.BroadcastUtils.BroadcastType;
 import org.sori.kidsbbs.util.DBUtils;
 

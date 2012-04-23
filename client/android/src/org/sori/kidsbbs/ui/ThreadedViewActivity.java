@@ -36,7 +36,7 @@ import org.sori.kidsbbs.provider.ArticleDatabase.ArticleColumn;
 import org.sori.kidsbbs.provider.ArticleProvider.ContentUriString;
 import org.sori.kidsbbs.provider.ArticleProvider.OrderBy;
 import org.sori.kidsbbs.provider.ArticleProvider.Selection;
-import org.sori.kidsbbs.ui.prefernce.MainSettings;
+import org.sori.kidsbbs.ui.preference.MainSettings;
 import org.sori.kidsbbs.util.ArticleUtils;
 import org.sori.kidsbbs.util.DBUtils;
 import org.sori.kidsbbs.util.DateUtils;
