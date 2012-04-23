@@ -325,7 +325,8 @@ public class BoardListActivity extends ListActivity {
 					new DialogInterface.OnClickListener() {
 						public void onClick(DialogInterface _dialog, int _which) {
 							int nUpdated = 0;
-							for (int i = 0; i < mSelectedNew.length; ++i) {
+							int length = mSelectedNew.length;
+							for (int i = 0; i < length; ++i) {
 								if (mSelectedNew[i] == mSelectedOld[i]) {
 									continue;
 								}
