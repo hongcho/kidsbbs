@@ -135,23 +135,25 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 			mResources.getStringArray(R.array.board_name_map_out);
 		final String[] defaultMapKeys =
 			mResources.getStringArray(R.array.default_board_tables);
+		int length;
 
 		final HashMap<String, String> nameMap = new HashMap<String, String>();
-		for (int i = 0; i < nameMapKeys.length; ++i) {
+		length = nameMapKeys.length;
+		for (int i = 0; i < length; ++i) {
 			nameMap.put(nameMapKeys[i], nameMapValues[i]);
 		}
 
 		final HashMap<String, Boolean> updateMap = new HashMap<String, Boolean>();
-		for (int i = 0; i < tabnames.length; ++i) {
-			updateMap.put(tabnames[i], false);
+		for (String key: tabnames) {
+			updateMap.put(key, false);
 		}
-		for (int i = 0; i < defaultMapKeys.length; ++i) {
-			updateMap.put(defaultMapKeys[i], true);
+		for (String key: defaultMapKeys) {
+			updateMap.put(key, true);
 		}
 
 		// Populate...
-		for (int i = 0; i < tabnames.length; ++i) {
-			final String[] p = BoardInfo.parseTabname(tabnames[i]);
+		for (String tabname: tabnames) {
+			final String[] p = BoardInfo.parseTabname(tabname);
 			final int type = Integer.parseInt(p[0]);
 			final String name = p[1];
 			String title;
@@ -166,8 +168,8 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 			} else {
 				title += name;
 			}
-			addBoard(_db, new BoardInfo(tabnames[i], title),
-					updateMap.get(tabnames[i])
+			addBoard(_db, new BoardInfo(tabname, title),
+					updateMap.get(tabname)
 						? BoardState.SELECTED : BoardState.PAUSED);
 		}
 	}

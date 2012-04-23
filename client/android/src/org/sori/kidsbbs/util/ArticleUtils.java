@@ -72,8 +72,8 @@ public class ArticleUtils {
 				Pattern.compile("^\\s*\\.{3,}\\s*$", Pattern.MULTILINE),
 				Pattern.compile("^\\s*\\\\{3,}\\s*$", Pattern.MULTILINE),
 		};
-		for (int i = 0; i < P_QUOTES.length; ++i) {
-			Matcher m = P_QUOTES[i].matcher(_s);
+		for (Pattern pattern: P_QUOTES) {
+			Matcher m = pattern.matcher(_s);
 			_s = m.replaceAll("");
 		}
 		// Remove white spaces.
@@ -83,7 +83,8 @@ public class ArticleUtils {
 				Pattern.compile("^\\s+"),
 		};
 		final String[] R_SPACES = { " ", " ", "", };
-		for (int i = 0; i < P_SPACES.length; ++i) {
+		int length = P_SPACES.length;
+		for (int i = 0; i < length; ++i) {
 			Matcher m = P_SPACES[i].matcher(_s);
 			_s = m.replaceAll(R_SPACES[i]);
 		}

@@ -301,7 +301,8 @@ public class UpdateService extends Service
 					fDone = true;
 					break;
 				}
-				for (int i = 0; !fDone && i < articles.size(); ++i) {
+				int size = articles.size();
+				for (int i = 0; !fDone && i < size; ++i) {
 					final ArticleInfo info = articles.get(i);
 					if (!DateUtils.isRecent(info.getDateString())) {
 						continue;
