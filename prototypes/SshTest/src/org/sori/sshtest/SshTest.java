@@ -9,6 +9,7 @@ import android.content.res.Resources;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Window;
 import android.widget.TextView;
 
 public class SshTest extends Activity {
@@ -25,6 +26,7 @@ public class SshTest extends Activity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		requestWindowFeature(Window.FEATURE_NO_TITLE); 
 		setContentView(R.layout.main);
 
 		mTextView = (TextView)findViewById(R.id.text);
