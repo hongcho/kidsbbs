@@ -1,5 +1,5 @@
 ######################################################################
-# Copyright (c) 2001-2010, Younghong "Hong" Cho <hongcho@sori.org>.
+# Copyright (c) 2001-2012, Younghong "Hong" Cho <hongcho@sori.org>.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,7 @@
 ######################################################################
 # KidSql.pm
 # == History
+# 2012-10-23 Handling the new login mechanism.
 # 2010-09-02 Created from KidsLib.pm.
 ######################################################################
 
@@ -34,9 +35,10 @@ package KidSql;
 use strict;
 use Encode;
 use LWP::UserAgent;
+use HTTP::Request::Common;
 use DBI;
 # The default MD5 didn't quite work.
-use lib '/home/soriorg/perlmod/usr/lib64/perl5/5.8.8/x86_64-linux-thread-multi';
+#use lib '/home/soriorg/perlmod/usr/lib64/perl5/5.8.8/x86_64-linux-thread-multi';
 use Digest::MD5 qw(md5_hex);
 use lib '.';
 use KidSqlDBInfo;
@@ -59,7 +61,13 @@ my $KIDS_BLIST = $KIDS_BASE.'/blist.html';
 my $KIDS_PSTR = '&Position=';
 my $KIDS_NSTR = '&Num=';
 
-my $AGENT_STRBASE = 'KidSqlGet 0/1 (http://sori.org/kids/) ';
+my $AGENT_STR = "KidsSqlGet 0/2 (http://sori.org/kids/)";
+
+my $KIDS_LOGIN_PARAMS =
+    [username => KidSqlDBInfo::GetKidsUser(),
+     password => KidSqlDBInfo::GetKidsPasswd(),
+     submit => 'Login'];
+my $KIDS_COOKIE = undef;
 
 my $MAX_TRY = 3;
 
@@ -198,6 +206,7 @@ my $S_CURDATE_UTC = "CONVERT_TZ(NOW(), '$S_TZ_LOCAL', 'UTC')";
 # Local variables.
 
 my $AGENT = new LWP::UserAgent;
+$AGENT->max_redirect(0);	# no auto redirects.
 my $agent_set = 0;
 
 ######################################################################
@@ -377,7 +386,7 @@ sub ConvertDateSqlToNum
 # Set up the user agent string.
 sub SetUserAgentString
 {
-    $agent_set or $AGENT->agent($AGENT_STRBASE . $AGENT->agent);
+    $agent_set or $AGENT->agent("$AGENT_STR");
     $agent_set = 1;
 }
 
@@ -424,6 +433,34 @@ sub GetItemUrl
 }
 
 ######################################################################
+# Get the response.
+sub GetResponse
+{
+    my ($rq) = @_;
+    if (defined($KIDS_COOKIE)) {
+	my $c = $rq->header("Cookie");
+	if (!defined($c) or $c !~ /$KIDS_COOKIE/) {
+	    $rq->header("Cookie" => $KIDS_COOKIE);
+	}
+    }
+    my $rs = $AGENT->request($rq);
+    if ($rs->is_redirect) {
+	my $urlx = $rs->header("Location");
+	if ($urlx =~ /\/login$/) {
+	    my $rsx = $AGENT->request(POST $urlx,
+				      $KIDS_LOGIN_PARAMS);
+	    my $sc = $rsx->header("Set-Cookie");
+	    if (defined($sc) and $sc =~ /(kids_session=[a-f0-9]+);/g) {
+		$KIDS_COOKIE = $1;
+		$rq->header("Cookie" => $KIDS_COOKIE);
+		$rs = $AGENT->request($rq);
+	    }
+	}
+    }
+    return $rs;
+}
+
+######################################################################
 # Get the board page.
 sub GetBoardPage
 {
@@ -437,7 +474,7 @@ sub GetBoardPage
     my $rq = new HTTP::Request(GET => $url);
     my $try = $MAX_TRY;
     while ($try-- > 0) {
-	my $rs = $AGENT->request($rq);
+	my $rs = GetResponse($rq);
 	next if (!$rs->is_success);
 	foreach my $l (split(/\n/, $rs->content)) {
 	    $l = utf82euckr($l);# Keep things in EUC-KR
@@ -493,7 +530,7 @@ sub GetArticlePage
     my $rq = new HTTP::Request(GET => $url);
     my $try = $MAX_TRY;
     while ($try-- > 0) {
-	my $rs = $AGENT->request($rq);
+	my $rs = GetResponse($rq);
 	next if (!$rs->is_success);
 	my $st = 0;
 	my $skip = 1;
@@ -826,7 +863,7 @@ sub GetBoardList
     my $rq = new HTTP::Request(GET => $url);
     my $try = $MAX_TRY;
     while ($try-- > 0) {
-	my $rs = $AGENT->request($rq);
+	my $rs = GetResponse($rq);
 	next if (!$rs->is_success);
 	foreach my $l (split(/\n/, $rs->content)) {
 	    $l = utf82euckr($l);# Keep things in EUC-KR
