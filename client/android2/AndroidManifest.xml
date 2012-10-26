@@ -1,10 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="org.sori.org.kidsbbs2"
+    package="org.sori.app.android.kidsbbs2"
     android:versionCode="1"
     android:versionName="0.1" >
 
     <uses-sdk
-        android:minSdkVersion="4"
+        android:minSdkVersion="8"
         android:targetSdkVersion="16" />
 
     <application
