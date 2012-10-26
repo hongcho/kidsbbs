@@ -1,4 +1,4 @@
-package org.sori.org.kidsbbs2;
+package org.sori.app.android.kidsbbs2;
 
 import android.app.Activity;
 import android.os.Bundle;
