@@ -1,4 +1,4 @@
-// Copyright (c) 2010-2011, Younghong "Hong" Cho <hongcho@sori.org>.
+// Copyright (c) 2010-2012, Younghong "Hong" Cho <hongcho@sori.org>.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -69,10 +69,11 @@ public class DateUtils {
 	public static final String GetShortDateString(final String _dateString) {
 		try {
 			final Date local = DF_FULL.parse(_dateString);
-			final Date now = new Date();
-			if (now.getYear() == local.getYear()
-					&& now.getMonth() == local.getMonth()
-					&& now.getDate() == local.getDate()) {
+			final Calendar calLocal = new GregorianCalendar();
+			final Calendar calNow = Calendar.getInstance();
+			calLocal.setTime(local);
+			if (calNow.get(Calendar.YEAR) == calLocal.get(Calendar.YEAR)
+					&& calNow.get(Calendar.DAY_OF_YEAR) == calLocal.get(Calendar.DAY_OF_YEAR)) {
 				return DF_TIME.format(local);
 			} else {
 				return DF_DATE.format(local);

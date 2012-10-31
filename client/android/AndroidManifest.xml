@@ -1,16 +1,24 @@
-<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.sori.kidsbbs"
     android:versionCode="00016"
-    android:versionName="@string/version_name"
-    >
+    android:versionName="@string/version_name">
+    <uses-sdk
+        android:minSdkVersion="8"
+        android:targetSdkVersion="15" />
+    <uses-permission
+        android:name="android.permission.INTERNET" />
+    <uses-permission
+        android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission
+        android:name="android.permission.VIBRATE" />
     <application
         android:icon="@drawable/icon"
         android:label="@string/title_app"
-        >
-        <activity android:name=".ui.MainActivity"
+        android:theme="@style/AppTheme">
+        <activity
+            android:name=".ui.MainActivity"
             android:label="@string/title_app"
-            >
+            android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -20,61 +28,58 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.BoardListActivity"
+        <activity
+            android:name=".ui.BoardListActivity"
             android:label="@string/title_blist"
-            android:launchMode="singleTask"
-            >
+            android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.ThreadListActivity"
+        <activity
+            android:name=".ui.ThreadListActivity"
             android:label="@string/title_tlist"
-            android:launchMode="singleTop"
-            >
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.UserListActivity"
+        <activity
+            android:name=".ui.UserListActivity"
             android:label="@string/title_user"
-            android:launchMode="singleTop"
-            >
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.ThreadedViewActivity"
+        <activity
+            android:name=".ui.ThreadedViewActivity"
             android:label="@string/title_tview"
-            android:launchMode="singleTop"
-            >
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.preference.MainSettings"
+        <activity
+            android:name=".ui.preference.MainSettings"
             android:label="@string/title_pref"
-            android:launchMode="singleTop"
-            >
+            android:launchMode="singleTop">
         </activity>
-        <provider android:name=".provider.ArticleProvider"
-            android:authorities="org.sori.kidsbbs.provider"
-            />
-        <service android:name=".service.UpdateService"
-            android:enabled="true"
-            />
-        <receiver android:name=".service.AlarmReceiver">
+        <provider
+            android:name=".provider.ArticleProvider"
+            android:authorities="org.sori.kidsbbs.provider" />
+        <service
+            android:name=".service.UpdateService"
+            android:enabled="true" />
+        <receiver
+            android:name=".service.AlarmReceiver">
         	<intent-filter>
         		<action android:name="org.sori.kidsbbs.alarm.UpdateBoards" />
         	</intent-filter>
         </receiver>
     </application>
-    <uses-sdk android:minSdkVersion="4" android:targetSdkVersion="14" />
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.VIBRATE" />
 </manifest> 
