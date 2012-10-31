@@ -1,4 +1,4 @@
-// Copyright (c) 2010-2011, Younghong "Hong" Cho <hongcho@sori.org>.
+// Copyright (c) 2010-2012, Younghong "Hong" Cho <hongcho@sori.org>.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,11 +27,11 @@ package org.sori.kidsbbs.service;
 
 import java.util.ArrayList;
 
-import org.sori.kidsbbs.R;
 import org.sori.kidsbbs.KidsBbs.NotificationType;
 import org.sori.kidsbbs.KidsBbs.PackageBase;
 import org.sori.kidsbbs.KidsBbs.ParamName;
 import org.sori.kidsbbs.KidsBbs.Settings;
+import org.sori.kidsbbs.R;
 import org.sori.kidsbbs.data.ArticleInfo;
 import org.sori.kidsbbs.data.BoardInfo;
 import org.sori.kidsbbs.io.HttpXml;
@@ -47,9 +47,9 @@ import org.sori.kidsbbs.ui.BoardListActivity;
 import org.sori.kidsbbs.ui.preference.MainSettings;
 import org.sori.kidsbbs.ui.preference.MainSettings.PrefKey;
 import org.sori.kidsbbs.util.BroadcastUtils;
+import org.sori.kidsbbs.util.BroadcastUtils.BroadcastType;
 import org.sori.kidsbbs.util.DBUtils;
 import org.sori.kidsbbs.util.DateUtils;
-import org.sori.kidsbbs.util.BroadcastUtils.BroadcastType;
 
 import android.app.AlarmManager;
 import android.app.Notification;
@@ -68,11 +68,14 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -83,36 +86,38 @@ public class UpdateService extends Service
 	private int mUpdateFreq;
 	private UpdateTask mLastUpdate = null;
 
-	ConnectivityManager mConnectivities;
+	ConnectivityManager mConnectivityManager;
 	AlarmManager mAlarms;
 	PendingIntent mAlarmIntent;
 
 	private Integer mIsPausedSync = 0;
 	private boolean mIsPaused = false;
-	private boolean mBgDataEnabled = true;
-	private boolean mNoConnectivity = false;
 
 	private ContentResolver mResolver;
+	private NotificationCompat.Builder mNotificationBuilder;
 	private NotificationManager mNotificationManager;
-	private Notification mNewArticlesNotification;
 	private boolean mNotificationOn = true;
-	private int mNotificationDefaults = Notification.DEFAULT_LIGHTS
-			| Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE;
-	private String mNotificationTitleString;
-	private String mNotificationMessage;
+	private int mNotificationDefaults =
+			Notification.DEFAULT_LIGHTS
+			| Notification.DEFAULT_SOUND
+			| Notification.DEFAULT_VIBRATE;
 
 	// Update to onStartCommand when min SDK becomes >= 5...
 	@Override
 	public void onStart(Intent _intent, int _startId) {
-		setupAlarm(mUpdateFreq,
+		setupAlarm(
+				mUpdateFreq,
 				_intent.getStringExtra(
 						PackageBase.PARAM + ParamName.TABNAME));
 	}
 
 	public void onSharedPreferenceChanged(SharedPreferences _prefs, String _key) {
 		if (_key.equals(MainSettings.PrefKey.UPDATE_FREQ)) {
-			final int updateFreqNew = Integer.parseInt(_prefs.getString(_key,
-					MainSettings.getDefaultUpdateFreq(this)));
+			final int updateFreqNew =
+					Integer.parseInt(
+							_prefs.getString(
+									_key,
+									MainSettings.getDefaultUpdateFreq(this)));
 			if (updateFreqNew != mUpdateFreq) {
 				mUpdateFreq = updateFreqNew;
 				setupAlarm(mUpdateFreq, null);
@@ -143,8 +148,10 @@ public class UpdateService extends Service
 	private void setupAlarm(final long _period, final String _tabname) {
 		if (_period > 0) {
 			final long msPeriod = _period * 60 * 1000;
-			mAlarms.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-					SystemClock.elapsedRealtime() + msPeriod, msPeriod,
+			mAlarms.setRepeating(
+					AlarmManager.ELAPSED_REALTIME_WAKEUP,
+					SystemClock.elapsedRealtime() + msPeriod,
+					msPeriod,
 					mAlarmIntent);
 		} else {
 			mAlarms.cancel(mAlarmIntent);
@@ -156,33 +163,34 @@ public class UpdateService extends Service
 	public void onCreate() {
 		super.onCreate();
 
-		final Resources resources = getResources();
-		mNotificationTitleString =
-			resources.getString(R.string.notification_title_text);
-		mNotificationMessage =
-			resources.getString(R.string.notification_message);
-
 		mResolver = getContentResolver();
-
-		mConnectivities = (ConnectivityManager) getSystemService(
-				Context.CONNECTIVITY_SERVICE);
-
-		mNotificationManager = (NotificationManager) getSystemService(
-				Context.NOTIFICATION_SERVICE);
-		mNewArticlesNotification = new Notification(R.drawable.icon,
-				mNotificationTitleString, System.currentTimeMillis());
-		mNewArticlesNotification.flags |= Notification.FLAG_AUTO_CANCEL;
-		mNewArticlesNotification.flags |= Notification.FLAG_ONLY_ALERT_ONCE;
-		mNotificationDefaults |= mNewArticlesNotification.defaults;
+		mConnectivityManager =
+				(ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+		mNotificationManager =
+				(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		final Resources resources = getResources();
+		mNotificationBuilder =
+				new NotificationCompat.Builder(this)
+				.setSmallIcon(R.drawable.icon)
+				.setContentTitle(resources.getString(R.string.notification_title_text))
+				.setContentText(resources.getString(R.string.notification_message));
 
 		mAlarms = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-		mAlarmIntent = PendingIntent.getBroadcast(this, 0, new Intent(
-				AlarmReceiver.UPDATE_BOARDS_ALARM), 0);
+		mAlarmIntent =
+				PendingIntent.getBroadcast(
+						this,
+						0,
+						new Intent(AlarmReceiver.UPDATE_BOARDS_ALARM),
+						0);
 
 		final SharedPreferences prefs =
-			PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		mUpdateFreq = Integer.parseInt(prefs.getString(PrefKey.UPDATE_FREQ,
-				MainSettings.getDefaultUpdateFreq(this)));
+				PreferenceManager.getDefaultSharedPreferences(
+						getApplicationContext());
+		mUpdateFreq =
+				Integer.parseInt(
+						prefs.getString(
+								PrefKey.UPDATE_FREQ,
+								MainSettings.getDefaultUpdateFreq(this)));
 		mNotificationOn = prefs.getBoolean(PrefKey.NOTIFICATION, true);
 		mNotificationDefaults = 0;
 		if (prefs.getBoolean(PrefKey.NOTIFICATION_LIGHTS, true)) {
@@ -226,13 +234,17 @@ public class UpdateService extends Service
 					BoardColumn.STATE,
 			};
 			int result = BoardState.PAUSED;
-			final Cursor c = mResolver.query(ContentUri.BOARDS, PROJECTIONS,
-					Selection.TABNAME, new String[] { _tabname }, null);
+			final Cursor c =
+					mResolver.query(
+							ContentUri.BOARDS,
+							PROJECTIONS,
+							Selection.TABNAME,
+							new String[] { _tabname },
+							null);
 			if (c != null) {
 				if (c.getCount() > 0) {
 					c.moveToFirst();
-					result = c.getInt(
-							c.getColumnIndex(BoardColumn.STATE));
+					result = c.getInt(c.getColumnIndex(BoardColumn.STATE));
 				}
 				c.close();
 			}
@@ -242,8 +254,12 @@ public class UpdateService extends Service
 		private boolean setTableState(final String _tabname, final int _state) {
 			final ContentValues values = new ContentValues();
 			values.put(BoardColumn.STATE, _state);
-			final int count = mResolver.update(ContentUri.BOARDS, values,
-					Selection.TABNAME, new String[] { _tabname });
+			final int count =
+					mResolver.update(
+							ContentUri.BOARDS,
+							values,
+							Selection.TABNAME,
+							new String[] { _tabname });
 			return count > 0;
 		}
 
@@ -307,27 +323,28 @@ public class UpdateService extends Service
 					if (!DateUtils.isRecent(info.getDateString())) {
 						continue;
 					}
-					final String[] args = new String[] { Integer.toString(
-							info.getSeq()) };
+					final String[] args =
+							new String[] { Integer.toString(info.getSeq()) };
 					ArticleInfo old = null;
-					final Cursor c = mResolver.query(uri, PROJECTION,
-							Selection.SEQ, args, null);
+					final Cursor c =
+							mResolver.query(uri, PROJECTION, Selection.SEQ, args, null);
 					if (c != null) {
 						if (c.getCount() > 0) {
 							c.moveToFirst();
 							// Cache the old entry.
-							final int seq = c.getInt(c.getColumnIndex(
-									ArticleColumn.SEQ));
-							final String user = c.getString(c.getColumnIndex(
-									ArticleColumn.USER));
-							final String date = c.getString(c.getColumnIndex(
-									ArticleColumn.DATE));
-							final String title = c.getString(c.getColumnIndex(
-									ArticleColumn.TITLE));
-							final boolean read = c.getInt(c.getColumnIndex(
-									ArticleColumn.READ)) != 0;
-							old = new ArticleInfo(_tabname, seq, user, null,
-									date, title, null, null, 1, read);
+							final int seq =
+									c.getInt(c.getColumnIndex(ArticleColumn.SEQ));
+							final String user =
+									c.getString(c.getColumnIndex(ArticleColumn.USER));
+							final String date =
+									c.getString(c.getColumnIndex(ArticleColumn.DATE));
+							final String title =
+									c.getString(c.getColumnIndex(ArticleColumn.TITLE));
+							final boolean read =
+									c.getInt(c.getColumnIndex(ArticleColumn.READ)) != 0;
+							old = new ArticleInfo(
+									_tabname, seq, user, null, date, title,
+									null, null, 1, read);
 						}
 						c.close();
 					} else {
@@ -363,14 +380,12 @@ public class UpdateService extends Service
 					} else {
 						// Hmm... already there...
 						if (info.getUser().equals(old.getUser())
-								&& info.getDateString().equals(
-										old.getDateString())
+								&& info.getDateString().equals(old.getDateString())
 								&& info.getTitle().equals(old.getTitle())) {
 							result = false;
 						} else {
 							try {
-								mResolver.update(uri, values, Selection.SEQ,
-										args);
+								mResolver.update(uri, values, Selection.SEQ, args);
 							} catch (SQLException e) {
 								result = false;
 							}
@@ -378,7 +393,8 @@ public class UpdateService extends Service
 					}
 					if (result) {
 						++count;
-						BroadcastUtils.announceBoardUpdated(UpdateService.this,
+						BroadcastUtils.announceBoardUpdated(
+								UpdateService.this,
 								_tabname);
 					}
 				}
@@ -405,30 +421,38 @@ public class UpdateService extends Service
 			if (!mNotificationOn) {
 				return;
 			}
-
-			// Prepare pending intent for notification
-			final String title = DBUtils.getBoardTitle(mResolver, _tabname);
-			final PendingIntent pendingIntent = PendingIntent.getActivity(
-					UpdateService.this, 0, new Intent(UpdateService.this,
-							BoardListActivity.class), 0);
-
-			// Notify new articles.
-			mNewArticlesNotification.tickerText = title + " (" + _count + ")";
-			mNewArticlesNotification.when = System.currentTimeMillis();
-			mNewArticlesNotification.defaults = mNotificationDefaults;
-			if ((mNotificationDefaults & Notification.DEFAULT_LIGHTS) != 0) {
-				mNewArticlesNotification.flags |= Notification.FLAG_SHOW_LIGHTS;
-			} else {
-				mNewArticlesNotification.flags &= ~Notification.FLAG_SHOW_LIGHTS;
-			}
-			//mNewArticlesNotification.number =
-			//	DBUtils.getTotalUnreadCount(mResolver);
-			mNewArticlesNotification.setLatestEventInfo(UpdateService.this,
-					mNotificationTitleString, mNotificationMessage,
-					pendingIntent);
-
-			mNotificationManager.notify(NotificationType.NEW_ARTICLE,
-					mNewArticlesNotification);
+			
+			// The target of the notification.
+			Intent resultIntent =
+					new Intent(UpdateService.this, BoardListActivity.class);
+			
+			// The stack builder object will contain an artificial back stack for the
+			// started Activity.
+			// This ensures that navigating backward from the Activity leads out of
+			// your application to the Home screen.
+			TaskStackBuilder stackBuilder =
+					TaskStackBuilder.create(UpdateService.this);
+			// Add the back stack for the Intent (but not the Intent itself)
+			stackBuilder.addParentStack(BoardListActivity.class);
+			// Add the Intent that starts the Activity to the top of the stack
+			stackBuilder.addNextIntent(resultIntent);
+			PendingIntent resultPendingIntent =
+					stackBuilder.getPendingIntent(
+							0,
+							PendingIntent.FLAG_UPDATE_CURRENT);
+			
+			// Set some other information
+			final String ticker =
+					DBUtils.getBoardTitle(mResolver, _tabname) + " (" + _count + ")";
+			
+			// Set up the builder and fire the notification
+			mNotificationBuilder.setTicker(ticker)
+					.setNumber(DBUtils.getTotalUnreadCount(mResolver))
+					.setDefaults(mNotificationDefaults)
+					.setContentIntent(resultPendingIntent);
+			mNotificationManager.notify(
+					NotificationType.NEW_ARTICLE,
+					mNotificationBuilder.build());
 		}
 
 		private int refreshTables(final String _tabname) {
@@ -580,16 +604,13 @@ public class UpdateService extends Service
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
 			final String action = _intent.getAction();
+			boolean isPaused;
 			if (action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
-				mNoConnectivity = _intent.getBooleanExtra(
-						ConnectivityManager.EXTRA_NO_CONNECTIVITY, false);
-			} else if (action.equals(
-					ConnectivityManager.ACTION_BACKGROUND_DATA_SETTING_CHANGED)) {
-				mBgDataEnabled = mConnectivities.getBackgroundDataSetting();
+				NetworkInfo netInfo = mConnectivityManager.getActiveNetworkInfo();
+				isPaused = !netInfo.isConnected() || netInfo.isRoaming();
 			} else {
 				return;
 			}
-			final boolean isPaused = mNoConnectivity || !mBgDataEnabled;
 			synchronized (mIsPausedSync) {
 				if (isPaused == mIsPaused) {
 					return;
@@ -608,9 +629,7 @@ public class UpdateService extends Service
 	private void registerReceivers() {
 		IntentFilter filter;
 		mConnReceiver = new ConnectivityReceiver();
-		filter = new IntentFilter(
-				ConnectivityManager.ACTION_BACKGROUND_DATA_SETTING_CHANGED);
-		filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+		filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
 		registerReceiver(mConnReceiver, filter);
 		mUpdateReceiver = new ArticleUpdatedReceiver();
 		filter = new IntentFilter(BroadcastType.ARTICLE_UPDATED);
