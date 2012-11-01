@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     android:padding="@dimen/padding_small"
     android:gravity="center_vertical"
     android:textAppearance="?android:attr/textAppearanceSmall"
-    android:background="#80f080"
-    android:textColor="#1f1f1f"
+    android:background="@color/header_background"
+    android:textColor="@color/header_foreground"
     android:textStyle="bold"
     android:text="@string/update_text" />
