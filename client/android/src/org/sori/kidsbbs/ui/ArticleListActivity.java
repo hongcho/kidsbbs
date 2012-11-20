@@ -27,7 +27,6 @@ package org.sori.kidsbbs.ui;
 
 import org.sori.kidsbbs.KidsBbs.PackageBase;
 import org.sori.kidsbbs.KidsBbs.ParamName;
-import org.sori.kidsbbs.KidsBbs;
 import org.sori.kidsbbs.R;
 import org.sori.kidsbbs.provider.ArticleDatabase.ArticleColumn;
 import org.sori.kidsbbs.provider.ArticleDatabase.BoardColumn;
@@ -64,14 +63,14 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.BaseColumns;
-import android.support.v4.view.MenuItemCompat;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.CursorAdapter;
 import android.widget.FilterQueryProvider;
 import android.widget.ListView;
@@ -79,14 +78,6 @@ import android.widget.TextView;
 
 public abstract class ArticleListActivity extends ListActivity
 		implements OnSharedPreferenceChangeListener {
-
-	protected interface MenuId {
-		int REFRESH = Menu.FIRST;
-		int SHOW = Menu.FIRST + 1;
-		int PREFERENCES = Menu.FIRST + 2;
-		int MARK_READ = Menu.FIRST + 3;
-		int MARK_ALL_READ = Menu.FIRST + 4;
-	}
 
 	protected ContentResolver mResolver;
 
@@ -218,82 +209,53 @@ public abstract class ArticleListActivity extends ListActivity
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu _menu) {
-		MenuItem item;
-		item =
-			_menu.add(0, MenuId.REFRESH, Menu.NONE, R.string.menu_refresh)
-			.setIcon(getResources().getIdentifier(
-					"android:drawable/ic_menu_refresh", null, null))
-			.setShortcut('0', 'r');
-		MenuItemCompat.setShowAsAction(item,
-				MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
-		
-		item =
-			_menu.add(0, MenuId.MARK_ALL_READ, Menu.NONE,
-					R.string.menu_mark_all_read)
-			.setIcon(getResources().getIdentifier(
-					"android:drawable/ic_menu_mark", null, null))
-			.setShortcut('1', 'm');
-		MenuItemCompat.setShowAsAction(item,
-				MenuItemCompat.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
-		
-		item =
-			_menu.add(0, MenuId.PREFERENCES, Menu.NONE,
-					R.string.menu_preferences)
-			.setIcon(android.R.drawable.ic_menu_preferences)
-			.setShortcut('2', 'p');
-		MenuItemCompat.setShowAsAction(item,
-				MenuItemCompat.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
-
-		return super.onCreateOptionsMenu(_menu);
-		
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.article_list, _menu);
+		return true;
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
-		case MenuId.REFRESH:
+		case R.id.menu_mark_all_read:
+			markAllRead();
+			return true;
+		case R.id.menu_refresh:
 			DBUtils.updateBoardTable(this, mTabname);
 			refreshList();
-			break;
-		case MenuId.MARK_ALL_READ:
-			markAllRead();
-			break;
-		case MenuId.PREFERENCES:
+			return true;
+		case R.id.menu_preferences:
 			showPreference();
-			break;
-		case KidsBbs.Hacks.android_R_id_home: // HACK: android.R.id.home
+			return true;
+		case android.R.id.home:
 			finish();
-			break;
+			return true;
+		default:
+			return super.onOptionsItemSelected(item);
 		}
-		return super.onOptionsItemSelected(item);
 	}
 
 	@Override
 	public void onCreateContextMenu(ContextMenu _menu, View _v,
 			ContextMenu.ContextMenuInfo _menuInfo) {
-		super.onCreateOptionsMenu(_menu);
-
-		_menu.setHeaderTitle(getResources().getString(
-				R.string.alist_cm_header))
-			.setHeaderIcon(android.R.drawable.ic_dialog_info);
-
-		_menu.add(0, MenuId.SHOW, Menu.NONE, R.string.read_text);
-		_menu.add(1, MenuId.MARK_READ, Menu.NONE, R.string.mark_read_text);
+		super.onCreateContextMenu(_menu, _v, _menuInfo);
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.article_list_context, _menu);
 	}
 
 	@Override
 	public boolean onContextItemSelected(MenuItem _item) {
-		super.onContextItemSelected(_item);
+		AdapterContextMenuInfo info = (AdapterContextMenuInfo) _item.getMenuInfo();
 		switch (_item.getItemId()) {
-		case MenuId.SHOW:
-			showItem(((AdapterView.AdapterContextMenuInfo) _item.getMenuInfo()).position);
+		case R.id.menu_show:
+			showItem(info.position);
 			return true;
-		case MenuId.MARK_READ:
-			markRead(((AdapterView.AdapterContextMenuInfo) _item
-					.getMenuInfo()).position);
+		case R.id.menu_mark_read:
+			markRead(info.position);
 			return true;
+		default:
+			return super.onContextItemSelected(_item);
 		}
-		return false;
 	}
 
 	private class UpdateTask extends AsyncTask<Void, Void, Cursor> {
@@ -374,7 +336,7 @@ public abstract class ArticleListActivity extends ListActivity
 
 	protected void markAllReadCommon(final String _w) {
 		new AlertDialog.Builder(this)
-			.setTitle(R.string.confirm_text)
+			.setTitle(R.string.menu_mark_all_read)
 			.setIcon(android.R.drawable.ic_dialog_alert)
 			.setMessage(R.string.mark_all_read_message)
 			.setPositiveButton(android.R.string.ok,

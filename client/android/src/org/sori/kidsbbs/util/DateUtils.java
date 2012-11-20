@@ -30,6 +30,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.Locale;
 import java.util.TimeZone;
 
 import org.sori.kidsbbs.KidsBbs.Settings;
@@ -54,7 +55,7 @@ public class DateUtils {
 		DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
 	private static final DateFormat DF_KIDS;
 	static {
-		DF_KIDS = new SimpleDateFormat(DATE_FORMAT);
+		DF_KIDS = new SimpleDateFormat(DATE_FORMAT, Locale.US);
 		DF_KIDS.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
 	}
 
