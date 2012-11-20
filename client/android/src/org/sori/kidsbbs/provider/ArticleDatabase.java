@@ -52,8 +52,9 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 		int BODY_AUTHOR_ADDED = 2;
 		int ARTICLE_VIEW_ADDED = 3;
 		int BOARD_COUNT_ADDED = 4;
+		int ARTICLE_VIEW_REORDERED = 5;
 	}
-	private static final int DATABASE_VERSION = Version.BOARD_COUNT_ADDED;
+	private static final int DATABASE_VERSION = Version.ARTICLE_VIEW_REORDERED;
 
 	public interface Table {
 		String BOARDS = "boards";
@@ -216,6 +217,7 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 	private void upgradeArticleDB(final SQLiteDatabase _db, final String _tabname,
 			final int _old) {
 		int version = _old;
+		boolean fViewRecreated = false;
 
 		// Cascading upgrade...
 		// Only use "break" to drop and re-create the table.
@@ -230,12 +232,23 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 			// - Re-create article view.
 			dropArticleViews(_db, _tabname);
 			createArticleViews(_db, _tabname);
+			fViewRecreated = true;
 			version = Version.ARTICLE_VIEW_ADDED;
 
 		case Version.ARTICLE_VIEW_ADDED:
 			// "count" was added to the board table.
 			// - Nothing to do.
 			version = Version.BOARD_COUNT_ADDED;
+			
+		case Version.BOARD_COUNT_ADDED:
+			// The View ordering changed.
+			// - Re-create article view.
+			if (!fViewRecreated) {
+				dropArticleViews(_db, _tabname);
+				createArticleViews(_db, _tabname);
+				fViewRecreated = true;
+			}
+			version = Version.ARTICLE_VIEW_REORDERED;
 		}
 
 		// If upgrade fails, re-create the table.
@@ -289,6 +302,11 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 				c.close();
 			}
 			version = Version.BOARD_COUNT_ADDED;
+			
+		case Version.BOARD_COUNT_ADDED:
+			// The View ordering changed.
+			// - Nothing to do.
+			version = Version.ARTICLE_VIEW_REORDERED;
 		}
 
 		// If upgrade fails, re-create the table.
@@ -310,6 +328,7 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 			throw new SQLException("addBoard: Failed to insert row into "
 					+ Table.BOARDS);
 		}
+		Log.i(TAG, "Added a new \"" + Table.BOARDS + "\" table");
 		createArticleTable(_db, _info.getTabname());
 	}
 
@@ -348,10 +367,12 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 				+ BoardColumnDef.TITLE + ","
 				+ BoardColumnDef.STATE + ","
 				+ BoardColumnDef.COUNT + ");");
+		Log.i(TAG, "Created the main table");
 	}
 
 	private void dropMainTable(final SQLiteDatabase _db) {
 		_db.execSQL("DROP TABLE IF EXISTS " + Table.BOARDS);
+		Log.i(TAG, "Dropped the main table");
 	}
 
 	private void createArticleViews(final SQLiteDatabase _db,
@@ -369,8 +390,9 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 				+ ArticleField.ALLREAD + ","
 				+ ArticleField.CNT
 				+ " FROM (SELECT * FROM " + _tabname
-				+ " ORDER BY " + ArticleProvider.OrderBy.SEQ_ASC
+				+ " ORDER BY " + ArticleProvider.OrderBy.SEQ_DESC
 				+ ") AS t GROUP BY " + ArticleColumn.THREAD + ";");
+		Log.i(TAG, "Created the article view for " + _tabname);
 	}
 
 	private void createArticleTable(final SQLiteDatabase _db,
@@ -390,12 +412,14 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 				+ getIndexName(_tabname, ArticleColumn.SEQ)
 				+ " ON " + _tabname
 				+ " (" + ArticleColumn.SEQ + ")");
+		Log.i(TAG, "Created the article table for " + _tabname);
 		createArticleViews(_db, _tabname);
 	}
 
 	private void dropArticleViews(final SQLiteDatabase _db,
 			final String _tabname) {
 		_db.execSQL("DROP VIEW IF EXISTS " + getViewName(_tabname));
+		Log.i(TAG, "Dropped the article view for " + _tabname);
 	}
 
 	private void dropArticleTable(final SQLiteDatabase _db,
@@ -403,6 +427,7 @@ public class ArticleDatabase extends SQLiteOpenHelper {
 		_db.execSQL("DROP TABLE IF EXISTS " + _tabname);
 		_db.execSQL("DROP INDEX IF EXISTS " + getIndexName(_tabname,
 				ArticleColumn.SEQ));
+		Log.i(TAG, "Dropped the article table for " + _tabname);
 		dropArticleViews(_db, _tabname);
 	}
 }

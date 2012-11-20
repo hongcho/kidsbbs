@@ -30,7 +30,6 @@ import java.util.HashMap;
 import org.sori.kidsbbs.KidsBbs.IntentUri;
 import org.sori.kidsbbs.KidsBbs.PackageBase;
 import org.sori.kidsbbs.KidsBbs.ParamName;
-import org.sori.kidsbbs.KidsBbs;
 import org.sori.kidsbbs.R;
 import org.sori.kidsbbs.provider.ArticleDatabase.ArticleColumn;
 import org.sori.kidsbbs.provider.ArticleProvider.ContentUriString;
@@ -53,16 +52,16 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.BaseColumns;
-import android.support.v4.view.MenuItemCompat;
 import android.util.TypedValue;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
-import android.widget.AdapterView;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.CursorAdapter;
 import android.widget.FilterQueryProvider;
 import android.widget.ListView;
@@ -71,15 +70,6 @@ import android.widget.TextView;
 public class ThreadedViewActivity extends ListActivity
 		implements ListView.OnScrollListener {
 	//private static final String TAG = "ThreadedViewActivity";
-
-	private interface MenuId {
-		int REFRESH = Menu.FIRST;
-		int PREFERENCES = Menu.FIRST + 1;
-		int EXPAND_ALL = Menu.FIRST + 2;
-		int COLLAPSE_ALL = Menu.FIRST + 3;
-		int TOGGLE_EXPANSION = Menu.FIRST + 4;
-		int SHOW_USER = Menu.FIRST + 5;
-	}
 
 	private ContentResolver mResolver;
 
@@ -218,98 +208,61 @@ public class ThreadedViewActivity extends ListActivity
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu _menu) {
-		MenuItem item;
-		item =
-			_menu.add(0, MenuId.REFRESH, Menu.NONE, R.string.menu_refresh)
-			.setIcon(getResources().getIdentifier(
-					"android:drawable/ic_menu_refresh", null, null))
-			.setShortcut('0', 'r');
-		MenuItemCompat.setShowAsAction(item,
-				MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
-		
-		item =
-			_menu.add(0, MenuId.EXPAND_ALL, Menu.NONE,
-					R.string.menu_expand_all)
-			.setIcon(android.R.drawable.ic_menu_zoom)
-			.setShortcut('1', 'e');
-		MenuItemCompat.setShowAsAction(item,
-				MenuItemCompat.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
-		
-		item =
-			_menu.add(0, MenuId.COLLAPSE_ALL, Menu.NONE,
-					R.string.menu_collapse_all)
-			.setIcon(getResources().getIdentifier(
-					"android:drawable/ic_menu_block", null, null))
-			.setShortcut('2', 'c');
-		MenuItemCompat.setShowAsAction(item,
-				MenuItemCompat.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
-		
-		item =
-			_menu.add(0, MenuId.PREFERENCES, Menu.NONE,
-					R.string.menu_preferences)
-			.setIcon(android.R.drawable.ic_menu_preferences)
-			.setShortcut('3', 'p');
-		MenuItemCompat.setShowAsAction(item,
-				MenuItemCompat.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
-
-		return super.onCreateOptionsMenu(_menu);
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.threaded_view, _menu);
+		return true;
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
-		case MenuId.REFRESH:
-			refreshList();
-			break;
-		case MenuId.EXPAND_ALL:
+		case R.id.menu_expand_all:
 			expandAll(true);
-			break;
-		case MenuId.COLLAPSE_ALL:
+			return true;
+		case R.id.menu_collapse_all:
 			expandAll(false);
-			break;
-		case MenuId.PREFERENCES:
+			return true;
+		case R.id.menu_refresh:
+			refreshList();
+			return true;
+		case R.id.menu_preferences:
 			showPreference();
-			break;
-		case KidsBbs.Hacks.android_R_id_home: // HACK: android.R.id.home
+			return true;
+		case android.R.id.home:
 			finish();
-			break;
+			return true;
+		default:
+			return super.onOptionsItemSelected(item);
 		}
-		return super.onOptionsItemSelected(item);
 	}
 
 	@Override
 	public void onCreateContextMenu(ContextMenu _menu, View _v,
 			ContextMenu.ContextMenuInfo _menuInfo) {
-		super.onCreateOptionsMenu(_menu);
-
-		_menu.setHeaderTitle(
-				getResources().getString(R.string.tview_cm_header))
-			.setHeaderIcon(android.R.drawable.ic_dialog_info);
-
-		_menu.add(0, MenuId.TOGGLE_EXPANSION, Menu.NONE,
-				R.string.menu_toggle_expansion);
-		_menu.add(1, MenuId.SHOW_USER, Menu.NONE, R.string.menu_show_user);
+		super.onCreateContextMenu(_menu, _v, _menuInfo);
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.threaded_view_context, _menu);
 	}
 
 	@Override
 	public boolean onContextItemSelected(MenuItem _item) {
-		super.onContextItemSelected(_item);
-		View v = ((AdapterView.AdapterContextMenuInfo) _item.getMenuInfo()).targetView;
+		AdapterContextMenuInfo info = (AdapterContextMenuInfo) _item.getMenuInfo();
 		switch (_item.getItemId()) {
-		case MenuId.TOGGLE_EXPANSION:
-			toggleExpansion(v);
+		case R.id.menu_toggle_expansion:
+			toggleExpansion(info.targetView);
 			return true;
-		case MenuId.SHOW_USER:
+		case R.id.menu_show_user:
 			final Intent intent = new Intent(this, UserListActivity.class);
 			intent.setData(IntentUri.USER);
 			intent.putExtra(PackageBase.PARAM + ParamName.TABNAME, mTabname);
 			intent.putExtra(PackageBase.PARAM + ParamName.BTITLE, mBoardTitle);
 			intent.putExtra(PackageBase.PARAM + ParamName.USER,
-					((ThreadItemView) v).mUser);
+					((ThreadItemView) info.targetView).mUser);
 			startActivity(intent);
 			return true;
+		default:
+			return super.onContextItemSelected(_item);
 		}
-		return false;
 	}
 
 	public void onScroll(AbsListView _v, int _first, int _count, int _total) {

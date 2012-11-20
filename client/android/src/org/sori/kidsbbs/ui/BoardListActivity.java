@@ -60,27 +60,19 @@ import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.BaseColumns;
-import android.support.v4.view.MenuItemCompat;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.CursorAdapter;
 import android.widget.FilterQueryProvider;
 import android.widget.ListView;
 import android.widget.TextView;
 
 public class BoardListActivity extends ListActivity {
-
-	private interface MenuId {
-		int REFRESH = Menu.FIRST;
-		int PREFERENCES = Menu.FIRST + 1;
-		int SHOW = Menu.FIRST + 2;
-		int SELECT = Menu.FIRST + 3;
-	}
 
 	private static final String KEY_SELECTED_ITEM = "KEY_SELECTED_ITEM";
 
@@ -158,72 +150,38 @@ public class BoardListActivity extends ListActivity {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu _menu) {
-		MenuItem item;
-		item =
-			_menu.add(0, MenuId.SELECT, Menu.NONE, R.string.menu_select)
-			.setIcon(android.R.drawable.ic_menu_add)
-			.setShortcut('0', 's');
-		MenuItemCompat.setShowAsAction(item,
-				MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
-		
-		item =
-			_menu.add(0, MenuId.REFRESH, Menu.NONE, R.string.menu_refresh)
-			.setIcon(getResources().getIdentifier(
-					"android:drawable/ic_menu_refresh", null, null))
-			.setShortcut('1', 'r');
-		MenuItemCompat.setShowAsAction(item,
-				MenuItemCompat.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
-		
-		item =
-			_menu.add(0, MenuId.PREFERENCES, Menu.NONE,
-					R.string.menu_preferences)
-			.setIcon(android.R.drawable.ic_menu_preferences)
-			.setShortcut('2', 'p');
-		MenuItemCompat.setShowAsAction(item,
-				MenuItemCompat.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
-
-		return super.onCreateOptionsMenu(_menu);
-	}
-
-	@Override
-	public void onCreateContextMenu(ContextMenu _menu, View _v,
-			ContextMenu.ContextMenuInfo _menuInfo) {
-		super.onCreateOptionsMenu(_menu);
-
-		_menu.setHeaderTitle(getResources().getString(
-				R.string.blist_cm_header))
-			.setHeaderIcon(android.R.drawable.ic_dialog_info);
-
-		_menu.add(0, MenuId.SHOW, Menu.NONE, R.string.read_text);
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.board_list, _menu);
+		return true;
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
-		case MenuId.SELECT:
+		case R.id.menu_select:
 			selectBoards();
-			break;
-		case MenuId.REFRESH:
+			return true;
+		case R.id.menu_refresh:
 			DBUtils.updateBoardTable(this, null);
 			refreshList();
-			break;
-		case MenuId.PREFERENCES:
+			return true;
+		case R.id.menu_preferences:
 			startActivity(new Intent(this, MainSettings.class));
-			break;
+			return true;
+		default:
+			return super.onOptionsItemSelected(item);
 		}
-		return super.onOptionsItemSelected(item);
+	}
+
+	@Override
+	public void onCreateContextMenu(ContextMenu _menu, View _v,
+			ContextMenu.ContextMenuInfo _menuInfo) {
+		super.onCreateContextMenu(_menu, _v, _menuInfo);
 	}
 
 	@Override
 	public boolean onContextItemSelected(MenuItem _item) {
-		super.onContextItemSelected(_item);
-		switch (_item.getItemId()) {
-		case MenuId.SHOW:
-			showItem(((AdapterView.AdapterContextMenuInfo)
-					_item.getMenuInfo()).position);
-			return true;
-		}
-		return false;
+		return super.onContextItemSelected(_item);
 	}
 
 	private class UpdateTask extends AsyncTask<Void, Void, Cursor> {
