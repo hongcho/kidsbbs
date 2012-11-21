@@ -1,0 +1,112 @@
+<!--
+Copyright (c) 2010-2012, Younghong "Hong" Cho <hongcho@sori.org>.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+  1. Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
+  2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+  3. Neither the name of the organization nor the names of its contributors
+may be used to endorse or promote products derived from this software
+without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources>
+    <string name="title_app">키즈 비비에스</string>
+    <string name="title_blist">보드목록</string>
+    <string name="title_tlist">주제목록</string>
+    <string name="title_tview">주제별 글보기</string>
+    <string name="title_user">사용자별 글보기</string>
+    <string name="title_view">글보기</string>
+    <string name="title_pref">키즈 비비에스 설정</string>
+
+    <string name="read_text">보기</string>
+    <string name="mark_read_text">읽음표시</string>
+    <string name="blist_cm_header">보드목록 메뉴</string>
+    <string name="alist_cm_header">글목록 메뉴</string>
+    <string name="tview_cm_header">주제별 글보기 메뉴</string>
+
+    <string name="menu_select">보드선택</string>
+    <string name="menu_refresh">업데이트</string>
+    <string name="menu_mark_all_read">전체읽음표시</string>
+    <string name="menu_mark_read">읽음표시</string>
+    <string name="menu_show">글보기</string>
+    <string name="menu_expand_all">전체펴기</string>
+    <string name="menu_collapse_all">전체접기</string>
+    <string name="menu_preferences">설정</string>
+    <string name="menu_toggle_expansion">접기/펴기</string>
+    <string name="menu_show_user">사용자별 글보기</string>
+
+    <string name="settings_update">불러오기 설정</string>
+    <string name="update_freq_title">불러오기 주기</string>
+    <string name="update_freq_summary">새글검색 주기를 정하세요.</string>
+
+    <string name="settings_viewing">보기 설정</string>
+    <string name="hide_read_title">읽은글 숨기기</string>
+    <string name="hide_read_summary">읽은 글을 목록에서 제외시킵니다.</string>
+
+    <string name="settings_notification">알림 설정</string>
+    <string name="notification_title">알림 설정</string>
+    <string name="notification_summary">새 글이 왔을 때 알려드릴까요?</string>
+    <string name="settings_notification_options">알림방식 설정</string>
+    <string name="notification_lights">LED 알림</string>
+    <string name="notification_sound">소리 알림</string>
+    <string name="notification_vibrate">진동 알림</string>
+
+    <string name="settings_general">일반 설정</string>
+    <string name="about_kidsbbs_title">키즈 비비에스란?</string>
+    <string name="about_copyrights_title">저작권에 대하여</string>
+    <string name="about_app_title">이 앱에 대하여</string>
+
+    <string name="default_update_freq">20</string>
+
+    <string name="board_selection_title">보드를 골라주세요.</string>
+    <string name="mark_all_read_message">글목록 전체를 모두 읽은 것으로 표시하겠습니까?</string>
+
+    <string name="notification_title_text">새 글이 올라왔습니다.</string>
+    <string name="notification_message">보드목록으로 가서 읽으세요.</string>
+
+    <string name="about_kidsbbs_text">KIDS (Korea Internet Dream Space / Korea
+        Internet DataService System): telnet/SSH를 기반으로 하는 BBS\n\n주소:
+        kids.kornet.net
+    </string>
+    <string name="about_app_text">이 앱은 키즈와는 직접적으로는 관련이 전혀
+        없습니다. 단지 사용자로서 취미삼아 만들어봤습니다.\n\n프로젝트:
+        http://kidsbbs.googlecode.com/
+    </string>
+    <string name="about_copyrights_text">
+        Copyright &#169; 2010 - 2012 Younghong Cho. All rights reserved.\n
+    </string>
+    <string name="about_copyrights_text_xxx">
+        Copyright &#169; 2010 - 2012 Younghong Cho. All rights reserved.\n
+        \nCopyright &#169; 2006 - 2010 Christian Plattner. All rights reserved.\n
+        \nCopyright &#169; 2005 - 2006 Swiss Federal Institute of Technology (ETH Zurich),
+        Department of Computer Science (http://www.inf.ethz.ch),
+        Christian Plattner. All rights reserved.\n
+        \nCopyright &#169; 2000 - 2004 The Legion Of The Bouncy Castle
+        (http://www.bouncycastle.org)\n
+    </string>
+
+    <string name="update_text">불러오고 있습니다&#8230;</string>
+    
+    <string name="cs_date">date</string>
+    <string name="cs_title">title</string>
+    <string name="cs_username">username</string>
+    <string name="cs_summary">summary</string>
+    <string name="cs_body">body</string>
+    <string name="cs_count2">0/123</string>
+</resources>
