@@ -39,8 +39,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <string name="blist_cm_header">보드목록 메뉴</string>
     <string name="alist_cm_header">글목록 메뉴</string>
     <string name="tview_cm_header">주제별 글보기 메뉴</string>
-    <string name="tlist_cm_header">주제목록 메뉴</string>
-    <string name="user_cm_header">사용자별 글보기 메뉴</string>
 
     <string name="menu_select">보드선택</string>
     <string name="menu_refresh">업데이트</string>
@@ -75,7 +73,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <string name="about_app_title">이 앱에 대하여</string>
 
     <string name="default_update_freq">20</string>
-    <string name="update_error_text">배경 서비스가 글을 불러오는데 문제가 있었습니다</string>
 
     <string name="board_selection_title">보드를 골라주세요.</string>
     <string name="mark_all_read_message">글목록 전체를 모두 읽은 것으로 표시하겠습니까?</string>
@@ -95,7 +92,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         Copyright &#169; 2010 - 2012 Younghong Cho. All rights reserved.\n
     </string>
     <string name="about_copyrights_text_xxx">
-        Copyright &#169; 2006 - 2010 Christian Plattner. All rights reserved.\n
+        Copyright &#169; 2010 - 2012 Younghong Cho. All rights reserved.\n
+        \nCopyright &#169; 2006 - 2010 Christian Plattner. All rights reserved.\n
         \nCopyright &#169; 2005 - 2006 Swiss Federal Institute of Technology (ETH Zurich),
         Department of Computer Science (http://www.inf.ethz.ch),
         Christian Plattner. All rights reserved.\n

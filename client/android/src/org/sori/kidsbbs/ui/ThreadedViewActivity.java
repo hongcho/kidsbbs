@@ -25,8 +25,6 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs.ui;
 
-import java.util.HashMap;
-
 import org.sori.kidsbbs.KidsBbs.IntentUri;
 import org.sori.kidsbbs.KidsBbs.PackageBase;
 import org.sori.kidsbbs.KidsBbs.ParamName;
@@ -52,6 +50,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.BaseColumns;
+import android.util.SparseBooleanArray;
 import android.util.TypedValue;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
@@ -60,6 +59,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.AbsListView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.CursorAdapter;
@@ -89,8 +89,6 @@ public class ThreadedViewActivity extends ListActivity
 	private String mTitle;
 	private int mSeq;
 
-	private String mUpdateText;
-	private TextView mStatusView;
 	private ListView mListView;
 	private TextView mUsernameView;
 	private TextView mDateView;
@@ -102,6 +100,7 @@ public class ThreadedViewActivity extends ListActivity
 	@Override
 	public void onCreate(Bundle _state) {
 		super.onCreate(_state);
+		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 		setContentView(R.layout.threaded_view);
 
 		final Intent intent = getIntent();
@@ -117,7 +116,6 @@ public class ThreadedViewActivity extends ListActivity
 		mResolver = getContentResolver();
 
 		final Resources resources = getResources();
-		mUpdateText = resources.getString(R.string.update_text);
 		if (mTitle == null || mTitle.length() == 0) {
 			mTitle = resources.getString(R.string.title_tview);
 		}
@@ -148,9 +146,6 @@ public class ThreadedViewActivity extends ListActivity
 				return false;
 			}
 		});
-
-		mStatusView = (TextView) findViewById(R.id.status);
-		mStatusView.setVisibility(View.GONE);
 
 		mUsernameView = (TextView) findViewById(R.id.username);
 		mDateView = (TextView) findViewById(R.id.date);
@@ -312,7 +307,7 @@ public class ThreadedViewActivity extends ListActivity
 		} else {
 			countString = "";
 		}
-		setTitle(mBoardTitle + " " + countString);
+		setTitle(countString + " " + mBoardTitle);
 	}
 
 	private final int getCount() {
@@ -325,8 +320,7 @@ public class ThreadedViewActivity extends ListActivity
 	private class UpdateTask extends AsyncTask<Void, Void, Cursor> {
 		@Override
 		protected void onPreExecute() {
-			mStatusView.setText(mUpdateText);
-			mStatusView.setVisibility(View.VISIBLE);
+			setProgressBarIndeterminateVisibility(true);
 		}
 
 		@Override
@@ -336,7 +330,7 @@ public class ThreadedViewActivity extends ListActivity
 
 		@Override
 		protected void onPostExecute(Cursor _c) {
-			mStatusView.setVisibility(View.GONE);
+			setProgressBarIndeterminateVisibility(false);
 			if (_c == null || _c.isClosed() || mAdapter == null) {
 				return;
 			}
@@ -476,16 +470,14 @@ public class ThreadedViewActivity extends ListActivity
 		private int mCollapsedHeightX;
 		private int mTopPaddingX;
 
-		private HashMap<Integer, Boolean> mExpansionStates =
-			new HashMap<Integer, Boolean>();
+		private SparseBooleanArray mExpansionStates = new SparseBooleanArray();
 
 		public Object getExpansionStates() {
 			return mExpansionStates;
 		}
 
-		@SuppressWarnings("unchecked")
 		public void setExpansionStates(final Object _states) {
-			mExpansionStates = (HashMap<Integer, Boolean>) _states;
+			mExpansionStates = (SparseBooleanArray) _states;
 		}
 
 		public ArticlesAdapter(Context _context) {

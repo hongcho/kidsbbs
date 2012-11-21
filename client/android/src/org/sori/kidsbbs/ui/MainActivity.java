@@ -25,7 +25,7 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs.ui;
 
-import org.sori.kidsbbs.service.UpdateService;
+import org.sori.kidsbbs.util.DBUtils;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -37,7 +37,8 @@ public class MainActivity extends Activity {
 	public void onCreate(Bundle _state) {
 		super.onCreate(_state);
 
-		startService(new Intent(this, UpdateService.class));
+		// The initial update.
+		DBUtils.updateBoardTable(this, "");
 
 		startActivity(new Intent(this, BoardListActivity.class));
 		finish();

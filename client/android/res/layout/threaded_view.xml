@@ -30,7 +30,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     android:layout_height="match_parent"
     android:orientation="vertical">
     
-    <include layout="@layout/common_header" />
     <include layout="@layout/title_header" />
     <include layout="@layout/message_header" />
     <include layout="@layout/common_list" />

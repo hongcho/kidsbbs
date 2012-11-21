@@ -85,6 +85,8 @@ public class UpdateService extends Service
 
 	private int mUpdateFreq;
 	private UpdateTask mLastUpdate = null;
+	private ArrayList<String> mTabnameQueue = new ArrayList<String>();
+	private String mCurTabname = "";
 
 	ConnectivityManager mConnectivityManager;
 	AlarmManager mAlarms;
@@ -102,13 +104,13 @@ public class UpdateService extends Service
 			| Notification.DEFAULT_SOUND
 			| Notification.DEFAULT_VIBRATE;
 
-	// Update to onStartCommand when min SDK becomes >= 5...
 	@Override
-	public void onStart(Intent _intent, int _startId) {
+	public int onStartCommand(Intent _intent, int _flags, int _startId) {
 		setupAlarm(
 				mUpdateFreq,
 				_intent.getStringExtra(
 						PackageBase.PARAM + ParamName.TABNAME));
+		return START_STICKY;
 	}
 
 	public void onSharedPreferenceChanged(SharedPreferences _prefs, String _key) {
@@ -217,15 +219,83 @@ public class UpdateService extends Service
 	public IBinder onBind(Intent _intent) {
 		return null;
 	}
+	
+	private String getTabname() {
+		String tabname;
+		synchronized(mTabnameQueue) {
+			try {
+				tabname = mTabnameQueue.remove(0);
+			} catch (Exception e) {
+				tabname = null;
+			}
+		}
+		return tabname;
+	}
+	private void setCurTabname(final String _tabname) {
+		synchronized(mCurTabname) {
+			mCurTabname = (_tabname == null) ? "" : _tabname;
+		}
+	}
+	private void addTabname(final String _tabname) {
+		synchronized(mTabnameQueue) {
+			if (!mTabnameQueue.contains(_tabname)) {
+				mTabnameQueue.add(_tabname);
+			}
+		}
+	}
+	private void addTabnameQueue(final String _tabname) {
+		final String[] PROJECTION = {
+				BoardColumn.TABNAME
+		};
+		final String ORDERBY = OrderBy.STATE_ASC + "," + OrderBy._ID;
+		
+		if (TextUtils.isEmpty(_tabname)) {
+			// Get all the boards...
+			final Cursor c = mResolver.query(ContentUri.BOARDS, PROJECTION,
+					Selection.STATE_ACTIVE, null, ORDERBY);
+			if (c != null) {
+				if (c.getCount() > 0) {
+					c.moveToFirst();
+					do {
+						addTabname(c.getString(c.getColumnIndex(
+								BoardColumn.TABNAME)));
+					} while (c.moveToNext());
+				}
+				c.close();
+			}
+		} else {
+			addTabname(_tabname);
+		}
+	}
 
-	private class UpdateTask extends AsyncTask<String, Void, Integer> {
+	private class UpdateTask extends AsyncTask<Void, Void, Void> {
 		@Override
-		protected Integer doInBackground(String... _args) {
-			return refreshTables(_args[0]);
+		protected Void doInBackground(Void... _args) {
+			int tries = 0;
+			while (true) {
+				final String tabname = getTabname();
+				if (TextUtils.isEmpty(tabname)) {
+					break;
+				}
+				setCurTabname(tabname);
+				try {
+					final int count = refreshTable(tabname, true);
+					Log.d(TAG, tabname + ": updated " + count + " articles");
+					tries = 0;
+				} catch (Exception e) {
+					Log.d(TAG, tabname + ": exception while updating (#"
+							+ tries + ")");
+					if (++tries > 2) {
+						break;
+					}
+				}
+			}
+			setCurTabname("");
+			return null;
 		}
 
 		@Override
-		protected void onPostExecute(Integer _result) {
+		protected void onPostExecute(Void _result) {
 			stopSelf();
 		}
 
@@ -454,71 +524,14 @@ public class UpdateService extends Service
 					NotificationType.NEW_ARTICLE,
 					mNotificationBuilder.build());
 		}
-
-		private int refreshTables(final String _tabname) {
-			final String[] PROJECTION = {
-					BoardColumn.TABNAME
-			};
-			final String ORDERBY = OrderBy.STATE_ASC + "," + OrderBy._ID;
-
-			boolean postNotification = true;
-			final ArrayList<String> tabnames = new ArrayList<String>();
-			if (TextUtils.isEmpty(_tabname)) {
-				// Get all the boards...
-				final Cursor c = mResolver.query(ContentUri.BOARDS, PROJECTION,
-						Selection.STATE_ACTIVE, null, ORDERBY);
-				if (c != null) {
-					if (c.getCount() > 0) {
-						c.moveToFirst();
-						do {
-							tabnames.add(c.getString(c.getColumnIndex(
-									BoardColumn.TABNAME)));
-						} while (c.moveToNext());
-					}
-					c.close();
-				}
-			} else {
-				postNotification = false;
-				tabnames.add(_tabname);
-			}
-
-			// Update each board in the list.
-			int total_count = 0;
-			int i = 0;
-			int nTries = 0;
-			while (i < tabnames.size()) {
-				synchronized (mIsPausedSync) {
-					while (mIsPaused) {
-						try {
-							mIsPausedSync.wait();
-						} catch (Exception e) {
-						}
-					}
-				}
-				final String tabname = tabnames.get(i);
-				try {
-					final int count = refreshTable(tabname, postNotification);
-					Log.d(TAG, tabname + ": updated " + count + " articles");
-					total_count += count;
-					++i;
-					nTries = 0;
-				} catch (Exception e) {
-					Log.d(TAG, tabname + ": exception while updating (#"
-							+ nTries + ")");
-					if (++nTries > 2) {
-						break;
-					}
-				}
-			}
-			return total_count;
-		}
 	}
 
 	private void refreshArticles(final String _tabname) {
+		addTabnameQueue(_tabname);
 		if (mLastUpdate == null
 				|| mLastUpdate.getStatus().equals(AsyncTask.Status.FINISHED)) {
 			mLastUpdate = new UpdateTask();
-			mLastUpdate.execute(_tabname);
+			mLastUpdate.execute((Void)null);
 		}
 	}
 

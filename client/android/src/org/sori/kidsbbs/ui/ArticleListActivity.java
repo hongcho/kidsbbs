@@ -70,6 +70,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.CursorAdapter;
 import android.widget.FilterQueryProvider;
@@ -93,10 +94,6 @@ public abstract class ArticleListActivity extends ListActivity
 
 	private String mBoardTitle;
 	protected String mTabname;
-
-	private String mUpdateText;
-
-	private TextView mStatusView;
 
 	private UpdateTask mLastUpdate;
 
@@ -133,7 +130,7 @@ public abstract class ArticleListActivity extends ListActivity
 	}
 
 	protected final void updateTitleCommon(final int _unread, final int _total) {
-		setTitle(mBoardTitle + " (" + _unread + "/" + _total + ")");
+		setTitle("(" + _unread + "/" + _total + ") " + mBoardTitle);
 	}
 
 	protected final Cursor getItem(final int _index) {
@@ -143,6 +140,7 @@ public abstract class ArticleListActivity extends ListActivity
 	@Override
 	public void onCreate(Bundle _state) {
 		super.onCreate(_state);
+		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 		setContentView(R.layout.article_list);
 
 		final Intent intent = getIntent();
@@ -152,11 +150,6 @@ public abstract class ArticleListActivity extends ListActivity
 		mUriList = Uri.parse(ContentUriString.LIST + mTabname);
 
 		mResolver = getContentResolver();
-
-		mUpdateText = getResources().getString(R.string.update_text);
-
-		mStatusView = (TextView) findViewById(R.id.status);
-		mStatusView.setVisibility(View.GONE);
 
 		mAdapter = new ArticlesAdapter(this);
 		setListAdapter(mAdapter);
@@ -261,8 +254,7 @@ public abstract class ArticleListActivity extends ListActivity
 	private class UpdateTask extends AsyncTask<Void, Void, Cursor> {
 		@Override
 		protected void onPreExecute() {
-			mStatusView.setText(mUpdateText);
-			mStatusView.setVisibility(View.VISIBLE);
+			setProgressBarIndeterminateVisibility(true);
 		}
 
 		@Override
@@ -281,7 +273,7 @@ public abstract class ArticleListActivity extends ListActivity
 
 		@Override
 		protected void onPostExecute(Cursor _c) {
-			mStatusView.setVisibility(View.GONE);
+			setProgressBarIndeterminateVisibility(false);
 			if (_c == null || _c.isClosed() || mAdapter == null) {
 				return;
 			}

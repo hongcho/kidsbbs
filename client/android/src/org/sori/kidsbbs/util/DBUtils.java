@@ -42,6 +42,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.text.TextUtils;
 
 public class DBUtils {
 
@@ -57,8 +58,10 @@ public class DBUtils {
 	public static final void updateBoardTable(final Context _context,
 			final String _tabname) {
 		Intent intent = new Intent(_context, UpdateService.class);
-		if (_tabname != null && _tabname.length() > 0) {
+		if (!TextUtils.isEmpty(_tabname)) {
 			intent.putExtra(PackageBase.PARAM + ParamName.TABNAME, _tabname);
+		} else {
+			intent.putExtra(PackageBase.PARAM + ParamName.TABNAME, "");
 		}
 		_context.startService(intent);
 	}
