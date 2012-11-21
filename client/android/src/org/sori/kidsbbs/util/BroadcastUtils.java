@@ -38,10 +38,20 @@ public class BroadcastUtils {
 		String BOARD_UPDATED = PackageBase.BCAST + "BoardUpdated";
 		String ARTICLE_UPDATED = PackageBase.BCAST + "ArticleUpdated";
 		String UPDATE_ERROR = PackageBase.BCAST + "UpdateError";
+		String UPDATE_STARTED = PackageBase.BCAST + "UpdateStarted";
+		String UPDATE_ENDED = PackageBase.BCAST + "UpdateEnded";
 	}
 
 	public static final void announceUpdateError(final Context _context) {
 		_context.sendBroadcast(new Intent(BroadcastType.UPDATE_ERROR));
+	}
+
+	public static final void announceUpdateStarted(final Context _context) {
+		_context.sendBroadcast(new Intent(BroadcastType.UPDATE_STARTED));
+	}
+
+	public static final void announceUpdateEnded(final Context _context) {
+		_context.sendBroadcast(new Intent(BroadcastType.UPDATE_ENDED));
 	}
 
 	public static final void announceBoardUpdated(final Context _context,

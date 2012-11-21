@@ -26,6 +26,7 @@
 package org.sori.kidsbbs.service;
 
 import org.sori.kidsbbs.KidsBbs.PackageBase;
+import org.sori.kidsbbs.util.DBUtils;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -38,6 +39,6 @@ public class AlarmReceiver extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context _context, Intent _intent) {
 		// Start server from alarm...
-		_context.startService(new Intent(_context, UpdateService.class));
+		DBUtils.updateBoardTable(_context, "");
 	}
 }

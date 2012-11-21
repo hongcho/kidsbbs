@@ -67,6 +67,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.CursorAdapter;
 import android.widget.FilterQueryProvider;
 import android.widget.ListView;
@@ -83,10 +84,6 @@ public class BoardListActivity extends ListActivity {
 	private int mSavedItemPosition;
 
 	private String mTitleBase;
-	private String mUpdateText;
-	private String mUpdateErrorText;
-
-	private TextView mStatusView;
 
 	private UpdateTask mLastUpdate = null;
 	private boolean mError = false;
@@ -99,14 +96,10 @@ public class BoardListActivity extends ListActivity {
 	@Override
 	public void onCreate(Bundle _state) {
 		super.onCreate(_state);
+		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 		setContentView(R.layout.board_list);
 
 		mTitleBase = getResources().getString(R.string.title_blist);
-		mStatusView = (TextView) findViewById(R.id.status);
-
-		final Resources resources = getResources();
-		mUpdateText = resources.getString(R.string.update_text);
-		mUpdateErrorText = resources.getString(R.string.update_error_text);
 
 		mResolver = getContentResolver();
 		mNotificationManager = (NotificationManager) getSystemService(
@@ -187,8 +180,7 @@ public class BoardListActivity extends ListActivity {
 	private class UpdateTask extends AsyncTask<Void, Void, Cursor> {
 		@Override
 		protected void onPreExecute() {
-			mStatusView.setText(mUpdateText);
-			mStatusView.setVisibility(View.VISIBLE);
+			setProgressBarIndeterminateVisibility(true);
 		}
 
 		@Override
@@ -200,7 +192,7 @@ public class BoardListActivity extends ListActivity {
 
 		@Override
 		protected void onPostExecute(Cursor _c) {
-			mStatusView.setVisibility(View.GONE);
+			setProgressBarIndeterminateVisibility(false);
 			if (_c == null || _c.isClosed() || mAdapter == null) {
 				return;
 			}
@@ -211,7 +203,7 @@ public class BoardListActivity extends ListActivity {
 	}
 
 	private void updateTitle() {
-		setTitle(mTitleBase + " (" + mAdapter.getCount() + ")");
+		setTitle("(" + mAdapter.getCount() + ") " + mTitleBase);
 	}
 
 	private boolean isUpdating() {
@@ -298,8 +290,7 @@ public class BoardListActivity extends ListActivity {
 										new String[] { mTabnames[i] });
 							}
 							if (nUpdated > 0) {
-								startService(new Intent(BoardListActivity.this,
-										UpdateService.class));
+								DBUtils.updateBoardTable(BoardListActivity.this, "");
 							}
 						}
 					});
@@ -350,28 +341,17 @@ public class BoardListActivity extends ListActivity {
 		}
 	}
 
-	private void setError() {
-		mError = true;
-		mStatusView.setVisibility(View.VISIBLE);
-	}
-
-	private void clearError() {
-		mError = false;
-		mStatusView.setVisibility(View.GONE);
-	}
-
 	private class UpdateErrorReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
-			mStatusView.setText(mUpdateErrorText);
-			setError();
+			mError = true;
 		}
 	}
 
 	private class BoardUpdatedReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context _context, Intent _intent) {
-			clearError();
+			mError = false;
 		}
 	}
 

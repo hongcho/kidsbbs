@@ -30,6 +30,5 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     
-    <include layout="@layout/common_header" />
     <include layout="@layout/common_list" />
 </LinearLayout>
