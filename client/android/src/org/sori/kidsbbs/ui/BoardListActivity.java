@@ -35,7 +35,6 @@ import org.sori.kidsbbs.provider.ArticleDatabase.BoardState;
 import org.sori.kidsbbs.provider.ArticleProvider.ContentUri;
 import org.sori.kidsbbs.provider.ArticleProvider.OrderBy;
 import org.sori.kidsbbs.provider.ArticleProvider.Selection;
-import org.sori.kidsbbs.service.UpdateService;
 import org.sori.kidsbbs.ui.preference.MainSettings;
 import org.sori.kidsbbs.util.BroadcastUtils.BroadcastType;
 import org.sori.kidsbbs.util.DBUtils;
@@ -108,6 +107,8 @@ public class BoardListActivity extends ListActivity {
 		mAdapter = new BoardsAdapter(this);
 		setListAdapter(mAdapter);
 
+		updateTitle();
+
 		registerForContextMenu(getListView());
 		registerReceivers();
 
@@ -124,6 +125,7 @@ public class BoardListActivity extends ListActivity {
 	protected void onResume() {
 		super.onResume();
 		mNotificationManager.cancel(NotificationType.NEW_ARTICLE);
+		updateTitle();
 	}
 	
 	@Override
