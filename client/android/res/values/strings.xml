@@ -45,8 +45,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <string name="menu_mark_all_read">전체읽음표시</string>
     <string name="menu_mark_read">읽음표시</string>
     <string name="menu_show">글보기</string>
-    <string name="menu_expand_all">전체펴기</string>
-    <string name="menu_collapse_all">전체접기</string>
     <string name="menu_preferences">설정</string>
     <string name="menu_toggle_expansion">접기/펴기</string>
     <string name="menu_show_user">사용자별 글보기</string>

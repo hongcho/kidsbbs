@@ -1,4 +1,4 @@
-// Copyright (c) 2011, Younghong "Hong" Cho <hongcho@sori.org>.
+// Copyright (c) 2011-2012, Younghong "Hong" Cho <hongcho@sori.org>.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -205,17 +205,19 @@ public class ThreadedViewActivity extends ListActivity
 	public boolean onCreateOptionsMenu(Menu _menu) {
 		MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.threaded_view, _menu);
+		
+		// Access non-public Android icons.
+		_menu.findItem(R.id.menu_refresh).setIcon(
+				getResources().getIdentifier(
+						"android:drawable/ic_menu_refresh", null, null));
 		return true;
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
-		case R.id.menu_expand_all:
-			expandAll(true);
-			return true;
-		case R.id.menu_collapse_all:
-			expandAll(false);
+		case R.id.menu_toggle_expansion:
+			toggleExpansion();
 			return true;
 		case R.id.menu_refresh:
 			refreshList();
@@ -359,11 +361,15 @@ public class ThreadedViewActivity extends ListActivity
 		updateHeader(mListView);
 	}
 
-	private void expandAll(final boolean _state) {
-		mAdapter.setExpansionAll(_state);
+	private void toggleExpansion() {
+		// First get the current overall expansion state.
+		boolean curState = !mAdapter.isAllCollapsed();
+		
+		// Toggle the expansion.
 		final int n = mListView.getChildCount();
+		mAdapter.setExpansionAll(!curState);
 		for (int i = n - 1; i >= 0; --i) {
-			mAdapter.setExpansion(mListView.getChildAt(i), _state);
+			mAdapter.setExpansion(mListView.getChildAt(i), !curState);
 		}
 		refreshView();
 	}
@@ -652,6 +658,23 @@ public class ThreadedViewActivity extends ListActivity
 				mExpansionStates.put(c.getInt(ColumnIndex.SEQ), _state);
 			} while (c.moveToNext());
 			c.moveToPosition(saved);
+		}
+		
+		public boolean isAllCollapsed() {
+			Cursor c = getCursor();
+			if (c == null || c.getCount() <= 0) {
+				return true;
+			}
+			boolean isCollapsed = true;
+			final int saved = c.getPosition();
+			do {
+				if (mExpansionStates.get(c.getInt(ColumnIndex.SEQ))) {
+					isCollapsed = false;
+					break;
+				}
+			} while (c.moveToNext());
+			c.moveToPosition(saved);
+			return isCollapsed;
 		}
 	}
 }
