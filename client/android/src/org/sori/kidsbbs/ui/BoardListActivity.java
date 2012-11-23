@@ -1,4 +1,4 @@
-// Copyright (c) 2010-2011, Younghong "Hong" Cho <hongcho@sori.org>.
+// Copyright (c) 2010-2012, Younghong "Hong" Cho <hongcho@sori.org>.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,6 @@ import org.sori.kidsbbs.provider.ArticleDatabase.BoardState;
 import org.sori.kidsbbs.provider.ArticleProvider.ContentUri;
 import org.sori.kidsbbs.provider.ArticleProvider.OrderBy;
 import org.sori.kidsbbs.provider.ArticleProvider.Selection;
-import org.sori.kidsbbs.service.UpdateService;
 import org.sori.kidsbbs.ui.preference.MainSettings;
 import org.sori.kidsbbs.util.BroadcastUtils.BroadcastType;
 import org.sori.kidsbbs.util.DBUtils;
@@ -107,6 +106,8 @@ public class BoardListActivity extends ListActivity {
 
 		mAdapter = new BoardsAdapter(this);
 		setListAdapter(mAdapter);
+		
+		updateTitle();
 
 		registerForContextMenu(getListView());
 		registerReceivers();
@@ -145,6 +146,11 @@ public class BoardListActivity extends ListActivity {
 	public boolean onCreateOptionsMenu(Menu _menu) {
 		MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.board_list, _menu);
+		
+		// Access non-public Android icons.
+		_menu.findItem(R.id.menu_refresh).setIcon(
+				getResources().getIdentifier(
+						"android:drawable/ic_menu_refresh", null, null));
 		return true;
 	}
 

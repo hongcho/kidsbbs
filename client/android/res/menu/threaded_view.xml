@@ -26,16 +26,14 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/menu_expand_all"
-        android:title="@string/menu_expand_all"
-        android:showAsAction="ifRoom|withText" />
-    <item android:id="@+id/menu_collapse_all"
-        android:title="@string/menu_collapse_all"
+    <item android:id="@+id/menu_toggle_expansion"
+        android:title="@string/menu_toggle_expansion"
         android:showAsAction="ifRoom|withText" />
     <item android:id="@+id/menu_refresh"
         android:title="@string/menu_refresh"
-        android:showAsAction="ifRoom|withText" />
+        android:showAsAction="ifRoom" />
     <item android:id="@+id/menu_preferences"
         android:title="@string/menu_preferences"
+        android:icon="@android:drawable/ic_menu_preferences"
         android:showAsAction="ifRoom" />
 </menu>
