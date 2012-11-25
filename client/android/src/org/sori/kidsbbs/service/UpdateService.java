@@ -374,7 +374,7 @@ public class UpdateService extends IntentService
 			Log.i(TAG, _tabname + ": next from " + start);
 		}
 		final int trimmed = trimBoardTable(_tabname);
-		Log.d(TAG, _tabname + ": trimed " + trimmed + " articles");
+		Log.i(TAG, _tabname + ": trimed " + trimmed + " articles");
 		if (_shouldNotify && count > 0) {
 			notifyNewArticles(_tabname, count);
 		}

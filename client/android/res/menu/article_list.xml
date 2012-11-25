@@ -35,5 +35,5 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <item android:id="@+id/menu_preferences"
         android:title="@string/menu_preferences"
         android:icon="@android:drawable/ic_menu_preferences"
-        android:showAsAction="ifRoom" />
+        android:showAsAction="never" />
 </menu>
