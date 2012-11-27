@@ -26,11 +26,18 @@
 package org.sori.kidsbbs.service;
 
 import org.sori.kidsbbs.KidsBbs.PackageBase;
+import org.sori.kidsbbs.ui.preference.MainSettings;
+import org.sori.kidsbbs.ui.preference.MainSettings.PrefKey;
 import org.sori.kidsbbs.util.DBUtils;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.SystemClock;
+import android.preference.PreferenceManager;
 
 public class AlarmReceiver extends BroadcastReceiver {
 	public static final String UPDATE_BOARDS_ALARM =
@@ -40,5 +47,40 @@ public class AlarmReceiver extends BroadcastReceiver {
 	public void onReceive(Context _context, Intent _intent) {
 		// Start server from alarm...
 		DBUtils.updateBoardTable(_context, "");
+	}
+	
+	public static final PendingIntent getPendingIntent(Context _context) {
+		return PendingIntent.getBroadcast(
+				_context,
+				0,
+				new Intent(AlarmReceiver.UPDATE_BOARDS_ALARM),
+				0);
+	}
+	
+	public static final void setupAlarm(Context _context, final long _delay) {
+		final SharedPreferences prefs =
+				PreferenceManager.getDefaultSharedPreferences(_context);
+		final int freq =
+				Integer.parseInt(prefs.getString(PrefKey.UPDATE_FREQ,
+						MainSettings.getDefaultUpdateFreq(_context)));
+		final PendingIntent intent = AlarmReceiver.getPendingIntent(_context);
+		AlarmReceiver.setupAlarm(_context, freq, _delay, intent);
+	}
+
+	public static final void setupAlarm(Context _context, final long _period,
+			final long _delay, PendingIntent _pendingIntent) {
+		AlarmManager alarmManager =
+				(AlarmManager) _context.getSystemService(Context.ALARM_SERVICE);
+		if (_period > 0) {
+			final long msPeriod = _period * 60 * 1000;
+			final long msDelay = ((_period < _delay) ? _period : _delay) * 60 * 1000;
+			alarmManager.setRepeating(
+					AlarmManager.ELAPSED_REALTIME_WAKEUP,
+					SystemClock.elapsedRealtime() + msDelay,
+					msPeriod,
+					_pendingIntent);
+		} else {
+			alarmManager.cancel(_pendingIntent);
+		}
 	}
 }

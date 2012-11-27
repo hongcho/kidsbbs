@@ -25,11 +25,14 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs.util;
 
+import java.util.ArrayList;
+
 import org.sori.kidsbbs.KidsBbs.PackageBase;
 import org.sori.kidsbbs.KidsBbs.ParamName;
 import org.sori.kidsbbs.provider.ArticleDatabase.ArticleColumn;
 import org.sori.kidsbbs.provider.ArticleDatabase.ArticleField;
 import org.sori.kidsbbs.provider.ArticleDatabase.BoardColumn;
+import org.sori.kidsbbs.provider.ArticleDatabase.BoardState;
 import org.sori.kidsbbs.provider.ArticleProvider.ContentUri;
 import org.sori.kidsbbs.provider.ArticleProvider.ContentUriString;
 import org.sori.kidsbbs.provider.ArticleProvider.OrderBy;
@@ -53,6 +56,8 @@ public class DBUtils {
 		String[] ARTICLE_CNT = { ArticleField.CNT };
 		String[] READ = { ArticleColumn.READ };
 		String[] ALLREAD = { ArticleField.ALLREAD };
+		String[] BOARD_NAME = { BoardColumn.TABNAME };
+		String[] BOARD_STATE = { BoardColumn.STATE };
 	}
 
 	public static final void updateBoardTable(final Context _context,
@@ -99,18 +104,18 @@ public class DBUtils {
 
 	public static final int getBoardTableSize(final ContentResolver _cr,
 			final String _tabname) {
-		int cnt = 0;
+		int count = 0;
 		final Uri uri = Uri.parse(ContentUriString.LIST + _tabname);
 		final Cursor c = _cr.query(uri, Projection.ARTICLE_CNT, null, null,
 				null);
 		if (c != null) {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
-				cnt = c.getInt(0);
+				count = c.getInt(0);
 			}
 			c.close();
 		}
-		return cnt;
+		return count;
 	}
 
 	public static final int getBoardUnreadCount(final ContentResolver _cr,
@@ -196,5 +201,57 @@ public class DBUtils {
 			c.close();
 		}
 		return read;
+	}
+	
+	public static final ArrayList<String> getActiveBoards(
+			final ContentResolver _cr) {
+		final String ORDERBY = OrderBy.STATE_ASC + "," + OrderBy._ID;
+		ArrayList<String> tabnames = new ArrayList<String>();
+		
+		// Get all the boards...
+		final Cursor c = _cr.query(ContentUri.BOARDS, Projection.BOARD_NAME,
+				Selection.STATE_ACTIVE, null, ORDERBY);
+		if (c != null) {
+			if (c.getCount() > 0) {
+				c.moveToFirst();
+				do {
+					tabnames.add(c.getString(c.getColumnIndex(
+							BoardColumn.TABNAME)));
+				} while (c.moveToNext());
+			}
+			c.close();
+		}
+		return tabnames;
+	}
+	
+	public static final int getBoardState(final ContentResolver _cr,
+			final String _tabname) {
+		int result = BoardState.PAUSED;
+		final Cursor c =
+				_cr.query(
+						ContentUri.BOARDS,
+						Projection.BOARD_STATE,
+						Selection.TABNAME,
+						new String[] { _tabname },
+						null);
+		if (c != null) {
+			if (c.getCount() > 0) {
+				c.moveToFirst();
+				result = c.getInt(c.getColumnIndex(BoardColumn.STATE));
+			}
+			c.close();
+		}
+		return result;
+	}
+
+	public static final boolean setBoardState(final ContentResolver _cr,
+			final String _tabname, final int _state) {
+		final ContentValues values = new ContentValues();
+		values.put(BoardColumn.STATE, _state);
+		return _cr.update(
+						ContentUri.BOARDS,
+						values,
+						Selection.TABNAME,
+						new String[] { _tabname }) > 0;
 	}
 }
