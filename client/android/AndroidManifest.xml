@@ -29,15 +29,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     package="org.sori.kidsbbs"
     android:versionCode="00016"
     android:versionName="@string/version_name">
-    <uses-sdk
-        android:minSdkVersion="8"
-        android:targetSdkVersion="17" />
-    <uses-permission
-        android:name="android.permission.INTERNET" />
-    <uses-permission
-        android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission
-        android:name="android.permission.VIBRATE" />
+    <uses-sdk android:minSdkVersion="8" android:targetSdkVersion="17" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <application
         android:icon="@drawable/icon"
         android:label="@string/title_app"
@@ -113,9 +109,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         <receiver
             android:name=".service.AlarmReceiver"
             android:exported="false">
-        	<intent-filter>
-        		<action android:name="org.sori.kidsbbs.alarm.UpdateBoards" />
-        	</intent-filter>
+            <intent-filter>
+                <action android:name="org.sori.kidsbbs.alarm.UpdateBoards" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".service.StartupReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <category android:name="android.intent.category.HOME" />
+            </intent-filter>
         </receiver>
     </application>
-</manifest> 
+</manifest>
