@@ -39,7 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         android:label="@string/title_app"
         android:theme="@style/AppTheme"
         android:allowBackup="true"
-        android:uiOptions="none">
+        android:uiOptions="splitActionBarWhenNarrow">
         <activity
             android:name=".ui.MainActivity"
             android:label="@string/title_app"
