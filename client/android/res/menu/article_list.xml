@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         android:showAsAction="ifRoom|withText" />
     <item android:id="@+id/menu_refresh"
         android:title="@string/menu_refresh"
-        android:showAsAction="ifRoom" />
+        android:showAsAction="never" />
     <item android:id="@+id/menu_preferences"
         android:title="@string/menu_preferences"
         android:icon="@android:drawable/ic_menu_preferences"
