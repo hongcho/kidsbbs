@@ -39,7 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         android:label="@string/title_app"
         android:theme="@style/AppTheme"
         android:allowBackup="true"
-        android:uiOptions="splitActionBarWhenNarrow">
+        android:uiOptions="none">
         <activity
             android:name=".ui.MainActivity"
             android:label="@string/title_app"
@@ -87,7 +87,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             android:name=".ui.ThreadedViewActivity"
             android:label="@string/title_tview"
             android:exported="false"
-            android:uiOptions="none"
             android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
