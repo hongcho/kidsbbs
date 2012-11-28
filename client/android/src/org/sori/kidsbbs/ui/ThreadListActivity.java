@@ -26,94 +26,14 @@
 package org.sori.kidsbbs.ui;
 
 import org.sori.kidsbbs.R;
-import org.sori.kidsbbs.KidsBbs.IntentUri;
-import org.sori.kidsbbs.KidsBbs.PackageBase;
-import org.sori.kidsbbs.KidsBbs.ParamName;
-import org.sori.kidsbbs.provider.ArticleDatabase.ArticleColumn;
-import org.sori.kidsbbs.provider.ArticleProvider.ContentUriString;
-import org.sori.kidsbbs.provider.ArticleProvider.Selection;
-import org.sori.kidsbbs.util.ArticleUtils;
-import org.sori.kidsbbs.util.DBUtils;
 
-import android.content.ContentValues;
-import android.content.res.Resources;
-import android.database.Cursor;
 import android.os.Bundle;
 
 public class ThreadListActivity extends ArticleListActivity {
 
-	private String mTitleTView;
-
 	@Override
 	public void onCreate(Bundle _state) {
 		super.onCreate(_state);
-
-		final Resources resources = getResources();
-		mTitleTView = resources.getString(R.string.title_tview);
-
-		setQueryBase(ContentUriString.TLIST, COLUMNS_TLIST, null);
-
-		updateTitle();
-
-		registerForContextMenu(getListView());
-
-		initializeStates();
-	}
-
-	protected void refreshList() {
-		refreshListCommon();
-	}
-
-	protected void updateTitle() {
-		updateTitleCommon(getCount(ContentUriString.LIST, Selection.UNREAD),
-				getCount(ContentUriString.LIST, null));
-	}
-
-	protected boolean matchingBroadcast(final int _seq, final String _user,
-			final String _thread) {
-		return true;
-	}
-
-	protected void showItem(final int _index) {
-		final Cursor c = getItem(_index);
-		final int count = c.getInt(c.getColumnIndex(ArticleColumn.CNT));
-		final String title = c.getString(c.getColumnIndex(ArticleColumn.TITLE));
-		final String ttitle = count > 1 ?
-				ArticleUtils.getThreadTitle(title) : title;
-		Bundle extras = new Bundle();
-		extras.putString(PackageBase.PARAM + ParamName.VTITLE, mTitleTView);
-		extras.putString(PackageBase.PARAM + ParamName.THREAD,
-				c.getString(c.getColumnIndex(ArticleColumn.THREAD)));
-		extras.putString(PackageBase.PARAM + ParamName.TTITLE, ttitle);
-		showItemCommon(this, ThreadedViewActivity.class, IntentUri.TVIEW, extras);
-	}
-
-	protected void markRead(final int _index) {
-		final Cursor c = getItem(_index);
-		final int count = c.getInt(c.getColumnIndex(ArticleColumn.CNT));
-		int nChanged;
-		// Change only one for Marking it unread.
-		if (count == 1) {
-			nChanged = markReadOne(c);
-		} else {
-			final int seq = c.getInt(c.getColumnIndex(ArticleColumn.SEQ));
-			final String thread = c.getString(c.getColumnIndex(
-					ArticleColumn.THREAD));
-			final String where =
-				ArticleColumn.THREAD + "='" + thread
-				+ "' AND " + ArticleColumn.SEQ + "<=" + seq
-				+ " AND " + Selection.UNREAD;
-			final ContentValues values = new ContentValues();
-			values.put(ArticleColumn.READ, 1);
-			nChanged = mResolver.update(getUriList(), values, where, null);
-		}
-		if (nChanged > 0) {
-			DBUtils.updateBoardCount(mResolver, mTabname);
-			refreshList();
-		}
-	}
-
-	protected void markAllRead() {
-		markAllReadCommon("");
+		setContentView(R.layout.thread_list);
 	}
 }

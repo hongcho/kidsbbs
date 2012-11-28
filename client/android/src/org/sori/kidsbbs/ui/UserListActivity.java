@@ -1,4 +1,4 @@
-// Copyright (c) 2010-2011, Younghong "Hong" Cho <hongcho@sori.org>.
+// Copyright (c) 2010-2012, Younghong "Hong" Cho <hongcho@sori.org>.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -25,79 +25,15 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.sori.kidsbbs.ui;
 
-import org.sori.kidsbbs.KidsBbs;
 import org.sori.kidsbbs.R;
-import org.sori.kidsbbs.KidsBbs.PackageBase;
-import org.sori.kidsbbs.KidsBbs.ParamName;
-import org.sori.kidsbbs.provider.ArticleDatabase.ArticleColumn;
-import org.sori.kidsbbs.provider.ArticleProvider.ContentUriString;
-import org.sori.kidsbbs.provider.ArticleProvider.Selection;
 
-import android.content.Intent;
-import android.content.res.Resources;
-import android.database.Cursor;
 import android.os.Bundle;
 
 public class UserListActivity extends ArticleListActivity {
-	private String mBoardUser;
-	private String mTitleView;
 
 	@Override
 	public void onCreate(Bundle _state) {
 		super.onCreate(_state);
-
-		final Intent intent = getIntent();
-		mBoardUser = intent.getStringExtra(PackageBase.PARAM + ParamName.USER);
-
-		final Resources resources = getResources();
-		mTitleView = resources.getString(R.string.title_view);
-
-		setQueryBase(ContentUriString.LIST, COLUMNS_LIST,
-				ArticleColumn.USER + "='" + mBoardUser + "'");
-
-		updateTitle();
-
-		registerForContextMenu(getListView());
-
-		initializeStates();
-	}
-
-	protected void refreshList() {
-		refreshListCommon();
-	}
-
-	protected void updateTitle() {
-		updateTitleCommon(
-				getCount(ContentUriString.LIST, Selection.UNREAD + " AND "
-						+ ArticleColumn.USER + "='" + mBoardUser + "'"),
-				getCount(ContentUriString.LIST,
-						ArticleColumn.USER + "='" + mBoardUser + "'"));
-	}
-
-	protected boolean matchingBroadcast(final int _seq, final String _user,
-			final String _thread) {
-		return _user.equals(mBoardUser);
-	}
-
-	protected void showItem(final int _index) {
-		final Cursor c = getItem(_index);
-		Bundle extras = new Bundle();
-		extras.putString(PackageBase.PARAM + ParamName.VTITLE, mTitleView);
-		extras.putString(PackageBase.PARAM + ParamName.THREAD,
-				c.getString(c.getColumnIndex(ArticleColumn.THREAD)));
-		extras.putInt(PackageBase.PARAM + ParamName.SEQ,
-				c.getInt(c.getColumnIndex(ArticleColumn.SEQ)));
-		extras.putString(PackageBase.PARAM + ParamName.TTITLE,
-				c.getString(c.getColumnIndex(ArticleColumn.TITLE)));
-		showItemCommon(this, ThreadedViewActivity.class,
-				KidsBbs.IntentUri.TVIEW, extras);
-	}
-
-	protected void markRead(final int _index) {
-		markReadOne(getItem(_index));
-	}
-
-	protected void markAllRead() {
-		markAllReadCommon(ArticleColumn.USER + "='" + mBoardUser + "' AND ");
+		setContentView(R.layout.user_list);
 	}
 }
