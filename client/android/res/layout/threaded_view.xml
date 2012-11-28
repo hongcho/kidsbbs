@@ -32,5 +32,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     
     <include layout="@layout/title_header" />
     <include layout="@layout/message_header" />
-    <include layout="@layout/common_list" />
+    <fragment class="org.sori.kidsbbs.ui.ThreadedListFragment"
+        android:id="@+id/fragment0"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 </LinearLayout>
